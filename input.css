@@ -1,0 +1,303 @@
+/* @import "style/leptonic/leptonic-themes"; */
+
+/* @tailwind base; */
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizelegibility;
+  font-family:
+    Segoe UI,
+    SegoeUI,
+    Helvetica Neue,
+    Helvetica,
+    Arial,
+    sans-serif;
+  @apply max-w-5xl mx-auto sm:px-4;
+}
+
+/* Light mode default */
+body {
+  @apply bg-white text-neutral-900;
+}
+
+a[aria-current] {
+  font-weight: bold;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+nav a {
+  padding: 0.5rem 0.5rem;
+  text-decoration: none;
+  color: #0065b3;
+}
+
+nav a:hover {
+  color: #0065b3;
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-neutral-900 text-neutral-200;
+  }
+
+  nav a {
+    /* microsoft docs blue */
+    color: #75b6e7;
+    text-decoration: none;
+  }
+
+  nav a:hover {
+    color: #278cda;
+    text-decoration: underline;
+  }
+}
+
+/* code { */
+/*   font-family: */
+/*     JetBrains Mono, */
+/*     monospace; */
+/*   font-size: 1rem; */
+/*   color: #75b6e7; */
+/*   background-color: rgb(117 182 231 / 0.3); */
+/*   padding-top: 0.125rem; */
+/*   padding-bottom: 0.125rem; */
+/*   padding-left: 0.25rem; */
+/*   padding-right: 0.25rem; */
+/*   border-radius: 0.25rem; */
+/* } */
+
+::backdrop {
+  --tw-border-spacing-x: 0;
+  --tw-border-spacing-y: 0;
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  --tw-pan-x: ;
+  --tw-pan-y: ;
+  --tw-pinch-zoom: ;
+  --tw-scroll-snap-strictness: proximity;
+  --tw-gradient-from-position: ;
+  --tw-gradient-via-position: ;
+  --tw-gradient-to-position: ;
+  --tw-ordinal: ;
+  --tw-slashed-zero: ;
+  --tw-numeric-figure: ;
+  --tw-numeric-spacing: ;
+  --tw-numeric-fraction: ;
+  --tw-ring-inset: ;
+  --tw-ring-offset-width: 0px;
+  --tw-ring-offset-color: #fff;
+  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-shadow: 0 0 #0000;
+  --tw-ring-shadow: 0 0 #0000;
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
+  --tw-blur: ;
+  --tw-brightness: ;
+  --tw-contrast: ;
+  --tw-grayscale: ;
+  --tw-hue-rotate: ;
+  --tw-invert: ;
+  --tw-saturate: ;
+  --tw-sepia: ;
+  --tw-drop-shadow: ;
+  --tw-backdrop-blur: ;
+  --tw-backdrop-brightness: ;
+  --tw-backdrop-contrast: ;
+  --tw-backdrop-grayscale: ;
+  --tw-backdrop-hue-rotate: ;
+  --tw-backdrop-invert: ;
+  --tw-backdrop-opacity: ;
+  --tw-backdrop-saturate: ;
+  --tw-backdrop-sepia: ;
+  --tw-contain-size: ;
+  --tw-contain-layout: ;
+  --tw-contain-paint: ;
+  --tw-contain-style: ;
+}
+
+/* Open state of the dialog */
+dialog[open] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Closed state of the dialog */
+dialog {
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 300ms cubic-bezier(0, 0, 0, 1) allow-discrete;
+}
+
+/* Before-open state */
+/* Needs to be after the previous dialog[open] rule to take effect, */
+/* as the specificity is the same */
+@starting-style {
+  dialog[open] {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* Transition the :backdrop when the dialog modal is promoted to the top layer */
+dialog[open]::backdrop {
+  backdrop-filter: blur(8px);
+  background-color: rgb(0 0 0 / 25%);
+  /* background-image: linear-gradient(to top right, */
+  /*     rgb(245 158 11 / 0.3), */
+  /*     rgb(59 130 246 / 0.3)); */
+}
+
+dialog::backdrop {
+  backdrop-filter: blur(0px);
+  background-color: rgb(0 0 0 / 0%);
+  transition: all 150ms cubic-bezier(0, 0, 0, 1) allow-discrete;
+}
+
+/* This starting-style rule cannot be nested inside the above selector */
+/* because the nesting selector cannot represent pseudo-elements. */
+@starting-style {
+  dialog[open]::backdrop {
+    backdrop-filter: blur(0px);
+    background-color: rgb(0 0 0 / 0%);
+  }
+}
+
+input {
+  min-width: 240px;
+}
+
+.btn {
+  @apply font-bold py-2 px-4;
+}
+
+.success {
+  background-color: green;
+}
+
+.error {
+  color: #efd9fd;
+  background-color: #3b2e58;
+  border: 1px solid #3b2e58;
+  padding: 1rem 1rem;
+}
+
+.error p,
+ul {
+  margin-block: 0;
+}
+
+.fadeIn {
+  animation: 300ms fadeIn cubic-bezier(0.2, 0, 0, 1);
+}
+
+.fadeOut {
+  animation: 150ms fadeOut cubic-bezier(0.3, 0.1, 1, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+/* transitionTimingFunction: { */
+/* 	'standard': 'cubic-bezier(0.2, 0, 0, 1)', */
+/* 	'standard-decelerate': 'cubic-bezier(0, 0, 0, 1)', */
+/* 	'standard-accelerate': 'cubic-bezier(0.3, 0.1, 1, 1)', */
+/* 	'emphasized-decelerate': 'cubic-bezier(0.05, 0.7, 0.1, 1.0)', */
+/* 	'emphasized-accelerate': 'cubic-bezier(0.3, 0.0, 0.8, 0.15)' */
+/* } */
+
+.slideIn {
+  animation: 450ms slideIn cubic-bezier(0.2, 0, 0, 1);
+}
+
+.slideOut {
+  animation: 200ms slideOut cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(100px, 0px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(0px, 0px);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    opacity: 1;
+    transform: translate(0px, 0px);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(-25vw, 0);
+  }
+}
+
+.slideInBack {
+  animation: 450ms slideInBack cubic-bezier(0.2, 0, 0, 1);
+}
+
+.slideOutBack {
+  animation: 200ms slideOutBack cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes slideInBack {
+  from {
+    opacity: 0;
+    transform: translate(-100px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(0px, 0px);
+  }
+}
+
+@keyframes slideOutBack {
+  from {
+    opacity: 1;
+    transform: translate(0px, 0px);
+  }
+
+  to {
+    opacity: 0;
+    transform: translate(25vw, 0);
+  }
+}

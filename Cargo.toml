@@ -1,0 +1,82 @@
+[package]
+name = "secret-leptos"
+version = "0.1.0"
+edition = "2021"
+
+[profile.dev]
+# Potential to opt-in on higher optimization for our code. This may increase incremental compilation times, but will reduce binary size.
+opt-level = 0
+[profile.dev.package."*"]
+# High optimization for our dependencies. This should increase performance drastically whithout hitting our incremental compilation times.
+# This will lead to obscure error messages from third party libraries. Comment this out when experiencing a tricky bug.
+opt-level = 3
+
+[profile.release]
+opt-level = "z"
+lto = "fat"
+debug = 0
+strip = true
+codegen-units = 1
+
+[build-dependencies]
+git2 = "0.19"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dependencies]
+# Leptos official
+leptos = { version = "0.7.0-beta", features = [
+  "csr",
+  # "nightly"
+] }
+leptos_router = { version = "0.7.0-beta", features = [
+  # "nightly"
+] }
+leptos_router_macro = { version = "0.7.0-beta" }
+leptos_meta = { version = "0.7.0-beta" }
+
+# Leptos extensions and related
+# leptos-use = { git = "https://github.com/Synphonyte/leptos-use.git", branch = "leptos-0.7" }
+# leptonic = { git = "https://github.com/lpotthast/leptonic.git", branch = "main" }
+# thaw = { version = "0.4.0-alpha", git = "https://github.com/thaw-ui/thaw.git", branch = "thaw/fluent", features = [
+#   "csr",
+#   "nightly",
+# ] }
+# codee = { version = "0.2", features = [
+#   "json_serde",
+#   "msgpack_serde",
+#   "base64",
+#   "prost",
+# ] }
+
+# gRPC
+tonic = { version = "0.12.2", default-features = false }
+
+# Web support
+console_error_panic_hook = "0.1.7"
+web-sys = "0.3"
+wasm-bindgen-futures = "0.4"
+send_wrapper = { version = "0.6.0", features = ["futures"] }
+serde-wasm-bindgen = "0.6"
+tonic-web-wasm-client = "0.6.0"
+# gloo-net = "0.6"
+# gloo-storage = "0.3"
+
+# Classic
+serde = { version = "1.0.208", features = ["derive"] }
+serde_json = "1.0.125"
+base64 = "0.22.1"
+futures = "0.3.20"
+async-trait = "0.1.81"
+thiserror = "1.0.63"
+
+# Logging
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+tracing-subscriber-wasm = "0.1.0"
+
+# Secret
+keplr-sys = "0.0.2"
+secret-toolkit-snip20 = { version = "0.10.0" }
+secretrs = { version = "0.1.1" }
+rsecret = { path = "../secret-clients/rsecret" }
