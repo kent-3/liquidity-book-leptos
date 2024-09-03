@@ -15,11 +15,11 @@ html {
     Helvetica,
     Arial,
     sans-serif;
-  @apply max-w-5xl mx-auto sm:px-4;
 }
 
 /* Light mode default */
 body {
+  @apply max-w-5xl mx-auto sm:px-4 px-2;
   @apply bg-white text-neutral-900;
 }
 
@@ -176,10 +176,6 @@ dialog::backdrop {
     backdrop-filter: blur(0px);
     background-color: rgb(0 0 0 / 0%);
   }
-}
-
-input {
-  min-width: 240px;
 }
 
 .btn {

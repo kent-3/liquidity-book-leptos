@@ -9,7 +9,10 @@ use leptos::{
     logging::log,
     prelude::*,
 };
-use leptos_router::components::{Route, Router, Routes, A};
+use leptos_router::{
+    components::{FlatRoutes, Route, Router, Routes, A},
+    StaticSegment,
+};
 use leptos_router_macro::path;
 use secret_toolkit_snip20::{QueryMsg, TokenInfoResponse};
 use send_wrapper::SendWrapper;
@@ -27,38 +30,19 @@ mod constants;
 mod error;
 mod keplr;
 mod prelude;
+mod routes;
 mod state;
+mod types;
 mod utils;
 
 use components::Spinner2;
 use constants::{CHAIN_ID, GRPC_URL};
 use error::Error;
-use keplr::{keplr_sys, Keplr, KeplrTests, Key};
+use keplr::{keplr_sys, Keplr, Key};
+use routes::pool::Pool;
+use routes::pool::PoolCreator;
 use state::{KeplrSignals, TokenMap, WasmClient};
-
-// TODO: move custom types to seperate module
-
-// TODO: include the decimals somehow, and use that in the Display trait
-#[derive(Clone, Debug)]
-pub struct Coin {
-    pub denom: String,
-    pub amount: String,
-}
-
-impl From<secretrs::proto::cosmos::base::v1beta1::Coin> for Coin {
-    fn from(value: secretrs::proto::cosmos::base::v1beta1::Coin) -> Self {
-        Self {
-            denom: value.denom,
-            amount: value.amount,
-        }
-    }
-}
-
-impl std::fmt::Display for Coin {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}", self.amount, self.denom)
-    }
-}
+use types::Coin;
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -175,10 +159,10 @@ pub fn App() -> impl IntoView {
         <Router>
             <header>
                 <div class="flex justify-between items-center">
-                    <h1>"Secret Leptos"</h1>
+                    <div class="my-3 font-bold text-3xl">"Trader Crow 2"</div>
                     // terrible, but it works...
                     <Show when=move || {
-                        keplr.key.get().map(|foo| foo.is_ok()).unwrap_or_default()
+                        keplr.key.get().map(|key| key.is_ok()).unwrap_or_default()
                     }>
                         <p class="text-sm outline outline-2 outline-offset-8 outline-neutral-500">
                             "Connected as "<strong>{key_name}</strong>
@@ -202,18 +186,19 @@ pub fn App() -> impl IntoView {
                 </div>
                 <hr />
                 <nav>
-                    <A href="/secret-leptos/">"Home"</A>
-                    <A href="/secret-leptos/keplr">"Keplr"</A>
+                    <A href="/">"Home"</A>
+                    <A href="/pool">"Pool"</A>
+                    <A href="/trade">"Trade"</A>
+                    <A href="/analytics">"Analytics"</A>
                 </nav>
                 <hr />
             </header>
-            <main
-                // class="outline outline-1 outline-offset-8 outline-neutral-500"
-            >
-                <Routes fallback=|| "This page could not be found.">
-                    <Route path=path!("secret-leptos") view=|| view! { <Home /> } />
-                    <Route path=path!("secret-leptos/keplr") view=|| view! { <KeplrTests /> } />
-                </Routes>
+            <main class="overflow-x-auto">
+                <FlatRoutes fallback=|| "This page could not be found.">
+                    <Route path=StaticSegment("") view=Home />
+                    <Route path=StaticSegment("pool") view=Pool />
+                    <Route path=(StaticSegment("pool"), StaticSegment("create")) view=PoolCreator />
+                </FlatRoutes>
             </main>
             <LoadingModal when=enable_keplr_action.pending() message="Requesting Connection" />
             <OptionsMenu dialog_ref=options_dialog_ref toggle_menu=toggle_options_menu />
@@ -479,7 +464,7 @@ fn Home() -> impl IntoView {
                 }
             }>
                 <Suspense fallback=move || view! { <p>"Loading (user_balance)..."</p> }>
-                    <p>{move || Suspend::new(async move {user_balance.await})}</p>
+                    <p>{move || Suspend::new(async move { user_balance.await })}</p>
                 </Suspense>
             </ErrorBoundary>
             <Suspense>
