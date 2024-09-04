@@ -39,8 +39,7 @@ use components::Spinner2;
 use constants::{CHAIN_ID, GRPC_URL};
 use error::Error;
 use keplr::{keplr_sys, Keplr, Key};
-use routes::pool::Pool;
-use routes::pool::PoolCreator;
+use routes::{pool::*, trade::*};
 use state::{KeplrSignals, TokenMap, WasmClient};
 use types::Coin;
 
@@ -195,9 +194,11 @@ pub fn App() -> impl IntoView {
             </header>
             <main class="overflow-x-auto">
                 <FlatRoutes fallback=|| "This page could not be found.">
-                    <Route path=StaticSegment("") view=Home />
-                    <Route path=StaticSegment("pool") view=Pool />
-                    <Route path=(StaticSegment("pool"), StaticSegment("create")) view=PoolCreator />
+                    <Route path=path!("/") view=Home />
+                    <Route path=path!("/pool") view=Pool />
+                    <Route path=path!("/pool/:token_a/:token_b/:basis_points") view=PoolManager />
+                    <Route path=path!("/pool/create") view=PoolCreator />
+                    <Route path=path!("/trade") view=Trade />
                 </FlatRoutes>
             </main>
             <LoadingModal when=enable_keplr_action.pending() message="Requesting Connection" />
