@@ -156,6 +156,7 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Router>
+            <div class="background-image"></div>
             <header>
                 <div class="flex justify-between items-center">
                     <div class="my-3 font-bold text-3xl">"Trader Crow 2"</div>
