@@ -29,6 +29,7 @@ mod components;
 mod constants;
 mod error;
 mod keplr;
+mod liquidity_book;
 mod prelude;
 mod routes;
 mod state;

@@ -80,3 +80,4 @@ keplr-sys = "0.0.2"
 secret-toolkit-snip20 = { version = "0.10.0" }
 secretrs = { version = "0.1.1" }
 rsecret = { path = "../secret-clients/rsecret" }
+shade-protocol = { git = "https://github.com/securesecrets/shade.git", branch = "orderbook/library", features = ["liquidity-book"] }

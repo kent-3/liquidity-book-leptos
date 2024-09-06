@@ -37,12 +37,20 @@ pub fn Pool() -> impl IntoView {
     // TODO: query for the pools
     let pools = vec!["foo", "bar"];
 
+    use crate::liquidity_book::lb_factory::QueryMsg;
+    use crate::liquidity_book::Querier;
+
+    let resource = LocalResource::new(move || {
+        SendWrapper::new(async move { QueryMsg::GetNumberOfLbPairs {}.do_query().await })
+    });
+
     view! {
         <A href="/pool/create">
             <button>"Create New Pool"</button>
         </A>
         <h3 class="mb-1">"Existing Pools"</h3>
         <ul>{pools.into_iter().map(|n| view! { <li>{n}</li> }).collect_view()}</ul>
+        <h3>{move || resource.get()}</h3>
     }
 }
 
