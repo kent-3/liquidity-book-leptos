@@ -1,2 +1,6 @@
+.*
+!.cargo
+!.github
+
 /target
 # /dist
