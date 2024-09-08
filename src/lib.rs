@@ -10,7 +10,7 @@ use leptos::{
     prelude::*,
 };
 use leptos_router::{
-    components::{FlatRoutes, Route, Router, Routes, A},
+    components::{FlatRoutes, ParentRoute, Route, Router, Routes, A},
     StaticSegment,
 };
 use leptos_router_macro::path;
@@ -195,13 +195,15 @@ pub fn App() -> impl IntoView {
                 <hr />
             </header>
             <main class="overflow-x-auto">
-                <FlatRoutes fallback=|| "This page could not be found.">
+                <Routes fallback=|| "This page could not be found.">
                     <Route path=path!("/") view=Home />
-                    <Route path=path!("/pool") view=Pool />
-                    <Route path=path!("/pool/:token_a/:token_b/:basis_points") view=PoolManager />
-                    <Route path=path!("/pool/create") view=PoolCreator />
+                    <ParentRoute path=path!("/pool") view=Pool>
+                        <Route path=path!("/") view=PoolBrowser/>
+                        <Route path=path!("/create") view=PoolCreator />
+                        <Route path=path!("/:token_a/:token_b/:basis_points") view=PoolManager />
+                    </ParentRoute>
                     <Route path=path!("/trade") view=Trade />
-                </FlatRoutes>
+                </Routes>
             </main>
             <LoadingModal when=enable_keplr_action.pending() message="Requesting Connection" />
             <OptionsMenu dialog_ref=options_dialog_ref toggle_menu=toggle_options_menu />

@@ -81,9 +81,11 @@ nav a:hover {
     width: 100%;
     height: 100%;
     background:
-      linear-gradient(rgba(255, 255, 255, 1) 0%,
+      linear-gradient(
+        rgba(255, 255, 255, 1) 0%,
         rgba(255, 255, 255, 0.8) 60%,
-        rgba(255, 255, 255, 0) 100%),
+        rgba(255, 255, 255, 0) 100%
+      ),
       url("images/mountains4.webp") center / cover no-repeat fixed;
     z-index: -1;
     translate: 0 10px;
@@ -237,10 +239,14 @@ ul {
 
 .fadeIn {
   animation: 300ms fadeIn cubic-bezier(0.2, 0, 0, 1);
+  /* Hold final state of animation */
+  animation-fill-mode: forwards;
 }
 
 .fadeOut {
   animation: 150ms fadeOut cubic-bezier(0.3, 0.1, 1, 1);
+  /* Hold final state of animation */
+  animation-fill-mode: forwards;
 }
 
 @keyframes fadeIn {

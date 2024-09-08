@@ -1,8 +1,10 @@
+use crate::components::AnimatedShow;
 use crate::state::*;
 use crate::CHAIN_ID;
 use rsecret::query::compute::ComputeQuerier;
 use rsecret::secret_network_client::CreateQuerierOptions;
 use send_wrapper::SendWrapper;
+use std::time::Duration;
 
 use leptos::prelude::*;
 use leptos_router::components::{ParentRoute, Route, A};
@@ -34,8 +36,11 @@ use tracing::{debug, info};
 
 #[component]
 pub fn Pool() -> impl IntoView {
-    // TODO: query for the pools
-    let pools = vec!["foo", "bar"];
+    info!("rendering <Pool/>");
+
+    on_cleanup(move || {
+        info!("cleaning up <Pool/>");
+    });
 
     use crate::liquidity_book::lb_factory::QueryMsg;
     use crate::liquidity_book::Querier;
@@ -44,13 +49,75 @@ pub fn Pool() -> impl IntoView {
         SendWrapper::new(async move { QueryMsg::GetNumberOfLbPairs {}.do_query().await })
     });
 
+    provide_context(resource);
+
+    let show = RwSignal::new(false);
+
     view! {
+        <div
+            class="hover-me fadeIn"
+            on:mouseenter=move |_| show.set(true)
+            on:mouseleave=move |_| show.set(false)
+        >
+            "Hover Me"
+        </div>
+
+        <AnimatedShow
+            when=show
+            show_class="fadeIn"
+            hide_class="fadeOut"
+            hide_delay=Duration::from_millis(1000)
+        >
+            <div class="here-i-am">
+                "Here I Am!"
+            </div>
+        </AnimatedShow>
+
+        <div class="p-2 fadeIn">
+            <Outlet/>
+        </div>
+
+        // alternate layout with button to the right
+        // <div class="p-2 flex flex-row items-center gap-12">
+        //     <div class="space-y-0">
+        //         <div class="text-3xl font-bold">Pool</div>
+        //         <div class="text-sm text-neutral-400">Provide liquidity and earn fees.</div>
+        //     </div>
+        //     <A href="/pool/create">
+        //         <button>"Create New Pool"</button>
+        //     </A>
+        // </div>
+
+    }
+}
+
+#[component]
+pub fn PoolBrowser() -> impl IntoView {
+    info!("rendering <PoolBrowser/>");
+
+    on_cleanup(move || {
+        info!("cleaning up <PoolBrowser/>");
+    });
+
+    // TODO: query for the pools
+    let pools = vec!["foo", "bar"];
+
+    let resource = use_context::<LocalResource<String>>().expect("Context missing!");
+
+    view! {
+        <div class="text-3xl font-bold">"Pool"</div>
+        <div class="text-sm text-neutral-400">
+            "Provide liquidity and earn fees."
+        </div>
+
+        <h3 class="mb-1">"Existing Pools"</h3>
+        <ul>{pools.into_iter().map(|n| view! { <li>{n}</li> }).collect_view()}</ul>
+
+        // <h3>{move || resource.get()}</h3>
+
         <A href="/pool/create">
             <button>"Create New Pool"</button>
         </A>
-        <h3 class="mb-1">"Existing Pools"</h3>
-        <ul>{pools.into_iter().map(|n| view! { <li>{n}</li> }).collect_view()}</ul>
-        <h3>{move || resource.get()}</h3>
     }
 }
 
@@ -120,7 +187,7 @@ pub fn PoolManager() -> impl IntoView {
     view! {
         <a
             href="/pool"
-            class="block mt-2 text-neutral-200/50 text-sm font-bold cursor-pointer no-underline"
+            class="block text-neutral-200/50 text-sm font-bold cursor-pointer no-underline"
         >
             "🡨 Back to pools list"
         </a>
@@ -161,6 +228,12 @@ pub fn PoolManager() -> impl IntoView {
 
 #[component]
 pub fn PoolCreator() -> impl IntoView {
+    info!("rendering <PoolCreator/>");
+
+    on_cleanup(move || {
+        info!("cleaning up <PoolCreator/>");
+    });
+
     let (token_x, set_token_x) = signal("TOKENX".to_string());
     let (token_y, set_token_y) = signal("TOKENY".to_string());
     let (bin_step, set_bin_step) = signal("100".to_string());
@@ -182,7 +255,13 @@ pub fn PoolCreator() -> impl IntoView {
     };
 
     view! {
-        <h2 class="text-center sm:text-left">"Create New Pool"</h2>
+        <a
+            href="/pool"
+            class="block text-neutral-200/50 text-sm font-bold cursor-pointer no-underline"
+        >
+            "🡨 Back to pools list"
+        </a>
+        <div class="py-3 text-2xl font-bold text-center sm:text-left">"Create New Pool"</div>
         <form class="container max-w-xs space-y-4 py-1 mx-auto sm:mx-0" on:submit=create_pool>
             <label class="block">
                 "Select Token"
