@@ -31,8 +31,8 @@ use tracing::debug;
 ///
 ///     <AnimatedShow
 ///        when=show
-///        show_class="fade-in-1000"
-///        hide_class="fade-out-1000"
+///        show_class="fadeIn"
+///        hide_class="fadeOut"
 ///        hide_delay=Duration::from_millis(1000)
 ///     >
 ///        <div class="here-i-am">

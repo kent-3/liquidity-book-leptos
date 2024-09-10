@@ -4,6 +4,8 @@ use crate::CHAIN_ID;
 use rsecret::query::compute::ComputeQuerier;
 use rsecret::secret_network_client::CreateQuerierOptions;
 use send_wrapper::SendWrapper;
+use shade_protocol::c_std::Addr;
+use shade_protocol::liquidity_book::lb_pair::ReservesResponse;
 use std::time::Duration;
 
 use leptos::prelude::*;
@@ -42,8 +44,9 @@ pub fn Pool() -> impl IntoView {
         info!("cleaning up <Pool/>");
     });
 
-    use crate::liquidity_book::lb_factory::QueryMsg;
+    use crate::liquidity_book::addrs::{LB_FACTORY_CONTRACT, LB_PAIR_CONTRACT};
     use crate::liquidity_book::Querier;
+    use shade_protocol::contract_interfaces::liquidity_book::lb_factory::QueryMsg;
 
     let resource = LocalResource::new(move || {
         SendWrapper::new(async move { QueryMsg::GetNumberOfLbPairs {}.do_query().await })
@@ -51,45 +54,18 @@ pub fn Pool() -> impl IntoView {
 
     provide_context(resource);
 
-    let show = RwSignal::new(false);
-
     view! {
-        <div
-            class="hover-me fadeIn"
-            on:mouseenter=move |_| show.set(true)
-            on:mouseleave=move |_| show.set(false)
-        >
-            "Hover Me"
+        <div class="p-2">
+            <Outlet />
         </div>
-
-        <AnimatedShow
-            when=show
-            show_class="fadeIn"
-            hide_class="fadeOut"
-            hide_delay=Duration::from_millis(1000)
-        >
-            <div class="here-i-am">
-                "Here I Am!"
-            </div>
-        </AnimatedShow>
-
-        <div class="p-2 fadeIn">
-            <Outlet/>
-        </div>
-
-        // alternate layout with button to the right
-        // <div class="p-2 flex flex-row items-center gap-12">
-        //     <div class="space-y-0">
-        //         <div class="text-3xl font-bold">Pool</div>
-        //         <div class="text-sm text-neutral-400">Provide liquidity and earn fees.</div>
-        //     </div>
-        //     <A href="/pool/create">
-        //         <button>"Create New Pool"</button>
-        //     </A>
-        // </div>
-
     }
 }
+
+use shade_protocol::{
+    c_std::ContractInfo,
+    contract_interfaces::liquidity_book::lb_pair::LBPair,
+    swap::core::{TokenAmount, TokenType},
+};
 
 #[component]
 pub fn PoolBrowser() -> impl IntoView {
@@ -99,25 +75,85 @@ pub fn PoolBrowser() -> impl IntoView {
         info!("cleaning up <PoolBrowser/>");
     });
 
+    let pair_1 = LBPair {
+        token_x: TokenType::CustomToken {
+            contract_addr: Addr::unchecked("foo"),
+            token_code_hash: "code_hash".to_string(),
+        },
+        token_y: TokenType::CustomToken {
+            contract_addr: Addr::unchecked("bar"),
+            token_code_hash: "code_hash".to_string(),
+        },
+        bin_step: 100,
+        contract: ContractInfo {
+            address: Addr::unchecked("secret1pt5nd3fuevamy5lqcv53jqsvytspmknanf5c28"),
+            code_hash: "9768cfd5753a7fa2b51b30a3fc41632df2b3bc31801dece2d6111f321a3e4252"
+                .to_string(),
+        },
+    };
+
+    let pair_2 = LBPair {
+        token_x: TokenType::CustomToken {
+            contract_addr: Addr::unchecked("bar"),
+            token_code_hash: "code_hash".to_string(),
+        },
+        token_y: TokenType::CustomToken {
+            contract_addr: Addr::unchecked("baz"),
+            token_code_hash: "code_hash".to_string(),
+        },
+        bin_step: 100,
+        contract: ContractInfo {
+            address: Addr::unchecked("a second LB Pair"),
+            code_hash: "9768cfd5753a7fa2b51b30a3fc41632df2b3bc31801dece2d6111f321a3e4252"
+                .to_string(),
+        },
+    };
+
     // TODO: query for the pools
-    let pools = vec!["foo", "bar"];
+    let pools = vec![pair_1, pair_2];
 
     let resource = use_context::<LocalResource<String>>().expect("Context missing!");
 
     view! {
         <div class="text-3xl font-bold">"Pool"</div>
-        <div class="text-sm text-neutral-400">
-            "Provide liquidity and earn fees."
-        </div>
+        <div class="text-sm text-neutral-400">"Provide liquidity and earn fees."</div>
 
         <h3 class="mb-1">"Existing Pools"</h3>
-        <ul>{pools.into_iter().map(|n| view! { <li>{n}</li> }).collect_view()}</ul>
+        <ul>
+            {pools
+                .into_iter()
+                .map(|n| {
+                    view! {
+                        <li>
+                            <a href=format!(
+                                "/pool/{}/{}/{}",
+                                match n.token_x {
+                                    TokenType::CustomToken { contract_addr, .. } => {
+                                        contract_addr.to_string()
+                                    }
+                                    TokenType::NativeToken { denom } => denom,
+                                },
+                                match n.token_y {
+                                    TokenType::CustomToken { contract_addr, .. } => {
+                                        contract_addr.to_string()
+                                    }
+                                    TokenType::NativeToken { denom } => denom,
+                                },
+                                n.bin_step,
+                            )>{n.contract.address.to_string()}</a>
+                        </li>
+                    }
+                })
+                .collect_view()}
+        </ul>
 
         // <h3>{move || resource.get()}</h3>
 
-        <A href="/pool/create">
-            <button>"Create New Pool"</button>
-        </A>
+        <div class="mt-4">
+            <A href="/pool/create">
+                <button class="p-1">"Create New Pool"</button>
+            </A>
+        </div>
     }
 }
 
@@ -161,28 +197,58 @@ pub fn PoolManager() -> impl IntoView {
             .unwrap_or_else(|| "100".to_string())
     };
 
-    let resource = Resource::new(
+    // let resource = Resource::new(
+    //     move || (token_a(), token_b(), basis_points()),
+    //     move |(token_a, token_b, basis_points)| {
+    //         SendWrapper::new(async move {
+    //             let encryption_utils = secretrs::EncryptionUtils::new(None, CHAIN_ID).unwrap();
+    //             // TODO: revisit this. url is not needed, EncryptionUtils should be a trait
+    //             let options = CreateQuerierOptions {
+    //                 url: "https://grpc.mainnet.secretsaturn.net",
+    //                 chain_id: CHAIN_ID,
+    //                 encryption_utils,
+    //             };
+    //             let compute = ComputeQuerier::new(wasm_client.get(), options);
+    //             // TODO:
+    //             let query = format!("{}, {}, {}", token_a, token_b, basis_points);
+    //             debug!("{query}");
+    //
+    //             let result = compute.address_by_label("amber-24").await;
+    //             result.map_err(Into::<crate::Error>::into)
+    //         })
+    //     },
+    // );
+    // let (pending, set_pending) = signal(false);
+
+    use crate::liquidity_book::contract_interfaces::lb_pair::QueryMsg;
+    use crate::liquidity_book::Querier;
+
+    #[derive(serde::Deserialize, Debug)]
+    struct ReservesResponse {
+        pub reserve_x: String,
+        pub reserve_y: String,
+    }
+
+    let total_reserves = Resource::new(
         move || (token_a(), token_b(), basis_points()),
         move |(token_a, token_b, basis_points)| {
             SendWrapper::new(async move {
-                let encryption_utils = secretrs::EncryptionUtils::new(None, CHAIN_ID).unwrap();
-                // TODO: revisit this. url is not needed, EncryptionUtils should be a trait
-                let options = CreateQuerierOptions {
-                    url: "https://grpc.mainnet.secretsaturn.net",
-                    chain_id: CHAIN_ID,
-                    encryption_utils,
-                };
-                let compute = ComputeQuerier::new(wasm_client.get(), options);
-                // TODO:
-                let query = format!("{}, {}, {}", token_a, token_b, basis_points);
-                debug!("{query}");
-
-                let result = compute.address_by_label("amber-24").await;
-                result.map_err(Into::<crate::Error>::into)
+                let response = QueryMsg::GetReserves {}.do_query().await;
+                debug!("{response}");
+                let reserves: ReservesResponse = serde_json::from_str(&response).unwrap();
+                format!(
+                    "{token_a}: {}, {token_b}: {}",
+                    reserves.reserve_x, reserves.reserve_y
+                )
             })
         },
     );
-    let (pending, set_pending) = signal(false);
+    let active_id = Resource::new(
+        move || (token_a(), token_b(), basis_points()),
+        move |(token_a, token_b, basis_points)| {
+            SendWrapper::new(async move { QueryMsg::GetActiveId {}.do_query().await })
+        },
+    );
 
     view! {
         <a
@@ -203,17 +269,17 @@ pub fn PoolManager() -> impl IntoView {
             </a>
         </div>
 
-        <Suspense fallback=|| view! { <p>"Loading..."</p> }>
-            // you can `.await` resources to avoid dealing with the `None` state
-            <p>
-                "User ID: "
-                {move || Suspend::new(async move {
-                    match resource.await {
-                        Ok(response) => response,
-                        Err(_) => "error".to_string(),
-                    }
-                })}
-            </p>
+        // <Suspense fallback=|| view! { <p>"Loading..."</p> }>
+        //     // you can `.await` resources to avoid dealing with the `None` state
+        //     <p>
+        //         "User ID: "
+        //         {move || Suspend::new(async move {
+        //             match resource.await {
+        //                 Ok(response) => response,
+        //                 Err(_) => "error".to_string(),
+        //             }
+        //         })}
+        //     </p>
         // or you can still use .get() to access resources in things like component props
         // <For
         // each=move || resource.get().and_then(Result::ok).unwrap_or_default()
@@ -222,6 +288,17 @@ pub fn PoolManager() -> impl IntoView {
         // >
         // // ...
         // </For>
+        // </Suspense>
+
+        <Suspense fallback=|| view! { <p>"Loading..."</p> }>
+            <div>
+                "Total Reserves: "
+                {move || Suspend::new(async move { total_reserves.await })}
+            </div >
+            <div>
+                "Active ID: "
+                {move || Suspend::new(async move { active_id.await })}
+            </div >
         </Suspense>
     }
 }

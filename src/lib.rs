@@ -1,4 +1,6 @@
 #![allow(unused)]
+#![allow(mixed_script_confusables)]
+#![allow(confusable_idents)]
 
 // use codee::string::FromToStringCodec;
 // use leptos_use::storage::use_local_storage;
@@ -160,11 +162,10 @@ pub fn App() -> impl IntoView {
             <div class="background-image"></div>
             <header>
                 <div class="flex justify-between items-center">
-                    <div class="my-3 font-bold text-3xl">"Trader Crow 2"</div>
+                    // <span class="italic font-extrabold">ρ</span>
+                    <div class="my-3 font-bold text-3xl">"Trader Rho"</div>
                     // terrible, but it works...
-                    <Show when=move || {
-                        keplr.key.get().map(|key| key.is_ok()).unwrap_or_default()
-                    }>
+                    <Show when=move || { keplr.key.get().and_then(|key| key.ok()).is_some() }>
                         <p class="text-sm outline outline-2 outline-offset-8 outline-neutral-500">
                             "Connected as "<strong>{key_name}</strong>
                         </p>
@@ -198,7 +199,7 @@ pub fn App() -> impl IntoView {
                 <Routes fallback=|| "This page could not be found.">
                     <Route path=path!("/") view=Home />
                     <ParentRoute path=path!("/pool") view=Pool>
-                        <Route path=path!("/") view=PoolBrowser/>
+                        <Route path=path!("/") view=PoolBrowser />
                         <Route path=path!("/create") view=PoolCreator />
                         <Route path=path!("/:token_a/:token_b/:basis_points") view=PoolManager />
                     </ParentRoute>
