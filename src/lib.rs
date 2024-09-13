@@ -163,10 +163,9 @@ pub fn App() -> impl IntoView {
             <header>
                 <div class="flex justify-between items-center">
                     // <span class="italic font-extrabold">ρ</span>
-                    <div class="my-3 font-bold text-3xl">"Trader Rho"</div>
-                    // terrible, but it works...
-                    <Show when=move || { keplr.key.get().and_then(|key| key.ok()).is_some() }>
-                        <p class="text-sm outline outline-2 outline-offset-8 outline-neutral-500">
+                    <div class="my-3 font-bold text-3xl line-clamp-1">"Trader Crow 2"</div>
+                    <Show when=move || keplr.key.get().and_then(|key| key.ok()).is_some()>
+                        <p class="hidden sm:block text-sm outline outline-2 outline-offset-8 outline-neutral-500">
                             "Connected as "<strong>{key_name}</strong>
                         </p>
                     </Show>
@@ -201,7 +200,11 @@ pub fn App() -> impl IntoView {
                     <ParentRoute path=path!("/pool") view=Pool>
                         <Route path=path!("/") view=PoolBrowser />
                         <Route path=path!("/create") view=PoolCreator />
-                        <Route path=path!("/:token_a/:token_b/:basis_points") view=PoolManager />
+                        <ParentRoute path=path!("/:token_a/:token_b/:bps") view=PoolManager>
+                            <Route path=path!("/") view=|| () />
+                            <Route path=path!("/add") view=AddLiquidity />
+                            <Route path=path!("/remove") view=RemoveLiquidity />
+                        </ParentRoute>
                     </ParentRoute>
                     <Route path=path!("/trade") view=Trade />
                 </Routes>
@@ -216,7 +219,7 @@ pub fn App() -> impl IntoView {
 pub fn LoadingModal(when: Memo<bool>, #[prop(into)] message: String) -> impl IntoView {
     let dialog_ref = NodeRef::<Dialog>::new();
 
-    Effect::new_sync(move |_| match dialog_ref.get() {
+    Effect::new(move |_| match dialog_ref.get() {
         Some(dialog) => match when.get() {
             true => {
                 let _ = dialog.show_modal();
@@ -227,7 +230,12 @@ pub fn LoadingModal(when: Memo<bool>, #[prop(into)] message: String) -> impl Int
     });
 
     view! {
-        <dialog node_ref=dialog_ref class="absolute inset-0 flex items-center">
+        <dialog node_ref=dialog_ref class="block inset-0">
+            // NOTE: when 'display: none' is toggled on/off, some of the animation gets lost,
+            // so it's better to use 'visibility: hidden' instead of 'display: none'.
+            // Tailwind's 'invisible' = 'visibility: hidden' and 'hidden' = 'display: none'
+            // The svg will be spinning invisibly, but it's worth it for the nicer animation.
+            // class=("invisible", move || !when.get())
             <div class="inline-flex items-center">
                 <Spinner2 size="h-8 w-8" />
                 <div class="font-bold">{message}</div>
@@ -276,20 +284,24 @@ pub fn OptionsMenu(
     };
 
     view! {
-        <dialog node_ref=dialog_ref class="absolute inset-0 flex flex-col gap-4 items-center">
-            <button on:click=toggle_menu class="self-stretch">
-                "Close Menu"
-            </button>
-            <form class="flex gap-4" on:submit=on_submit>
-                <input type="text" value=GRPC_URL node_ref=input_element />
-                <input type="submit" value="Submit" class="min-w-fit" />
-            </form>
-            <button
-                on:click=disable_keplr
-                class="border-blue-500 text-blue-500 border-solid hover:bg-neutral-800 rounded-sm bg-[initial]"
-            >
-                Disconnect Wallet
-            </button>
+        <dialog node_ref=dialog_ref class="inset-0">
+            // NOTE: In this case, the effect is so small, it's not worth worrying about.
+            // class=("invisible", move || dialog_ref.get().is_some_and(|dialog| !dialog.open()))
+            <div class="flex flex-col gap-4 items-center">
+                <button on:click=toggle_menu class="self-stretch">
+                    "Close Menu"
+                </button>
+                <form class="flex gap-4" on:submit=on_submit>
+                    <input type="text" value=GRPC_URL node_ref=input_element />
+                    <input type="submit" value="Submit" class="min-w-fit" />
+                </form>
+                <button
+                    on:click=disable_keplr
+                    class="border-blue-500 text-blue-500 border-solid hover:bg-neutral-800 rounded-sm bg-[initial]"
+                >
+                    Disconnect Wallet
+                </button>
+            </div>
         </dialog>
     }
 }
