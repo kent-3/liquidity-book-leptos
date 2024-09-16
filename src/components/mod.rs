@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 mod animated_show;
 mod spinner;
 mod spinner2;

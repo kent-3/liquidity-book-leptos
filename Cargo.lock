@@ -4112,6 +4112,7 @@ dependencies = [
  "futures",
  "git2",
  "keplr-sys",
+ "lb-libraries",
  "leptos",
  "leptos_meta",
  "leptos_router",

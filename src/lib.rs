@@ -1,4 +1,4 @@
-#![allow(unused)]
+// #![allow(unused)]
 #![allow(mixed_script_confusables)]
 #![allow(confusable_idents)]
 
@@ -11,10 +11,7 @@ use leptos::{
     logging::log,
     prelude::*,
 };
-use leptos_router::{
-    components::{FlatRoutes, ParentRoute, Route, Router, Routes, A},
-    StaticSegment,
-};
+use leptos_router::components::{FlatRoutes, ParentRoute, Route, Router, Routes, A};
 use leptos_router_macro::path;
 use secret_toolkit_snip20::{QueryMsg, TokenInfoResponse};
 use send_wrapper::SendWrapper;

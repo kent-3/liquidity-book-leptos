@@ -3,9 +3,58 @@ use std::sync::LazyLock;
 
 #[derive(Debug)]
 pub struct LiquidityPreset {
-    delta_ids: Vec<i32>,
-    distribution_x: Vec<f32>,
-    distribution_y: Vec<f32>,
+    delta_ids: Vec<i64>,
+    distribution_x: Vec<f64>,
+    distribution_y: Vec<f64>,
+}
+
+impl LiquidityPreset {
+    pub fn delta_ids(&self) -> Vec<i64> {
+        self.delta_ids.clone()
+    }
+    pub fn distribution_x(&self) -> Vec<u64> {
+        self.distribution_x
+            .iter()
+            .map(|el| (el * 1e18).round() as u64) // Use round() to avoid truncation issues
+            .collect()
+    }
+    pub fn distribution_y(&self) -> Vec<u64> {
+        self.distribution_y
+            .iter()
+            .map(|el| (el * 1e18).round() as u64) // Use round() to avoid truncation issues
+            .collect()
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum LiquidityShape {
+    SpotUniform,
+    Curve,
+    BidAsk,
+    Wide,
+}
+
+impl From<&str> for LiquidityShape {
+    fn from(value: &str) -> Self {
+        match value {
+            "uniform" => LiquidityShape::SpotUniform,
+            "curve" => LiquidityShape::Curve,
+            "bid-ask" => LiquidityShape::BidAsk,
+            "wide" => LiquidityShape::Wide,
+            _ => panic!("Invalid liquidity shape"), // You can handle this with Result or Option instead
+        }
+    }
+}
+
+impl ToString for LiquidityShape {
+    fn to_string(&self) -> String {
+        match self {
+            LiquidityShape::SpotUniform => "uniform".to_string(),
+            LiquidityShape::Curve => "curve".to_string(),
+            LiquidityShape::BidAsk => "bid-ask".to_string(),
+            LiquidityShape::Wide => "wide".to_string(),
+        }
+    }
 }
 
 // 1) Spot (Uniform)
