@@ -1,6 +1,7 @@
 pub mod constants;
-
 pub mod contract_interfaces;
+pub mod curves;
+
 use constants::addrs::LB_PAIR_CONTRACT;
 use contract_interfaces::*;
 
