@@ -2,6 +2,8 @@ use super::Error;
 use async_trait::async_trait;
 use base64::prelude::{Engine as _, BASE64_STANDARD};
 use keplr_sys::*;
+use rsecret::wallet::*;
+use secretrs::tx::SignMode;
 use send_wrapper::SendWrapper;
 use serde::{Deserialize, Serialize};
 use std::rc::Rc;
@@ -9,11 +11,8 @@ use tracing::debug;
 use web_sys::{
     console,
     js_sys::{self, JsString},
-    wasm_bindgen,
+    wasm_bindgen::JsValue,
 };
-
-use rsecret::wallet::*;
-use secretrs::tx::{SignDoc, SignMode};
 
 pub use rsecret::wallet::AccountData;
 
@@ -58,9 +57,7 @@ impl Keplr {
 
     pub fn is_available() -> bool {
         web_sys::window()
-            .and_then(|window| {
-                js_sys::Reflect::get(&window, &wasm_bindgen::JsValue::from_str("keplr")).ok()
-            })
+            .and_then(|window| js_sys::Reflect::get(&window, &JsValue::from_str("keplr")).ok())
             .map_or(false, |keplr| !keplr.is_undefined() && !keplr.is_null())
     }
 
@@ -144,7 +141,7 @@ impl Keplr {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct KeplrOfflineSigner {
     inner: SendWrapper<Rc<keplr_sys::KeplrOfflineSigner>>,
 }
@@ -208,13 +205,30 @@ impl Signer for KeplrOfflineSigner {
     async fn sign_direct(
         &self,
         signer_address: &str,
-        sign_doc: SignDocVariant,
+        sign_doc: secretrs::tx::SignDoc,
     ) -> Result<DirectSignResponse, Self::Error> {
-        todo!()
+        let sign_doc: SignDoc = sign_doc.into();
+        let sign_doc = serde_wasm_bindgen::to_value(&sign_doc).expect("serde_wasm_bindgen problem");
+
+        SendWrapper::new(async move {
+            let js_result = self
+                .inner
+                .sign_direct(signer_address.into(), sign_doc)
+                .await
+                .map(|js_value| {
+                    serde_wasm_bindgen::from_value::<DirectSignResponse>(js_value)
+                        .expect("Problem deserializing DirectSignResponse")
+                })
+                .map_err(Into::into);
+
+            debug!("{:?}", js_result);
+            js_result
+        })
+        .await
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct KeplrOfflineSignerOnlyAmino {
     inner: SendWrapper<Rc<keplr_sys::KeplrOfflineSignerOnlyAmino>>,
 }
@@ -278,7 +292,7 @@ impl Signer for KeplrOfflineSignerOnlyAmino {
     async fn sign_direct(
         &self,
         signer_address: &str,
-        sign_doc: SignDocVariant,
+        sign_doc: secretrs::tx::SignDoc,
     ) -> Result<DirectSignResponse, Self::Error> {
         unimplemented!()
     }

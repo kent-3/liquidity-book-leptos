@@ -230,8 +230,12 @@ pub fn PoolManager() -> impl IntoView {
             <ul class="my-1 font-normal text-base text-neutral-200 ">
                 <Suspense fallback=|| view! { <div>"Loading Total Reserves..."</div> }>
                     <li>
-                        "Total Reserves: "<span  tabindex="0" class="cursor-pointer text-white peer">"🛈"</span>
-                        <li class="list-none text-sm font-bold text-violet-400 peer-focus:block hidden"> "🛈 Reserves may be in reverse order" </li>
+                        "Total Reserves: "<span tabindex="0" class="cursor-pointer text-white peer">
+                            "🛈"
+                        </span>
+                        <li class="list-none text-sm font-bold text-violet-400 peer-focus:block hidden">
+                            "🛈 Reserves may be in reverse order"
+                        </li>
                         {move || Suspend::new(async move {
                             let reserves = total_reserves.await;
                             view! {
@@ -252,15 +256,20 @@ pub fn PoolManager() -> impl IntoView {
                         {move || Suspend::new(async move {
                             let reserves = bin_reserves.await;
                             view! {
-                                <li class="pl-4 list-none">"bin_reserve_x: "{reserves.bin_reserve_x}</li>
-                                <li class="pl-4 list-none">"bin_reserve_y: "{reserves.bin_reserve_y}</li>
+                                <li class="pl-4 list-none">
+                                    "bin_reserve_x: "{reserves.bin_reserve_x}
+                                </li>
+                                <li class="pl-4 list-none">
+                                    "bin_reserve_y: "{reserves.bin_reserve_y}
+                                </li>
                             }
                         })}
                     </li>
                 </Suspense>
                 <Suspense fallback=|| view! { <div>"Loading Next Non-Empty Bin..."</div> }>
                     <li>
-                        "Next Non-Empty Bin ID: " {move || Suspend::new(async move { next_non_empty_bin.await })}
+                        "Next Non-Empty Bin ID: "
+                        {move || Suspend::new(async move { next_non_empty_bin.await })}
                     </li>
                 </Suspense>
             </ul>

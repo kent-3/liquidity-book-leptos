@@ -82,3 +82,6 @@ secretrs = { version = "0.1.1" }
 rsecret = { path = "../secret-clients/rsecret" }
 shade-protocol = { git = "https://github.com/securesecrets/shade.git", branch = "orderbook/library", features = ["liquidity-book"] }
 lb-libraries = { git = "https://github.com/securesecrets/shade.git", branch = "orderbook/library" }
+
+[patch.crates-io]
+keplr-sys = { path = "../keplr/keplr-sys" }

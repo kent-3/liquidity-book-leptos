@@ -10,6 +10,27 @@ use tonic_web_wasm_client::Client;
 use tracing::debug;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
+pub struct Endpoint {
+    pub url: RwSignal<String>,
+}
+
+impl Endpoint {
+    pub fn new(url: impl Into<String>) -> Self {
+        Self {
+            url: RwSignal::new(url.into()),
+        }
+    }
+}
+
+impl Default for Endpoint {
+    fn default() -> Self {
+        Self {
+            url: RwSignal::new(GRPC_URL.to_string()),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct WasmClient {
     pub client: RwSignal<Client>,
     pub url: RwSignal<String>,
@@ -62,22 +83,20 @@ impl AsRef<HashMap<String, ContractInfo>> for TokenMap {
 #[derive(Copy, Clone)]
 pub struct KeplrSignals {
     pub enabled: RwSignal<bool>,
-    pub key: LocalResource<Result<Key, Error>>,
+    pub key: AsyncDerived<Result<Key, Error>, LocalStorage>,
     // pub key: RwSignal<Option<Key>>,
 }
 
 impl KeplrSignals {
     pub fn new() -> Self {
         let enabled = RwSignal::new(false);
-        let key = LocalResource::new(move || {
-            SendWrapper::new(async move {
-                if enabled.get() {
-                    debug!("keplr is enabled! getting key");
-                    Keplr::get_key(CHAIN_ID).await.map_err(Into::into)
-                } else {
-                    Err(Error::KeplrDisabled)
-                }
-            })
+        let key = AsyncDerived::new_unsync(move || async move {
+            if enabled.get() {
+                debug!("keplr is enabled! getting key");
+                Keplr::get_key(CHAIN_ID).await.map_err(Into::into)
+            } else {
+                Err(Error::KeplrDisabled)
+            }
         });
 
         Self { enabled, key }

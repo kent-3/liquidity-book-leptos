@@ -1,4 +1,4 @@
-// #![allow(unused)]
+#![allow(unused)]
 #![allow(mixed_script_confusables)]
 #![allow(confusable_idents)]
 
@@ -381,37 +381,28 @@ fn Home() -> impl IntoView {
         })
     };
 
-    let user_balance = Resource::new(
-        move || keplr.key.get(),
-        move |key| {
-            SendWrapper::new(async move {
-                if let Some(Ok(key)) = key {
-                    let bank = BankQuerier::new(wasm_client.get_untracked());
-                    match bank.balance(key.bech32_address, "uscrt").await {
-                        Ok(balance) => {
-                            let balance: Coin = balance.balance.unwrap().into();
-                            Ok(balance.to_string())
-                        }
-                        // TODO: do better with these Error semantics
-                        Err(error) => {
-                            error!("{error}");
-                            Err(Error::from(error))
-                        }
+    let user_balance = AsyncDerived::new_unsync(move || {
+        async move {
+            if let Some(Ok(key)) = keplr.key.get() {
+                let bank = BankQuerier::new(wasm_client.get_untracked());
+                match bank.balance(key.bech32_address, "uscrt").await {
+                    Ok(balance) => {
+                        let balance: Coin = balance.balance.unwrap().into();
+                        Ok(balance.to_string())
                     }
-                } else {
-                    Err(Error::generic("no wallet key found"))
+                    // TODO: do better with these Error semantics
+                    Err(error) => {
+                        error!("{error}");
+                        Err(Error::from(error))
+                    }
                 }
-            })
-        },
-    );
+            } else {
+                Err(Error::generic("no wallet key found"))
+            }
+        }
+    });
 
     let encryption_utils = secretrs::EncryptionUtils::new(None, "secret-4").unwrap();
-    // TODO: revisit this. url is not needed, EncryptionUtils should be a trait
-    let options = CreateQuerierOptions {
-        url: "https://grpc.mainnet.secretsaturn.net",
-        chain_id: CHAIN_ID,
-        encryption_utils,
-    };
 
     // TODO: move all static resources like this (query response is always the same) to a separate
     // module. Implement caching with local storage. They can all use a random account for the
@@ -422,7 +413,8 @@ fn Home() -> impl IntoView {
         || (),
         move |_| {
             debug!("loading token_info resource");
-            let compute = ComputeQuerier::new(wasm_client.get_untracked(), options.clone());
+            let compute =
+                ComputeQuerier::new(wasm_client.get_untracked(), encryption_utils.clone());
             SendWrapper::new(async move {
                 let query = QueryMsg::TokenInfo {};
                 compute
@@ -434,79 +426,54 @@ fn Home() -> impl IntoView {
     );
 
     view! {
-        <Show when=move || keplr.enabled.get() fallback=|| view! { <p>Nothing to see here</p> }>
-            <pre>
-                {move || {
-                    format!("{:#?}", keplr.key.get().and_then(Result::ok).unwrap_or_default())
-                }}
-            </pre>
-            // Errors related to general chain queries
-            // the fallback receives a signal containing current errors
-            <ErrorBoundary fallback=|errors| {
-                view! {
-                    <div class="error">
-                        <p>"Errors: "</p>
-                        // we can render a list of errors as strings, if we'd like
-                        <ul>
-                            {move || {
-                                errors
-                                    .get()
-                                    .into_iter()
-                                    .map(|(_, e)| view! { <li>{e.to_string()}</li> })
-                                    .collect_view()
-                            }}
-                        </ul>
-                    </div>
-                }
-            }>
-                <p>{move || token_info.get()}</p>
-            </ErrorBoundary>
-            // Errors from user-specific queries should have a separate ErrorBoundary
-            <ErrorBoundary fallback=|errors| {
-                view! {
-                    <div class="error">
-                        <p>"Errors: "</p>
-                        <ul>
-                            {move || {
-                                errors
-                                    .get()
-                                    .into_iter()
-                                    .map(|(_, e)| view! { <li>{e.to_string()}</li> })
-                                    .collect_view()
-                            }}
-                        </ul>
-                    </div>
-                }
-            }>
-                <Suspense fallback=move || view! { <p>"Loading (user_balance)..."</p> }>
-                    <p>{move || Suspend::new(async move { user_balance.await })}</p>
-                </Suspense>
-            </ErrorBoundary>
-            <Suspense>
-                <h2>"Viewing Keys"</h2>
-                <ul class="overflow-x-auto">{viewing_keys_list}</ul>
-            </Suspense>
-        </Show>
+        <div class="max-w-lg">
+        <h1 class="font-semibold">Introduction</h1>
+        <p>
+            "This project presents an efficient Automated Market Maker (AMM)
+            protocol, modeled after the Liquidity Book protocol used by Trader Joe ("
+            <a
+                href="https://docs.traderjoexyz.com/concepts/concentrated-liquidity"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                Liquidity Book docs
+            </a>"). The protocol retains the key features of its predecessor, such as:"
+        </p>
+        <ul>
+            <li>
+                <strong>No Slippage:</strong>
+                <span>Enabling token swaps with zero slippage within designated bins</span>
+            </li>
+            <li>
+                <strong>Adaptive Pricing:</strong>
+                <span>
+                    Offering Liquidity Providers extra dynamic fees during periods of
+                    increased market volatility
+                </span>
+            </li>
+            <li>
+                <strong>Enhanced Capital Efficiency:</strong>
+                <span>Facilitating high-volume trading with minimal liquidity requirements</span>
+            </li>
+            <li>
+                <strong>Customizable Liquidity:</strong>
+                <span>
+                    Liquidity providers can customize their liquidity distributions
+                    based on their strategy
+                </span>
+            </li>
+        </ul>
+        </div>
     }
 }
 
 #[component]
-fn Modal(// Signal that will be toggled when the button is clicked.
-    // setter: WriteSignal<bool>,
-) -> impl IntoView {
+fn Modal() -> impl IntoView {
     info!("rendering <Modal/>");
 
     on_cleanup(|| {
         info!("cleaning up <Modal/>");
     });
-
-    // Examples using write signal as prop
-    // setter.set(true);
-    // setter.update(|value| *value = !*value);
-
-    // Example using read signal from context
-    // let getter =
-    //     use_context::<ReadSignal<bool>>().expect("there to be an 'enabled' signal provided");
 
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");

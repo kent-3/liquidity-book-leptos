@@ -22,12 +22,7 @@ impl Querier for lb_factory::QueryMsg {
 
         let client = Client::new(GRPC_URL.to_string());
         let encryption_utils = secretrs::EncryptionUtils::new(None, CHAIN_ID).unwrap();
-        let options = CreateQuerierOptions {
-            url: GRPC_URL,
-            chain_id: CHAIN_ID,
-            encryption_utils,
-        };
-        let compute = ComputeQuerier::new(client, options.clone());
+        let compute = ComputeQuerier::new(client, encryption_utils);
         let query = self;
         compute
             .query_secret_contract(contract_address, code_hash, query)
@@ -43,12 +38,7 @@ impl Querier for lb_pair::QueryMsg {
 
         let client = Client::new(GRPC_URL.to_string());
         let encryption_utils = secretrs::EncryptionUtils::new(None, CHAIN_ID).unwrap();
-        let options = CreateQuerierOptions {
-            url: GRPC_URL,
-            chain_id: CHAIN_ID,
-            encryption_utils,
-        };
-        let compute = ComputeQuerier::new(client, options.clone());
+        let compute = ComputeQuerier::new(client, encryption_utils);
         let query = self;
         compute
             .query_secret_contract(contract_address, code_hash, query)
