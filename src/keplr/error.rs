@@ -1,15 +1,25 @@
+use serde::{Deserialize, Serialize};
 use web_sys::{js_sys, wasm_bindgen};
 
-#[derive(thiserror::Error, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
+#[derive(thiserror::Error, Serialize, Deserialize, Debug, Clone)]
 pub enum Error {
+    #[error("Keplr is unavailable!")]
+    KeplrUnavailable,
+
     #[error("An error occurred in JavaScript: {0}")]
     JavaScript(String),
 
     #[error("Serialization Error: {0}")]
     Serialization(String),
 
-    #[error("Keplr is unavailable!")]
-    KeplrUnavailable,
+    #[error("{0}")]
+    Generic(String),
+}
+
+impl Error {
+    pub fn javascript(value: wasm_bindgen::JsValue) -> Self {
+        value.into()
+    }
 }
 
 impl From<wasm_bindgen::JsValue> for Error {
@@ -25,5 +35,23 @@ impl From<serde_wasm_bindgen::Error> for Error {
     fn from(error: serde_wasm_bindgen::Error) -> Self {
         let message = error.to_string();
         Error::Serialization(message)
+    }
+}
+
+impl Error {
+    pub fn generic(value: impl std::fmt::Display) -> Self {
+        Self::Generic(value.to_string())
+    }
+}
+
+impl From<&str> for Error {
+    fn from(value: &str) -> Self {
+        Self::Generic(value.to_string())
+    }
+}
+
+impl From<String> for Error {
+    fn from(value: String) -> Self {
+        Self::Generic(value)
     }
 }

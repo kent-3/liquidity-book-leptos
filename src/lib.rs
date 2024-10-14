@@ -21,8 +21,9 @@ use web_sys::{js_sys, wasm_bindgen::JsValue};
 
 use rsecret::{
     query::{bank::BankQuerier, compute::ComputeQuerier},
-    secret_network_client::CreateQuerierOptions,
+    secret_client::CreateQuerierOptions,
 };
+use secretrs::utils::EnigmaUtils;
 
 mod components;
 mod constants;
@@ -402,7 +403,7 @@ fn Home() -> impl IntoView {
         }
     });
 
-    let encryption_utils = secretrs::EncryptionUtils::new(None, "secret-4").unwrap();
+    let encryption_utils = EnigmaUtils::new(None, "secret-4").unwrap();
 
     // TODO: move all static resources like this (query response is always the same) to a separate
     // module. Implement caching with local storage. They can all use a random account for the
@@ -414,7 +415,7 @@ fn Home() -> impl IntoView {
         move |_| {
             debug!("loading token_info resource");
             let compute =
-                ComputeQuerier::new(wasm_client.get_untracked(), encryption_utils.clone());
+                ComputeQuerier::new(wasm_client.get_untracked(), encryption_utils.clone().into());
             SendWrapper::new(async move {
                 let query = QueryMsg::TokenInfo {};
                 compute

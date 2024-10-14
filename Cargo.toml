@@ -25,15 +25,15 @@ serde_json = "1.0"
 
 [dependencies]
 # Leptos official
-leptos = { version = "0.7.0-beta", features = [
+leptos = { version = "0.7.0-gamma", features = [
   "csr",
   # "nightly"
 ] }
-leptos_router = { version = "0.7.0-beta", features = [
+leptos_router = { version = "0.7.0-gamma", features = [
   # "nightly"
 ] }
-leptos_router_macro = { version = "0.7.0-beta" }
-leptos_meta = { version = "0.7.0-beta" }
+leptos_router_macro = { version = "0.7.0-gamma" }
+leptos_meta = { version = "0.7.0-gamma" }
 
 # Leptos extensions and related
 # leptos-use = { git = "https://github.com/Synphonyte/leptos-use.git", branch = "leptos-0.7" }
@@ -78,10 +78,11 @@ tracing-subscriber-wasm = "0.1.0"
 # Secret
 keplr-sys = "0.0.2"
 secret-toolkit-snip20 = { version = "0.10.0" }
-secretrs = { version = "0.1.1" }
+secretrs = { version = "0.1.2", default-features = false }
 rsecret = { path = "../secret-clients/rsecret" }
 shade-protocol = { git = "https://github.com/securesecrets/shade.git", branch = "orderbook/library", features = ["liquidity-book"] }
 lb-libraries = { git = "https://github.com/securesecrets/shade.git", branch = "orderbook/library" }
 
 [patch.crates-io]
 keplr-sys = { path = "../keplr/keplr-sys" }
+# secretrs = { path = "../secret-rust/secretrs" }

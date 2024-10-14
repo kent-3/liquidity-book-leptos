@@ -2,10 +2,19 @@ use super::Error;
 use async_trait::async_trait;
 use base64::prelude::{Engine as _, BASE64_STANDARD};
 use keplr_sys::*;
-use rsecret::wallet::*;
+use rsecret::{
+    secret_client::TBD,
+    wallet::{
+        wallet_amino::{AccountData, AminoSignResponse, StdSignDoc},
+        wallet_proto::{DirectSignResponse, SignDoc},
+        Signer,
+    },
+};
 use secretrs::tx::SignMode;
+use secretrs::utils::encryption::SecretUtils;
 use send_wrapper::SendWrapper;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde_json::{Map, Value};
 use std::rc::Rc;
 use tracing::debug;
 use web_sys::{
@@ -13,8 +22,6 @@ use web_sys::{
     js_sys::{self, JsString},
     wasm_bindgen::JsValue,
 };
-
-pub use rsecret::wallet::AccountData;
 
 #[derive(Serialize, Deserialize, Clone, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -78,7 +85,7 @@ impl Keplr {
 
     pub async fn get_account(chain_id: &str) -> Result<AccountData, Error> {
         let signer = Self::get_offline_signer_only_amino(chain_id);
-        let accounts = signer.get_accounts().await?;
+        let accounts = signer.get_accounts().await.map_err(Error::generic)?;
         // .map_err(|_| Error::KeplrUnavailable)?;
         // let accounts = js_sys::Array::from(&accounts);
         let account = accounts[0].clone();
@@ -96,20 +103,18 @@ impl Keplr {
         get_offline_signer_only_amino(chain_id).into()
     }
 
-    // TODO: this doesn't help... idk what to do here
-    pub async fn get_offline_signer_auto(
-        chain_id: &str,
-    ) -> Result<Box<dyn Signer<Error = Error>>, Error> {
-        let key = Self::get_key(chain_id).await?;
-        let signer: Box<dyn Signer<Error = Error>> = match key.is_nano_ledger {
-            true => Box::new(Self::get_offline_signer_only_amino(chain_id)),
-            false => Box::new(Self::get_offline_signer(chain_id)),
-        };
-        Ok(signer)
-    }
+    // TODO: not sure if this is correct
+    // pub async fn get_offline_signer_auto(chain_id: &str) -> Result<Box<dyn Signer>, Error> {
+    //     let key = Self::get_key(chain_id).await?;
+    //     let signer: Box<dyn Signer> = match key.is_nano_ledger {
+    //         true => Box::new(Self::get_offline_signer_only_amino(chain_id)),
+    //         false => Box::new(Self::get_offline_signer(chain_id)),
+    //     };
+    //     Ok(signer)
+    // }
 
     pub fn get_enigma_utils(chain_id: &str) -> EnigmaUtils {
-        get_enigma_utils(chain_id)
+        get_enigma_utils(chain_id).into()
     }
 
     pub async fn suggest_token(
@@ -154,10 +159,10 @@ impl From<keplr_sys::KeplrOfflineSigner> for KeplrOfflineSigner {
     }
 }
 
+use rsecret::wallet::Error as SignerError;
+
 #[async_trait]
 impl Signer for KeplrOfflineSigner {
-    type Error = super::Error;
-
     // pub fn chain_id(&self) -> String {
     //     self.inner
     //         .chain_id()
@@ -165,7 +170,7 @@ impl Signer for KeplrOfflineSigner {
     //         .expect("chain_id field is missing!")
     // }
 
-    async fn get_accounts(&self) -> Result<Vec<AccountData>, Self::Error> {
+    async fn get_accounts(&self) -> Result<Vec<AccountData>, SignerError> {
         SendWrapper::new(async move {
             self.inner
                 .get_accounts()
@@ -180,25 +185,26 @@ impl Signer for KeplrOfflineSigner {
                 })
         })
         .await
+        .map_err(SignerError::custom)
     }
 
-    async fn get_sign_mode(&self) -> Result<SignMode, Self::Error> {
+    async fn get_sign_mode(&self) -> Result<SignMode, SignerError> {
         Ok(SignMode::Direct)
     }
 
-    async fn sign_amino(
+    async fn sign_amino<T: Serialize + DeserializeOwned + Send + Sync>(
         &self,
         signer_address: &str,
-        sign_doc: StdSignDoc,
-    ) -> Result<AminoSignResponse, Self::Error> {
+        sign_doc: StdSignDoc<T>,
+    ) -> Result<AminoSignResponse<T>, SignerError> {
         todo!()
     }
 
-    async fn sign_permit(
+    async fn sign_permit<T: Serialize + DeserializeOwned + Send + Sync>(
         &self,
         signer_address: &str,
-        sign_doc: StdSignDoc,
-    ) -> Result<AminoSignResponse, Self::Error> {
+        sign_doc: StdSignDoc<T>,
+    ) -> Result<AminoSignResponse<T>, SignerError> {
         todo!()
     }
 
@@ -206,7 +212,7 @@ impl Signer for KeplrOfflineSigner {
         &self,
         signer_address: &str,
         sign_doc: secretrs::tx::SignDoc,
-    ) -> Result<DirectSignResponse, Self::Error> {
+    ) -> Result<DirectSignResponse, SignerError> {
         let sign_doc: SignDoc = sign_doc.into();
         let sign_doc = serde_wasm_bindgen::to_value(&sign_doc).expect("serde_wasm_bindgen problem");
 
@@ -219,12 +225,115 @@ impl Signer for KeplrOfflineSigner {
                     serde_wasm_bindgen::from_value::<DirectSignResponse>(js_value)
                         .expect("Problem deserializing DirectSignResponse")
                 })
-                .map_err(Into::into);
+                .map_err(Error::javascript)
+                .map_err(SignerError::custom);
 
             debug!("{:?}", js_result);
             js_result
         })
         .await
+    }
+}
+
+/// Sorts a JSON object by its keys recursively.
+pub(crate) fn sort_object(value: &Value) -> Value {
+    match value {
+        Value::Object(map) => {
+            let mut sorted_map = Map::new();
+            for (key, val) in map {
+                sorted_map.insert(key.clone(), sort_object(val));
+            }
+            Value::Object(sorted_map)
+        }
+        Value::Array(vec) => Value::Array(vec.iter().map(sort_object).collect()),
+        _ => value.clone(),
+    }
+}
+
+/// Returns a JSON string with objects sorted by key, used for Amino signing.
+fn json_sorted_stringify(value: &Value) -> String {
+    serde_json::to_string(&sort_object(value)).unwrap()
+}
+
+/// Serializes a `StdSignDoc` object to a sorted and UTF-8 encoded JSON string
+pub(crate) fn serialize_std_sign_doc<T: Serialize>(sign_doc: &StdSignDoc<T>) -> Vec<u8> {
+    let value = serde_json::to_value(sign_doc).unwrap();
+    json_sorted_stringify(&value).as_bytes().to_vec()
+}
+
+#[derive(Debug, Clone)]
+pub struct EnigmaUtils {
+    inner: SendWrapper<Rc<keplr_sys::EnigmaUtils>>,
+}
+
+impl From<keplr_sys::EnigmaUtils> for EnigmaUtils {
+    fn from(value: keplr_sys::EnigmaUtils) -> Self {
+        Self {
+            inner: SendWrapper::new(Rc::new(value)),
+        }
+    }
+}
+
+// use futures::executor::block_on;
+use js_sys::Uint8Array;
+use leptos::{prelude::logging::console_log, wasm_bindgen::JsCast};
+use secretrs::utils::Error as EncryptionError;
+
+#[async_trait(?Send)]
+impl SecretUtils for EnigmaUtils {
+    async fn encrypt<M: Serialize + Sync>(
+        &self,
+        contract_code_hash: &str,
+        msg: &M,
+    ) -> Result<Vec<u8>, EncryptionError> {
+        let msg = serde_wasm_bindgen::to_value(msg).expect("wasm_bindgen error");
+
+        let result = SendWrapper::new({
+            async move {
+                self.inner
+                    .encrypt(contract_code_hash.to_string(), msg)
+                    .await
+            }
+        })
+        .await;
+
+        let result = Uint8Array::new(&result.expect("problem encrypting with Keplr enigmaUtils"));
+
+        Ok(result.to_vec())
+    }
+
+    async fn decrypt(
+        &self,
+        nonce: &[u8; 32],
+        ciphertext: &[u8],
+    ) -> Result<Vec<u8>, EncryptionError> {
+        let result =
+        // NOTE: the order of inputs is reversed in Keplr's decrypt method.
+            SendWrapper::new({ async move { self.inner.decrypt(ciphertext, nonce).await } }).await;
+
+        let result = Uint8Array::new(&result.expect("problem decrypting with Keplr enigmaUtils"));
+
+        Ok(result.to_vec())
+    }
+
+    async fn get_pubkey(&self) -> [u8; 32] {
+        let key = self.inner.get_pubkey().await;
+        debug!("{:?}", key);
+        let key = Uint8Array::try_from(key).unwrap();
+        let mut array = [0u8; 32];
+        key.copy_to(&mut array);
+        debug!("{:?}", array);
+        array
+    }
+
+    async fn get_tx_encryption_key(&self, nonce: &[u8; 32]) -> [u8; 32] {
+        let key = self.inner.get_tx_encryption_key(nonce).await;
+        debug!("{:?}", key);
+        let key = Uint8Array::try_from(key).unwrap();
+        let mut array = [0u8; 32];
+        key.copy_to(&mut array);
+        debug!("{:?}", array);
+        array
     }
 }
 
@@ -243,8 +352,6 @@ impl From<keplr_sys::KeplrOfflineSignerOnlyAmino> for KeplrOfflineSignerOnlyAmin
 
 #[async_trait]
 impl Signer for KeplrOfflineSignerOnlyAmino {
-    type Error = super::Error;
-
     // pub fn chain_id(&self) -> String {
     //     self.inner
     //         .chain_id()
@@ -252,7 +359,7 @@ impl Signer for KeplrOfflineSignerOnlyAmino {
     //         .expect("chain_id field is missing!")
     // }
 
-    async fn get_accounts(&self) -> Result<Vec<AccountData>, Self::Error> {
+    async fn get_accounts(&self) -> Result<Vec<AccountData>, SignerError> {
         SendWrapper::new(async move {
             self.inner
                 .get_accounts()
@@ -267,25 +374,44 @@ impl Signer for KeplrOfflineSignerOnlyAmino {
                 })
         })
         .await
+        .map_err(SignerError::custom)
     }
 
-    async fn get_sign_mode(&self) -> Result<SignMode, Self::Error> {
+    async fn get_sign_mode(&self) -> Result<SignMode, SignerError> {
         Ok(SignMode::LegacyAminoJson)
     }
 
-    async fn sign_amino(
+    async fn sign_amino<T: Serialize + DeserializeOwned + Send + Sync>(
         &self,
         signer_address: &str,
-        sign_doc: StdSignDoc,
-    ) -> Result<AminoSignResponse, Self::Error> {
-        todo!()
+        sign_doc: StdSignDoc<T>,
+    ) -> Result<AminoSignResponse<T>, SignerError> {
+        debug!("Sign Amino");
+        SendWrapper::new(async move {
+            let sign_doc =
+                serde_wasm_bindgen::to_value(&sign_doc).expect("serde_wasm_bindgen problem");
+            debug!("StdSignDoc: {:?}", sign_doc);
+            let js_result = self
+                .inner
+                .sign_amino(signer_address.into(), sign_doc)
+                .await
+                .map(|js_value| {
+                    serde_wasm_bindgen::from_value::<AminoSignResponse<T>>(js_value)
+                        .expect("Problem deserializing AminoSignResponse")
+                })
+                .map_err(Error::javascript)
+                .map_err(SignerError::custom);
+
+            js_result
+        })
+        .await
     }
 
-    async fn sign_permit(
+    async fn sign_permit<T: Serialize + DeserializeOwned + Send + Sync>(
         &self,
         signer_address: &str,
-        sign_doc: StdSignDoc,
-    ) -> Result<AminoSignResponse, Self::Error> {
+        sign_doc: StdSignDoc<T>,
+    ) -> Result<AminoSignResponse<T>, SignerError> {
         todo!()
     }
 
@@ -293,7 +419,7 @@ impl Signer for KeplrOfflineSignerOnlyAmino {
         &self,
         signer_address: &str,
         sign_doc: secretrs::tx::SignDoc,
-    ) -> Result<DirectSignResponse, Self::Error> {
+    ) -> Result<DirectSignResponse, SignerError> {
         unimplemented!()
     }
 }

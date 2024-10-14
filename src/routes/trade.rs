@@ -14,11 +14,11 @@ use leptos_router::{
     NavigateOptions,
 };
 use rsecret::{
-    secret_network_client::CreateTxSenderOptions,
+    secret_client::CreateTxSenderOptions,
     tx::{ComputeServiceClient, TxSender},
     TxOptions,
 };
-use secretrs::{AccountId, EncryptionUtils};
+use secretrs::{utils::EnigmaUtils, AccountId};
 use send_wrapper::SendWrapper;
 use shade_protocol::c_std::Uint128;
 use tracing::{debug, info};
@@ -68,51 +68,89 @@ pub fn Trade() -> impl IntoView {
     let swap = Action::new(move |_: &()| {
         SendWrapper::new(async move {
             let wasm_web_client = tonic_web_wasm_client::Client::new(GRPC_URL.to_string());
-            let wallet = Keplr::get_offline_signer(CHAIN_ID);
+            let wallet = Keplr::get_offline_signer_only_amino(CHAIN_ID);
             // FIXME: panics if keplr is not enabled. instead, this should attempt to enable keplr
             let key = keplr.key.await.expect("Problem getting the Keplr key");
-            let encryption_utils = Keplr::get_enigma_utils(CHAIN_ID);
-            let options = CreateTxSenderOptions::<KeplrOfflineSigner> {
+            let enigma_utils = Keplr::get_enigma_utils(CHAIN_ID).into();
+            debug!("got the EnigmaUtils");
+            let options = CreateTxSenderOptions {
                 url: GRPC_URL,
                 chain_id: "secret-4",
                 wallet: wallet.into(),
                 wallet_address: key.bech32_address.into(),
-                // FIXME: make the keplr enigma utils work here
-                encryption_utils: EncryptionUtils::new(None, "secret-4").unwrap(),
+                enigma_utils,
             };
+            // let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
+            // let sender =
+            //     AccountId::new("secret", &key.address).expect("Error creating sender AccountId");
+            // let contract =
+            //     AccountId::from_str(LB_PAIR_CONTRACT.address.clone().to_string().as_ref())
+            //         .expect("Error creating contract AccountId");
+            // let msg = lb_pair::ExecuteMsg::SwapTokens {
+            //     offer: shade_protocol::swap::core::TokenAmount {
+            //         token: shade_protocol::swap::core::TokenType::CustomToken {
+            //             contract_addr: LB_PAIR_CONTRACT.address.clone(),
+            //             token_code_hash: LB_PAIR_CONTRACT.code_hash.clone(),
+            //         },
+            //         amount: Uint128::from_str("1000000").expect("Uint128 parse from_str error"),
+            //     },
+            //     expected_return: Some(
+            //         Uint128::from_str("995000").expect("Uint128 parse from_str error"),
+            //     ),
+            //     to: None,
+            //     padding: None,
+            // };
+            // // let msg = secretrs::compute::MsgExecuteContract {
+            // let msg = rsecret::tx::compute::MsgExecuteContractRaw {
+            //     sender,
+            //     contract,
+            //     // msg: serde_json::to_vec(&msg).expect("serde problem"),
+            //     msg,
+            //     sent_funds: vec![],
+            // };
+            // let tx_options = TxOptions {
+            //     gas_limit: 500_000,
+            //     ..Default::default()
+            // };
+            //
+            // let result = compute_service_client
+            //     .execute_contract(msg, LB_PAIR_CONTRACT.code_hash.clone(), tx_options)
+            //     .await;
+
             let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
             let sender =
                 AccountId::new("secret", &key.address).expect("Error creating sender AccountId");
-            let contract =
-                AccountId::from_str(LB_PAIR_CONTRACT.address.clone().to_string().as_ref())
-                    .expect("Error creating contract AccountId");
-            let msg = lb_pair::ExecuteMsg::SwapTokens {
-                offer: shade_protocol::swap::core::TokenAmount {
-                    token: shade_protocol::swap::core::TokenType::CustomToken {
-                        contract_addr: LB_PAIR_CONTRACT.address.clone(),
-                        token_code_hash: LB_PAIR_CONTRACT.code_hash.clone(),
-                    },
-                    amount: Uint128::from_str("1000000").expect("Uint128 parse from_str error"),
-                },
-                expected_return: Some(
-                    Uint128::from_str("995000").expect("Uint128 parse from_str error"),
-                ),
-                to: None,
+            let contract = AccountId::from_str("secret1k0jntykt7e4g3y88ltc60czgjuqdy4c9e8fzek")
+                .expect("Error creating contract AccountId");
+            let msg = secret_toolkit_snip20::HandleMsg::Send {
+                recipient: "secret17m7gyp4h9df56a2fryt48zt37ksrsrvvqha8he".to_string(),
+                recipient_code_hash: None,
+                amount: Uint128::from(1u128),
+                msg: None,
+                memo: None,
                 padding: None,
             };
-            let msg = secretrs::compute::MsgExecuteContract {
+            let msg = rsecret::tx::compute::MsgExecuteContractRaw {
                 sender,
                 contract,
-                msg: serde_json::to_vec(&msg).expect("serde problem"),
+                msg,
                 sent_funds: vec![],
             };
             let tx_options = TxOptions {
-                gas_limit: 500_000,
+                gas_limit: 50_000,
+                broadcast_mode: secretrs::proto::cosmos::tx::v1beta1::BroadcastMode::Sync,
+                wait_for_commit: true,
                 ..Default::default()
             };
+
             let result = compute_service_client
-                .execute_contract(msg, LB_PAIR_CONTRACT.code_hash.clone(), tx_options)
+                .execute_contract(
+                    msg,
+                    "af74387e276be8874f07bec3a87023ee49b0e7ebe08178c49d0a49c3c98ed60e",
+                    tx_options,
+                )
                 .await;
+            debug!("{:?}", result);
         })
     });
 
