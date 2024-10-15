@@ -86,4 +86,4 @@ lb-libraries = { git = "https://github.com/securesecrets/shade.git", branch = "o
 
 [patch.crates-io]
 keplr-sys = { path = "../keplr/keplr-sys" }
-# secretrs = { path = "../secret-rust/secretrs" }
+secretrs = { path = "../secret-rust/secretrs" }

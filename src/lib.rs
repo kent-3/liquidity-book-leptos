@@ -1,4 +1,4 @@
-#![allow(unused)]
+// #![allow(unused)]
 #![allow(mixed_script_confusables)]
 #![allow(confusable_idents)]
 
@@ -39,7 +39,7 @@ mod utils;
 use components::Spinner2;
 use constants::{CHAIN_ID, GRPC_URL};
 use error::Error;
-use keplr::{keplr_sys, Keplr, Key};
+use keplr::{Keplr, Key};
 use routes::{pool::*, trade::*};
 use state::{KeplrSignals, TokenMap, WasmClient};
 use types::Coin;
@@ -259,7 +259,7 @@ pub fn OptionsMenu(
     let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
 
     let disable_keplr = move |_| {
-        keplr_sys::disable(CHAIN_ID);
+        Keplr::disable(CHAIN_ID);
         keplr.enabled.set(false);
         // keplr.key.set(None);
     };

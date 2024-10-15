@@ -6,8 +6,8 @@ pub enum Error {
     #[error("Keplr is unavailable!")]
     KeplrUnavailable,
 
-    #[error("An error occurred in JavaScript: {0}")]
-    JavaScript(String),
+    #[error("An error occurred in Js: {0}")]
+    Js(String),
 
     #[error("Serialization Error: {0}")]
     Serialization(String),
@@ -17,8 +17,11 @@ pub enum Error {
 }
 
 impl Error {
-    pub fn javascript(value: wasm_bindgen::JsValue) -> Self {
+    pub fn js(value: wasm_bindgen::JsValue) -> Self {
         value.into()
+    }
+    pub fn generic(value: impl std::fmt::Display) -> Self {
+        Self::Generic(value.to_string())
     }
 }
 
@@ -28,19 +31,14 @@ impl From<wasm_bindgen::JsValue> for Error {
             .message()
             .as_string()
             .unwrap_or("unknown JS error".to_string());
-        Error::JavaScript(message)
+        Error::Js(message)
     }
 }
+
 impl From<serde_wasm_bindgen::Error> for Error {
     fn from(error: serde_wasm_bindgen::Error) -> Self {
         let message = error.to_string();
         Error::Serialization(message)
-    }
-}
-
-impl Error {
-    pub fn generic(value: impl std::fmt::Display) -> Self {
-        Self::Generic(value.to_string())
     }
 }
 
