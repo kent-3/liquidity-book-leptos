@@ -161,7 +161,7 @@ impl From<keplr_sys::KeplrOfflineSigner> for KeplrOfflineSigner {
 
 use rsecret::wallet::Error as SignerError;
 
-#[async_trait]
+#[async_trait(?Send)]
 impl Signer for KeplrOfflineSigner {
     // pub fn chain_id(&self) -> String {
     //     self.inner
@@ -350,7 +350,7 @@ impl From<keplr_sys::KeplrOfflineSignerOnlyAmino> for KeplrOfflineSignerOnlyAmin
     }
 }
 
-#[async_trait]
+#[async_trait(?Send)]
 impl Signer for KeplrOfflineSignerOnlyAmino {
     // pub fn chain_id(&self) -> String {
     //     self.inner
@@ -360,21 +360,18 @@ impl Signer for KeplrOfflineSignerOnlyAmino {
     // }
 
     async fn get_accounts(&self) -> Result<Vec<AccountData>, SignerError> {
-        SendWrapper::new(async move {
-            self.inner
-                .get_accounts()
-                .await
-                .map_err(|_| Error::KeplrUnavailable)
-                .map(|val| js_sys::Array::from(&val))
-                .and_then(|accounts| {
-                    accounts
-                        .iter()
-                        .map(|account| serde_wasm_bindgen::from_value(account).map_err(Into::into))
-                        .collect::<Result<Vec<AccountData>, Error>>()
-                })
-        })
-        .await
-        .map_err(SignerError::custom)
+        self.inner
+            .get_accounts()
+            .await
+            .map_err(|_| Error::KeplrUnavailable)
+            .map(|val| js_sys::Array::from(&val))
+            .and_then(|accounts| {
+                accounts
+                    .iter()
+                    .map(|account| serde_wasm_bindgen::from_value(account).map_err(Into::into))
+                    .collect::<Result<Vec<AccountData>, Error>>()
+            })
+            .map_err(SignerError::custom)
     }
 
     async fn get_sign_mode(&self) -> Result<SignMode, SignerError> {
@@ -386,24 +383,20 @@ impl Signer for KeplrOfflineSignerOnlyAmino {
         signer_address: &str,
         sign_doc: StdSignDoc<T>,
     ) -> Result<AminoSignResponse<T>, SignerError> {
-        SendWrapper::new(async move {
-            let sign_doc =
-                serde_wasm_bindgen::to_value(&sign_doc).expect("serde_wasm_bindgen problem");
-            debug!("StdSignDoc: {:?}", sign_doc);
-            let js_result = self
-                .inner
-                .sign_amino(signer_address.into(), sign_doc)
-                .await
-                .map(|js_value| {
-                    serde_wasm_bindgen::from_value::<AminoSignResponse<T>>(js_value)
-                        .expect("Problem deserializing AminoSignResponse")
-                })
-                .map_err(Error::javascript)
-                .map_err(SignerError::custom);
+        let sign_doc = serde_wasm_bindgen::to_value(&sign_doc).expect("serde_wasm_bindgen problem");
+        debug!("{:#?}", sign_doc);
+        let js_result = self
+            .inner
+            .sign_amino(signer_address.into(), sign_doc)
+            .await
+            .map(|js_value| {
+                serde_wasm_bindgen::from_value::<AminoSignResponse<T>>(js_value)
+                    .expect("Problem deserializing AminoSignResponse")
+            })
+            .map_err(Error::javascript)
+            .map_err(SignerError::custom);
 
-            js_result
-        })
-        .await
+        js_result
     }
 
     async fn sign_permit<T: Serialize + DeserializeOwned + Send + Sync>(
