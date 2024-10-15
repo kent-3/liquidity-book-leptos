@@ -386,7 +386,6 @@ impl Signer for KeplrOfflineSignerOnlyAmino {
         signer_address: &str,
         sign_doc: StdSignDoc<T>,
     ) -> Result<AminoSignResponse<T>, SignerError> {
-        debug!("Sign Amino");
         SendWrapper::new(async move {
             let sign_doc =
                 serde_wasm_bindgen::to_value(&sign_doc).expect("serde_wasm_bindgen problem");

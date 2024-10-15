@@ -1,26 +1,16 @@
-use std::str::FromStr;
-
 use crate::{
     constants::GRPC_URL,
-    keplr::{Keplr, KeplrOfflineSigner, KeplrOfflineSignerOnlyAmino},
+    keplr::Keplr,
     liquidity_book::{constants::addrs::LB_PAIR_CONTRACT, contract_interfaces::*},
     prelude::CHAIN_ID,
     state::*,
 };
-use leptos::html::Select;
-use leptos::prelude::*;
-use leptos_router::{
-    hooks::{query_signal_with_options, use_navigate},
-    NavigateOptions,
-};
-use rsecret::{
-    secret_client::CreateTxSenderOptions,
-    tx::{ComputeServiceClient, TxSender},
-    TxOptions,
-};
-use secretrs::{utils::EnigmaUtils, AccountId};
+use leptos::{html::Select, prelude::*};
+use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
+use rsecret::{secret_client::CreateTxSenderOptions, tx::ComputeServiceClient, TxOptions};
+use secretrs::AccountId;
 use send_wrapper::SendWrapper;
-use shade_protocol::c_std::Uint128;
+use std::str::FromStr;
 use tracing::{debug, info};
 
 #[component]
@@ -67,28 +57,49 @@ pub fn Trade() -> impl IntoView {
 
     let swap = Action::new(move |_: &()| {
         SendWrapper::new(async move {
-            let wasm_web_client = tonic_web_wasm_client::Client::new(GRPC_URL.to_string());
+            use cosmwasm_std::Uint128;
+            use rsecret::tx::compute::MsgExecuteContractRaw;
+            use secretrs::proto::cosmos::tx::v1beta1::BroadcastMode;
+            use shade_protocol::swap::core::{TokenAmount, TokenType};
+
+            let Ok(key) = Keplr::get_key(CHAIN_ID).await else {
+                return error!("Could not get key from Keplr");
+            };
+
             let wallet = Keplr::get_offline_signer_only_amino(CHAIN_ID);
-            // FIXME: panics if keplr is not enabled. instead, this should attempt to enable keplr
-            let key = keplr.key.await.expect("Problem getting the Keplr key");
             let enigma_utils = Keplr::get_enigma_utils(CHAIN_ID).into();
-            debug!("got the EnigmaUtils");
+
             let options = CreateTxSenderOptions {
                 url: GRPC_URL,
-                chain_id: "secret-4",
+                chain_id: CHAIN_ID,
                 wallet: wallet.into(),
                 wallet_address: key.bech32_address.into(),
                 enigma_utils,
             };
-            // let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
-            // let sender =
-            //     AccountId::new("secret", &key.address).expect("Error creating sender AccountId");
-            // let contract =
-            //     AccountId::from_str(LB_PAIR_CONTRACT.address.clone().to_string().as_ref())
-            //         .expect("Error creating contract AccountId");
+
+            let wasm_web_client = tonic_web_wasm_client::Client::new(GRPC_URL.to_string());
+            let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
+
+            // TODO: decide on using return error vs expect
+            let Ok(sender) = AccountId::new("secret", &key.address) else {
+                return error!("Error creating sender AccountId");
+            };
+            // let Ok(contract) = AccountId::from_str(LB_PAIR_CONTRACT.address.as_ref()) else {
+            //     return error!("Error creating contract AccountId");
+            // };
+            let contract = AccountId::from_str("secret1k0jntykt7e4g3y88ltc60czgjuqdy4c9e8fzek")
+                .expect("Error creating contract AccountId");
+            let msg = secret_toolkit_snip20::HandleMsg::Send {
+                recipient: "secret17m7gyp4h9df56a2fryt48zt37ksrsrvvqha8he".to_string(),
+                recipient_code_hash: None,
+                amount: Uint128::from(1u128),
+                msg: None,
+                memo: None,
+                padding: None,
+            };
             // let msg = lb_pair::ExecuteMsg::SwapTokens {
-            //     offer: shade_protocol::swap::core::TokenAmount {
-            //         token: shade_protocol::swap::core::TokenType::CustomToken {
+            //     offer: TokenAmount {
+            //         token: TokenType::CustomToken {
             //             contract_addr: LB_PAIR_CONTRACT.address.clone(),
             //             token_code_hash: LB_PAIR_CONTRACT.code_hash.clone(),
             //         },
@@ -100,37 +111,7 @@ pub fn Trade() -> impl IntoView {
             //     to: None,
             //     padding: None,
             // };
-            // // let msg = secretrs::compute::MsgExecuteContract {
-            // let msg = rsecret::tx::compute::MsgExecuteContractRaw {
-            //     sender,
-            //     contract,
-            //     // msg: serde_json::to_vec(&msg).expect("serde problem"),
-            //     msg,
-            //     sent_funds: vec![],
-            // };
-            // let tx_options = TxOptions {
-            //     gas_limit: 500_000,
-            //     ..Default::default()
-            // };
-            //
-            // let result = compute_service_client
-            //     .execute_contract(msg, LB_PAIR_CONTRACT.code_hash.clone(), tx_options)
-            //     .await;
-
-            let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
-            let sender =
-                AccountId::new("secret", &key.address).expect("Error creating sender AccountId");
-            let contract = AccountId::from_str("secret1k0jntykt7e4g3y88ltc60czgjuqdy4c9e8fzek")
-                .expect("Error creating contract AccountId");
-            let msg = secret_toolkit_snip20::HandleMsg::Send {
-                recipient: "secret17m7gyp4h9df56a2fryt48zt37ksrsrvvqha8he".to_string(),
-                recipient_code_hash: None,
-                amount: Uint128::from(1u128),
-                msg: None,
-                memo: None,
-                padding: None,
-            };
-            let msg = rsecret::tx::compute::MsgExecuteContractRaw {
+            let msg = MsgExecuteContractRaw {
                 sender,
                 contract,
                 msg,
@@ -138,7 +119,7 @@ pub fn Trade() -> impl IntoView {
             };
             let tx_options = TxOptions {
                 gas_limit: 50_000,
-                broadcast_mode: secretrs::proto::cosmos::tx::v1beta1::BroadcastMode::Sync,
+                broadcast_mode: BroadcastMode::Sync,
                 wait_for_commit: true,
                 ..Default::default()
             };
@@ -150,7 +131,11 @@ pub fn Trade() -> impl IntoView {
                     tx_options,
                 )
                 .await;
-            debug!("{:?}", result);
+
+            match result {
+                Ok(ok) => info!("{:?}", ok),
+                Err(error) => error!("{:?}", error),
+            }
         })
     });
 
