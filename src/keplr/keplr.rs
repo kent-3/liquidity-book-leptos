@@ -86,11 +86,7 @@ impl Keplr {
     pub async fn get_account(chain_id: &str) -> Result<AccountData, Error> {
         let signer = Self::get_offline_signer_only_amino(chain_id);
         let accounts = signer.get_accounts().await.map_err(Error::generic)?;
-        // .map_err(|_| Error::KeplrUnavailable)?;
-        // let accounts = js_sys::Array::from(&accounts);
         let account = accounts[0].clone();
-
-        // let account: AccountData = serde_wasm_bindgen::from_value(account)?;
 
         Ok(account)
     }

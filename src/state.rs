@@ -84,7 +84,6 @@ impl AsRef<HashMap<String, ContractInfo>> for TokenMap {
 pub struct KeplrSignals {
     pub enabled: RwSignal<bool>,
     pub key: AsyncDerived<Result<Key, Error>, LocalStorage>,
-    // pub key: RwSignal<Option<Key>>,
 }
 
 impl KeplrSignals {
@@ -92,7 +91,7 @@ impl KeplrSignals {
         let enabled = RwSignal::new(false);
         let key = AsyncDerived::new_unsync(move || async move {
             if enabled.get() {
-                debug!("keplr is enabled! getting key");
+                debug!("Derived signal, updating Keplr key");
                 Keplr::get_key(CHAIN_ID).await.map_err(Into::into)
             } else {
                 Err(Error::KeplrDisabled)

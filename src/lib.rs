@@ -65,9 +65,12 @@ pub fn App() -> impl IntoView {
 
     // Event Listeners
 
+    // Whenever the key store changes, this will re-set 'keplr.enabled' to true, triggering a
+    // reload of everything subscribed to that signal
     let keplr_keystorechange_handle =
         window_event_listener_untyped("keplr_keystorechange", move |_| {
             warn!("Key store in Keplr is changed. You may need to refetch the account info.");
+            keplr.enabled.set(true);
         });
 
     // let update_grpc_url = move |_| {

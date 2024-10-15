@@ -66,6 +66,14 @@ pub fn Trade() -> impl IntoView {
                 return error!("Could not get key from Keplr");
             };
 
+            // NOTE: For any method on Keplr that returns a promise (almost all of them), if it's Ok,
+            // that means keplr is enabled. We can use this fact to update any UI that needs to
+            // know if Keplr is enabled. Modifying this signal will cause everything subscribed
+            // to react. I don't want to trigger that reaction every single time though... which it
+            // currently does. This will trigger the AsyncDerived signal to get the key. Maybe
+            // that's fine since it's trivial.
+            keplr.enabled.set(true);
+
             let wallet = Keplr::get_offline_signer_only_amino(CHAIN_ID);
             let enigma_utils = Keplr::get_enigma_utils(CHAIN_ID).into();
 
@@ -77,6 +85,7 @@ pub fn Trade() -> impl IntoView {
                 enigma_utils,
             };
 
+            // TODO: Singleton for the tonic_web_wasm_client. Others too?
             let wasm_web_client = tonic_web_wasm_client::Client::new(GRPC_URL.to_string());
             let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
 
