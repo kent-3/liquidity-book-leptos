@@ -5,9 +5,9 @@ use crate::{
 };
 use leptos::prelude::*;
 use send_wrapper::SendWrapper;
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Deref};
 use tonic_web_wasm_client::Client;
-use tracing::debug;
+use tracing::{debug, trace};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Endpoint {
@@ -54,7 +54,7 @@ impl std::ops::Deref for WasmClient {
 }
 
 #[derive(Clone, Debug)]
-pub struct TokenMap(HashMap<String, ContractInfo>);
+pub struct TokenMap(pub HashMap<String, ContractInfo>);
 
 impl TokenMap {
     pub fn new() -> Self {
@@ -91,7 +91,7 @@ impl KeplrSignals {
         let enabled = RwSignal::new(false);
         let key = AsyncDerived::new_unsync(move || async move {
             if enabled.get() {
-                debug!("Derived signal, updating Keplr key");
+                trace!("Updating Keplr key (derived signal)");
                 Keplr::get_key(CHAIN_ID).await.map_err(Into::into)
             } else {
                 Err(Error::KeplrDisabled)

@@ -25,15 +25,15 @@ serde_json = "1.0"
 
 [dependencies]
 # Leptos official
-leptos = { version = "0.7.0-gamma", features = [
+leptos = { version = "0.7.0-gamma3", features = [
   "csr",
   # "nightly"
 ] }
-leptos_router = { version = "0.7.0-gamma", features = [
+leptos_router = { version = "0.7.0-gamma3", features = [
   # "nightly"
 ] }
-leptos_router_macro = { version = "0.7.0-gamma" }
-leptos_meta = { version = "0.7.0-gamma" }
+leptos_router_macro = { version = "0.7.0-gamma3" }
+leptos_meta = { version = "0.7.0-gamma3" }
 
 # Leptos extensions and related
 # leptos-use = { git = "https://github.com/Synphonyte/leptos-use.git", branch = "leptos-0.7" }

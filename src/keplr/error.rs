@@ -6,7 +6,7 @@ pub enum Error {
     #[error("Keplr is unavailable!")]
     KeplrUnavailable,
 
-    #[error("An error occurred in Js: {0}")]
+    #[error("{0}")]
     Js(String),
 
     #[error("Serialization Error: {0}")]

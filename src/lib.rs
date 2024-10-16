@@ -1,4 +1,4 @@
-// #![allow(unused)]
+#![allow(unused)]
 #![allow(mixed_script_confusables)]
 #![allow(confusable_idents)]
 
@@ -10,8 +10,9 @@ use leptos::{
     html::{Dialog, Input},
     logging::log,
     prelude::*,
+    reactive::graph::ReactiveNode,
 };
-use leptos_router::components::{FlatRoutes, ParentRoute, Route, Router, Routes, A};
+use leptos_router::components::{ParentRoute, Route, Router, Routes, A};
 use leptos_router_macro::path;
 use secret_toolkit_snip20::{QueryMsg, TokenInfoResponse};
 use send_wrapper::SendWrapper;
@@ -431,42 +432,44 @@ fn Home() -> impl IntoView {
 
     view! {
         <div class="max-w-lg">
-        <h1 class="font-semibold">Introduction</h1>
-        <p>
-            "This project presents an efficient Automated Market Maker (AMM)
-            protocol, modeled after the Liquidity Book protocol used by Trader Joe ("
-            <a
-                href="https://docs.traderjoexyz.com/concepts/concentrated-liquidity"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                Liquidity Book docs
-            </a>"). The protocol retains the key features of its predecessor, such as:"
-        </p>
-        <ul>
-            <li>
-                <strong>No Slippage:</strong>
-                <span>Enabling token swaps with zero slippage within designated bins</span>
-            </li>
-            <li>
-                <strong>Adaptive Pricing:</strong>
-                <span>
-                    Offering Liquidity Providers extra dynamic fees during periods of
-                    increased market volatility
-                </span>
-            </li>
-            <li>
-                <strong>Enhanced Capital Efficiency:</strong>
-                <span>Facilitating high-volume trading with minimal liquidity requirements</span>
-            </li>
-            <li>
-                <strong>Customizable Liquidity:</strong>
-                <span>
-                    Liquidity providers can customize their liquidity distributions
-                    based on their strategy
-                </span>
-            </li>
-        </ul>
+            <h1 class="font-semibold">Introduction</h1>
+            <p>
+                "This project presents an efficient Automated Market Maker (AMM)
+                protocol, modeled after the Liquidity Book protocol used by Trader Joe ("
+                <a
+                    href="https://docs.traderjoexyz.com/concepts/concentrated-liquidity"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    Liquidity Book docs
+                </a>"). The protocol retains the key features of its predecessor, such as:"
+            </p>
+            <ul>
+                <li>
+                    <strong>No Slippage:</strong>
+                    <span>Enabling token swaps with zero slippage within designated bins</span>
+                </li>
+                <li>
+                    <strong>Adaptive Pricing:</strong>
+                    <span>
+                        Offering Liquidity Providers extra dynamic fees during periods of
+                        increased market volatility
+                    </span>
+                </li>
+                <li>
+                    <strong>Enhanced Capital Efficiency:</strong>
+                    <span>
+                        Facilitating high-volume trading with minimal liquidity requirements
+                    </span>
+                </li>
+                <li>
+                    <strong>Customizable Liquidity:</strong>
+                    <span>
+                        Liquidity providers can customize their liquidity distributions
+                        based on their strategy
+                    </span>
+                </li>
+            </ul>
         </div>
     }
 }
