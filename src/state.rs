@@ -94,29 +94,6 @@ impl AsRef<RwSignal<String>> for ChainId {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub struct WasmClient {
-    pub client: RwSignal<Client>,
-    pub url: RwSignal<String>,
-}
-
-impl WasmClient {
-    pub fn new() -> Self {
-        Self {
-            client: RwSignal::new(Client::new(GRPC_URL.to_string())),
-            url: RwSignal::new(GRPC_URL.to_string()),
-        }
-    }
-}
-
-impl std::ops::Deref for WasmClient {
-    type Target = RwSignal<Client>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.client
-    }
-}
-
 // TODO: decide between this and the LazyLock approach.
 // It's not a signal, and should rarely be updated.
 #[derive(Clone, Debug)]

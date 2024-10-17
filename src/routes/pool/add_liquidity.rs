@@ -7,6 +7,7 @@ use leptos_router::{
 use rsecret::query::tendermint::TendermintQuerier;
 use send_wrapper::SendWrapper;
 use std::str::FromStr;
+use tonic_web_wasm_client::Client;
 use tracing::{debug, info};
 
 use crate::liquidity_book::{
@@ -30,8 +31,8 @@ use shade_protocol::{
 pub fn AddLiquidity() -> impl IntoView {
     info!("rendering <AddLiquidity/>");
 
+    let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
-    let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
     let params = use_params_map();
@@ -123,10 +124,10 @@ pub fn AddLiquidity() -> impl IntoView {
     }
 
     let latest_block = Resource::new(
-        || (),
-        move |_| {
+        move || endpoint.get(),
+        move |endpoint| {
             SendWrapper::new(async move {
-                let tendermint = TendermintQuerier::new(wasm_client.get_untracked());
+                let tendermint = TendermintQuerier::new(Client::new(endpoint));
                 let latest_block = tendermint.get_latest_block().await;
 
                 latest_block
@@ -212,8 +213,9 @@ pub fn AddLiquidity() -> impl IntoView {
     };
 
     let add_liquidity = Action::new(move |_: &()| {
+        let url = endpoint.get();
         SendWrapper::new(async move {
-            let tendermint = TendermintQuerier::new(wasm_client.get_untracked());
+            let tendermint = TendermintQuerier::new(Client::new(url));
             let latest_block = tendermint.get_latest_block().await;
 
             latest_block

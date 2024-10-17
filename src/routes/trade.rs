@@ -4,6 +4,7 @@ use crate::{
     liquidity_book::{constants::addrs::LB_PAIR_CONTRACT, contract_interfaces::*},
     prelude::{CHAIN_ID, COMPUTE_QUERY},
     state::*,
+    LoadingModal,
 };
 use leptos::{html::Select, prelude::*};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
@@ -17,6 +18,7 @@ use send_wrapper::SendWrapper;
 use serde::Deserialize;
 use std::str::FromStr;
 use std::sync::Arc;
+use tonic_web_wasm_client::Client;
 use tracing::{debug, info};
 
 #[derive(Deserialize, Debug)]
@@ -28,7 +30,6 @@ struct BalanceResponse {
 pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
-    let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
     // let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
     // let (token_map, _) = signal(token_map.0);
@@ -81,7 +82,16 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
                             debug!("{result}");
 
                             let result: BalanceResponse = serde_json::from_str(&result).unwrap();
-                            format!("Balance: {}", result.balance.amount.to_string())
+
+                            let factor = 10u128.pow(token.metadata.decimals as u32);
+                            let result = result.balance.amount.u128() as f64 / factor as f64;
+
+                            format!(
+                                "Balance: {:.precision$}",
+                                result,
+                                precision = token.metadata.decimals as usize
+                            ) // Format with fixed decimal places
+                              // format!("Balance: {}", result.balance.amount.to_string())
                         }
                         Err(err) => {
                             debug!("{}", err.to_string());
@@ -110,7 +120,6 @@ pub fn Trade() -> impl IntoView {
 
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
-    let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
     // prevents scrolling to the top of the page each time a query param changes
@@ -187,6 +196,7 @@ pub fn Trade() -> impl IntoView {
         // let map = token_map.clone();
         move || {
             // let map = map.clone();
+            let url = endpoint.get();
             async move {
                 if let Some(token) = token_y.get() {
                     let map = token_map.get();
@@ -196,7 +206,7 @@ pub fn Trade() -> impl IntoView {
                         Ok(vk) => {
                             debug!("Found viewing key for {}!", token.metadata.symbol);
                             let compute = ComputeQuerier::new(
-                                wasm_client.get(),
+                                Client::new(url),
                                 Keplr::get_enigma_utils(CHAIN_ID).into(),
                             );
                             let code_hash = compute
@@ -214,7 +224,9 @@ pub fn Trade() -> impl IntoView {
                                 .unwrap();
                             let result: secret_toolkit_snip20::Balance =
                                 serde_json::from_str(&result).unwrap();
-                            format!("Balance: {}", result.amount.to_string())
+                            let factor = 10u128.pow(token.metadata.decimals as u32);
+                            let result = result.amount.u128() as f64 / factor as f64;
+                            format!("Balance: {}", result.to_string())
                         }
                         Err(err) => {
                             debug!("{}", err.to_string());
@@ -250,6 +262,7 @@ pub fn Trade() -> impl IntoView {
     });
 
     let swap = Action::new(move |_: &()| {
+        let url = endpoint.get();
         SendWrapper::new(async move {
             use cosmwasm_std::Uint128;
             use rsecret::tx::compute::MsgExecuteContractRaw;
@@ -279,8 +292,7 @@ pub fn Trade() -> impl IntoView {
                 enigma_utils,
             };
 
-            // TODO: Singleton for the tonic_web_wasm_client. Others too?
-            let wasm_web_client = tonic_web_wasm_client::Client::new(GRPC_URL.to_string());
+            let wasm_web_client = tonic_web_wasm_client::Client::new(url);
             let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
 
             // TODO: decide on using return error vs expect
@@ -342,18 +354,15 @@ pub fn Trade() -> impl IntoView {
         })
     });
 
-    // Effect::new(move || debug!("{:?}", amount_x.get()));
-    // Effect::new(move || debug!("{:?}", amount_y.get()));
-    // Effect::new(move || debug!("{:?}", swap_for_y.get()));
-
     view! {
+        <LoadingModal when=swap.pending() message="Preparing Transaction" />
         <div class="p-2">
             <div class="text-3xl font-bold mb-4">"Trade"</div>
             <div class="container max-w-sm space-y-6">
                 <div class="space-y-2">
                     <div class="flex justify-between">
                         <div>"From"</div>
-                        <div class="py-0 px-2 hover:bg-violet-500/20 text-ellipsis">
+                        <div class="py-0 px-2 hover:bg-violet-500/20 text-ellipsis text-sm">
                             // "Balance: 👀"
                         <SnipBalance token_address=token_x.into() />
         // <Suspense fallback=|| view! { "Loading..." }>

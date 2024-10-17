@@ -15,8 +15,8 @@ use tracing::{debug, info};
 pub fn PoolManager() -> impl IntoView {
     info!("rendering <PoolManager/>");
 
+    let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
-    let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
     // whenever the key store changes, this will re-set 'is_keplr_enabled' to true, triggering a

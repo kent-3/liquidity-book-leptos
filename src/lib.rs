@@ -42,7 +42,7 @@ use constants::{CHAIN_ID, GRPC_URL};
 use error::Error;
 use keplr::{Keplr, Key};
 use routes::{pool::*, trade::*};
-use state::{ChainId, Endpoint, KeplrSignals, ProviderConfig, TokenMap, WasmClient};
+use state::{ChainId, Endpoint, KeplrSignals, ProviderConfig, TokenMap};
 use types::Coin;
 
 #[component]
@@ -55,7 +55,6 @@ pub fn App() -> impl IntoView {
     provide_context(Endpoint::default());
     provide_context(ChainId::default());
     provide_context(KeplrSignals::new());
-    provide_context(WasmClient::new());
     provide_context(TokenMap::new());
 
     // let provider =
@@ -63,7 +62,6 @@ pub fn App() -> impl IntoView {
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let chain_id = use_context::<ChainId>().expect("chain id context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
-    let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
     debug!("Loaded {} tokens", token_map.len());
@@ -78,7 +76,7 @@ pub fn App() -> impl IntoView {
     Effect::new(move |_| {
         let enabled = keplr.enabled.get();
         let key = keplr.key.get();
-        debug!("\nKeplr enabled: {}\nKeplr Key: {:?}", enabled, key)
+        debug!("\nKeplr enabled: {}\nKeplr Key: {:#?}", enabled, key)
     });
     Effect::new(move |_| debug!("Endpoint set to {}", endpoint.get()));
     Effect::new(move |_| debug!("Chain ID set to {:?}", chain_id.get()));
@@ -277,7 +275,6 @@ pub fn OptionsMenu(
 
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
-    let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
 
     let disable_keplr = move |_| {
         Keplr::disable(CHAIN_ID);
@@ -302,7 +299,6 @@ pub fn OptionsMenu(
             // this means we can call`HtmlInputElement::value()`
             // to get the current value of the input
             .value();
-        // wasm_client.set(Client::new(value));
         endpoint.set(value)
     };
 
@@ -333,8 +329,8 @@ pub fn OptionsMenu(
 fn Home() -> impl IntoView {
     info!("rendering <Home/>");
 
+    let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
-    let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
     // whenever the key store changes, this will re-set 'is_keplr_enabled' to true, triggering a
@@ -408,9 +404,10 @@ fn Home() -> impl IntoView {
     };
 
     let user_balance = AsyncDerived::new_unsync(move || {
+        let client = Client::new(endpoint.get());
         async move {
             if let Some(Ok(key)) = keplr.key.get() {
-                let bank = BankQuerier::new(wasm_client.get_untracked());
+                let bank = BankQuerier::new(client);
                 match bank.balance(key.bech32_address, "uscrt").await {
                     Ok(balance) => {
                         let balance: Coin = balance.balance.unwrap().into();
@@ -440,7 +437,7 @@ fn Home() -> impl IntoView {
         move |_| {
             debug!("loading token_info resource");
             let compute =
-                ComputeQuerier::new(wasm_client.get_untracked(), encryption_utils.clone().into());
+                ComputeQuerier::new(Client::new(endpoint.get()), encryption_utils.clone().into());
             SendWrapper::new(async move {
                 let query = QueryMsg::TokenInfo {};
                 compute
@@ -504,7 +501,6 @@ fn Modal() -> impl IntoView {
     });
 
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
-    let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
 
     let is_keplr_enabled = move || keplr.enabled.get();
     let my_address = move || {
