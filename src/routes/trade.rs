@@ -4,26 +4,104 @@ use crate::{
     liquidity_book::{constants::addrs::LB_PAIR_CONTRACT, contract_interfaces::*},
     prelude::{CHAIN_ID, COMPUTE_QUERY},
     state::*,
+    utils::humanize_token_amount,
     LoadingModal,
 };
+use cosmwasm_std::Uint128;
 use leptos::{html::Select, prelude::*};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use rsecret::{
     query::compute::ComputeQuerier, secret_client::CreateTxSenderOptions, tx::ComputeServiceClient,
     TxOptions,
 };
-use secret_toolkit_snip20::Balance;
 use secretrs::AccountId;
 use send_wrapper::SendWrapper;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::Arc;
 use tonic_web_wasm_client::Client;
 use tracing::{debug, info};
 
-#[derive(Deserialize, Debug)]
-struct BalanceResponse {
-    balance: Balance,
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct BalanceResponse {
+    pub balance: Balance,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct Balance {
+    pub amount: Uint128,
+}
+
+pub trait BalanceFormatter {
+    fn humanize(&self, decimals: impl Into<u32>) -> String;
+    fn humanize_with_precision(
+        &self,
+        decimals: impl Into<u32>,
+        precision: impl Into<i32>,
+    ) -> String;
+}
+
+impl BalanceFormatter for cosmwasm_std::Uint128 {
+    fn humanize(&self, decimals: impl Into<u32>) -> String {
+        let value = self.u128();
+        let decimals = decimals.into();
+        let factor = 10u128.pow(decimals);
+
+        let integer_part = value / factor;
+        let fractional_part = value % factor;
+
+        format!(
+            "{}.{:0width$}",
+            integer_part,
+            fractional_part,
+            width = decimals as usize
+        )
+    }
+
+    fn humanize_with_precision(
+        &self,
+        decimals: impl Into<u32>,
+        precision: impl Into<i32>,
+    ) -> String {
+        let value = self.u128();
+        let decimals = decimals.into();
+        let factor = 10u128.pow(decimals);
+
+        let integer_part = value / factor;
+        let fractional_part = value % factor;
+
+        // If precision is less than decimals, we need to round
+        let precision = precision.into() as u32;
+        if precision < decimals {
+            let rounding_factor = 10u128.pow(decimals - precision);
+            let fractional_rounded = (fractional_part + rounding_factor / 2) / rounding_factor;
+
+            // If rounding overflows (i.e., turns 999 -> 1000), we need to adjust the integer part
+            if fractional_rounded >= 10u128.pow(precision) {
+                format!(
+                    "{}.{:0width$}",
+                    integer_part + 1,
+                    0u128,
+                    width = precision as usize
+                )
+            } else {
+                format!(
+                    "{}.{:0width$}",
+                    integer_part,
+                    fractional_rounded,
+                    width = precision as usize
+                )
+            }
+        } else {
+            // No rounding needed, just display with full decimals
+            format!(
+                "{}.{:0width$}",
+                integer_part,
+                fractional_part,
+                width = decimals as usize
+            )
+        }
+    }
 }
 
 #[component]
@@ -34,6 +112,8 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
 
     // let (token_map, _) = signal(token_map.0);
 
+    // TODO: this should return a Result<Uint128> instead. That way the value can be manipulated
+    // elsewhere (like changing to full precision on hover).
     let token_balance = Resource::new(
         move || (token_address.get(), keplr.enabled.get(), keplr.key.get()),
         move |(contract_address, enabled, key)| {
@@ -81,17 +161,36 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
                                 .unwrap();
                             debug!("{result}");
 
-                            let result: BalanceResponse = serde_json::from_str(&result).unwrap();
+                            let BalanceResponse { balance } =
+                                serde_json::from_str(&result).unwrap();
 
-                            let factor = 10u128.pow(token.metadata.decimals as u32);
-                            let result = result.balance.amount.u128() as f64 / factor as f64;
+                            balance
+                                .amount
+                                .humanize_with_precision(token.metadata.decimals, 3)
 
-                            format!(
-                                "Balance: {:.precision$}",
-                                result,
-                                precision = token.metadata.decimals as usize
-                            ) // Format with fixed decimal places
-                              // format!("Balance: {}", result.balance.amount.to_string())
+                            // humanize_token_amount(balance.amount, token.metadata.decimals)
+
+                            // let amount = result.balance.amount.u128();
+                            // let decimals = token.metadata.decimals;
+                            // let factor = 10u128.pow(decimals as u32);
+                            //
+                            // let integer_part = amount / factor;
+                            // let fractional_part = amount % factor;
+                            //
+                            // format!(
+                            //     "{}.{:0width$}",
+                            //     integer_part,
+                            //     fractional_part,
+                            //     width = decimals as usize
+                            // )
+
+                            // format!(
+                            //     "Balance: {:.precision$}",
+                            //     result,
+                            //     precision = token.metadata.decimals as usize
+                            // )
+                            // Format with fixed decimal places
+                            // format!("Balance: {}", result.balance.amount.to_string())
                         }
                         Err(err) => {
                             debug!("{}", err.to_string());

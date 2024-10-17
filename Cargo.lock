@@ -4224,7 +4224,6 @@ dependencies = [
  "leptos_meta",
  "leptos_router",
  "leptos_router_macro",
- "once_cell",
  "rsecret",
  "secret-cosmwasm-std",
  "secret-toolkit-snip20",

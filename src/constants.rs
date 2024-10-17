@@ -2,10 +2,10 @@
 use crate::keplr::tokens::{keplr_contract_registry_tokens, ContractInfo};
 use rsecret::query::compute::ComputeQuerier;
 use secretrs::utils::EnigmaUtils;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::sync::LazyLock;
-use std::sync::RwLock;
+use std::{
+    collections::HashMap,
+    sync::{Arc, LazyLock, RwLock},
+};
 use tonic_web_wasm_client::Client as WebWasmClient;
 
 pub static CHAIN_ID: &str = "secret-4";
