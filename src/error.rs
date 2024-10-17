@@ -1,6 +1,6 @@
 // The Serialize and Deserialize traits are derived to ensure that Errors can be
 // transmitted to or from a server, which is necessary for them to function as Resources.
-#[derive(thiserror::Error, serde::Serialize, serde::Deserialize, Debug, Clone)]
+#[derive(thiserror::Error, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
 pub enum Error {
     #[error("An error occurred: {0}")]
     Generic(String),

@@ -9,6 +9,21 @@ use std::{collections::HashMap, ops::Deref};
 use tonic_web_wasm_client::Client;
 use tracing::{debug, trace};
 
+#[derive(Clone, Debug, PartialEq)]
+pub struct ProviderConfig {
+    pub url: String,
+    pub chain_id: String,
+}
+
+impl ProviderConfig {
+    pub fn new(url: impl Into<String>, chain_id: impl Into<String>) -> Self {
+        Self {
+            url: url.into(),
+            chain_id: chain_id.into(),
+        }
+    }
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Endpoint {
     pub url: RwSignal<String>,
@@ -27,6 +42,55 @@ impl Default for Endpoint {
         Self {
             url: RwSignal::new(GRPC_URL.to_string()),
         }
+    }
+}
+
+impl std::ops::Deref for Endpoint {
+    type Target = RwSignal<String>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.url
+    }
+}
+
+impl AsRef<RwSignal<String>> for Endpoint {
+    fn as_ref(&self) -> &RwSignal<String> {
+        &self.url
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct ChainId {
+    pub url: RwSignal<String>,
+}
+
+impl ChainId {
+    pub fn new(url: impl Into<String>) -> Self {
+        Self {
+            url: RwSignal::new(url.into()),
+        }
+    }
+}
+
+impl Default for ChainId {
+    fn default() -> Self {
+        Self {
+            url: RwSignal::new(CHAIN_ID.to_string()),
+        }
+    }
+}
+
+impl std::ops::Deref for ChainId {
+    type Target = RwSignal<String>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.url
+    }
+}
+
+impl AsRef<RwSignal<String>> for ChainId {
+    fn as_ref(&self) -> &RwSignal<String> {
+        &self.url
     }
 }
 
@@ -53,6 +117,8 @@ impl std::ops::Deref for WasmClient {
     }
 }
 
+// TODO: decide between this and the LazyLock approach.
+// It's not a signal, and should rarely be updated.
 #[derive(Clone, Debug)]
 pub struct TokenMap(pub HashMap<String, ContractInfo>);
 
@@ -84,6 +150,7 @@ impl AsRef<HashMap<String, ContractInfo>> for TokenMap {
 pub struct KeplrSignals {
     pub enabled: RwSignal<bool>,
     pub key: AsyncDerived<Result<Key, Error>, LocalStorage>,
+    // pub key: RwSignal<Option<Result<Key, Error>>>,
 }
 
 impl KeplrSignals {
@@ -97,6 +164,7 @@ impl KeplrSignals {
                 Err(Error::KeplrDisabled)
             }
         });
+        // let key = RwSignal::new(None);
 
         Self { enabled, key }
     }

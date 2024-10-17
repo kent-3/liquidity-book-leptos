@@ -42,27 +42,46 @@ use constants::{CHAIN_ID, GRPC_URL};
 use error::Error;
 use keplr::{Keplr, Key};
 use routes::{pool::*, trade::*};
-use state::{KeplrSignals, TokenMap, WasmClient};
+use state::{ChainId, Endpoint, KeplrSignals, ProviderConfig, TokenMap, WasmClient};
 use types::Coin;
 
 #[component]
 pub fn App() -> impl IntoView {
     info!("rendering <App/>");
 
-    // Global Context
+    // Global Contexts
 
-    let keplr = KeplrSignals::new();
-    let wasm_client = WasmClient::new();
-    let token_map = TokenMap::new();
-    debug!("Loaded {} tokens", token_map.len());
+    // provide_context(RwSignal::new(ProviderConfig::new(GRPC_URL, CHAIN_ID)));
+    provide_context(Endpoint::default());
+    provide_context(ChainId::default());
+    provide_context(KeplrSignals::new());
+    provide_context(WasmClient::new());
+    provide_context(TokenMap::new());
 
-    provide_context(keplr);
-    provide_context(wasm_client);
-    provide_context(token_map);
-
+    // let provider =
+    //     use_context::<RwSignal<ProviderConfig>>().expect("provider config context missing!");
+    let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
+    let chain_id = use_context::<ChainId>().expect("chain id context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
+
+    debug!("Loaded {} tokens", token_map.len());
+
+    // Effect::new(move |_| {
+    //     let provider = provider.get();
+    //     debug!(
+    //         "Endpoint: {}\nChain ID: {}",
+    //         provider.url, provider.chain_id
+    //     )
+    // });
+    Effect::new(move |_| {
+        let enabled = keplr.enabled.get();
+        let key = keplr.key.get();
+        debug!("\nKeplr enabled: {}\nKeplr Key: {:?}", enabled, key)
+    });
+    Effect::new(move |_| debug!("Endpoint set to {}", endpoint.get()));
+    Effect::new(move |_| debug!("Chain ID set to {:?}", chain_id.get()));
 
     // Event Listeners
 
@@ -256,6 +275,7 @@ pub fn OptionsMenu(
     // let dialog_ref = NodeRef::<Dialog>::new();
     let input_element = NodeRef::<Input>::new();
 
+    let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
 
@@ -282,7 +302,8 @@ pub fn OptionsMenu(
             // this means we can call`HtmlInputElement::value()`
             // to get the current value of the input
             .value();
-        wasm_client.set(Client::new(value));
+        // wasm_client.set(Client::new(value));
+        endpoint.set(value)
     };
 
     view! {

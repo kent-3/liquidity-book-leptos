@@ -1,8 +1,8 @@
 use crate::{
-    constants::GRPC_URL,
+    constants::{GRPC_URL, TOKEN_MAP},
     keplr::Keplr,
     liquidity_book::{constants::addrs::LB_PAIR_CONTRACT, contract_interfaces::*},
-    prelude::CHAIN_ID,
+    prelude::{CHAIN_ID, COMPUTE_QUERY},
     state::*,
 };
 use leptos::{html::Select, prelude::*};
@@ -25,96 +25,40 @@ struct BalanceResponse {
 }
 
 #[component]
-pub fn Trade() -> impl IntoView {
-    info!("rendering <Pool/>");
-
-    on_cleanup(move || {
-        info!("cleaning up <Pool/>");
-    });
-
+pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
+    let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
-    let token_map = use_context::<TokenMap>().expect("tokens context missing!");
+    // let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
-    // prevents scrolling to the top of the page each time a query param changes
-    let nav_options = NavigateOptions {
-        scroll: false,
-        ..Default::default()
-    };
+    // let (token_map, _) = signal(token_map.0);
 
-    let (token_x, set_token_x) = query_signal_with_options::<String>("from", nav_options.clone());
-    let (token_y, set_token_y) = query_signal_with_options::<String>("to", nav_options.clone());
-
-    // let token_map = Arc::new(token_map.0);
-    let (token_map, _) = signal(token_map.0);
-
-    // TODO: turn this into an Action instead?
-    // let token_x_balance = AsyncDerived::new_unsync({
-    //     // let map = token_map.clone();
-    //     move || {
-    //         // let map = map.clone();
-    //         async move {
-    //             if let Some(token) = token_x.get() {
-    //                 let map = token_map.get();
-    //                 let token = map.get(&token).unwrap();
-    //                 match Keplr::get_secret_20_viewing_key(CHAIN_ID, &token.contract_address).await
-    //                 {
-    //                     Ok(vk) => {
-    //                         debug!("Found viewing key for {}!", token.metadata.symbol);
-    //                         let compute = ComputeQuerier::new(
-    //                             wasm_client.get(),
-    //                             Keplr::get_enigma_utils(CHAIN_ID).into(),
-    //                         );
-    //                         let code_hash = compute
-    //                             .code_hash_by_contract_address(&token.contract_address)
-    //                             .await
-    //                             .expect("failed to query the code hash");
-    //                         let address = keplr.key.get().unwrap().unwrap().bech32_address;
-    //                         let query = secret_toolkit_snip20::QueryMsg::Balance {
-    //                             address: address,
-    //                             key: vk,
-    //                         };
-    //                         let result = compute
-    //                             .query_secret_contract(&token.contract_address, code_hash, query)
-    //                             .await
-    //                             .unwrap();
-    //                         result
-    //                     }
-    //                     Err(err) => {
-    //                         debug!("{}", err.to_string());
-    //                         "viewing key missing".to_string()
-    //                     }
-    //                 }
-    //             } else {
-    //                 "Select a token".to_string()
-    //             }
-    //         }
-    //     }
-    // });
-
-    // TODO: make this more readable!
-    let token_x_balance = Resource::new(
-        move || (token_x.get(), keplr.enabled.get()),
-        move |(contract_address, enabled)| {
-            let map = token_map.get();
+    let token_balance = Resource::new(
+        move || (token_address.get(), keplr.enabled.get(), keplr.key.get()),
+        move |(contract_address, enabled, key)| {
+            // let map = token_map.get();
+            let endpoint = endpoint.get();
 
             SendWrapper::new({
                 async move {
                     if !enabled {
-                        // return "Balance: 👀".to_string();
-                        return "Connect Wallet".to_string();
+                        return "Balance: 👀".to_string();
                     }
+                    let Some(Ok(key)) = key else {
+                        return "Balance: 👀".to_string();
+                    };
                     let Some(contract_address) = contract_address else {
                         return "Select a token".to_string();
                     };
-                    let Some(token) = map.get(&contract_address) else {
+                    let Some(token) = TOKEN_MAP.get(&contract_address) else {
                         return "Token not in map".to_string();
                     };
                     match Keplr::get_secret_20_viewing_key(CHAIN_ID, &contract_address).await {
                         Ok(vk) => {
                             debug!("Found viewing key for {}!\n{vk}", token.metadata.symbol);
                             let compute = ComputeQuerier::new(
-                                wasm_client.get_untracked(),
+                                // wasm_client.get_untracked(),
+                                tonic_web_wasm_client::Client::new(endpoint),
                                 Keplr::get_enigma_utils(CHAIN_ID).into(),
                             );
                             let code_hash = compute
@@ -126,12 +70,9 @@ pub fn Trade() -> impl IntoView {
                                     code_hash: {}",
                                 &token.contract_address, code_hash
                             );
-                            let address =
-                                keplr.key.get_untracked().unwrap().unwrap().bech32_address;
-                            let query = secret_toolkit_snip20::QueryMsg::Balance {
-                                address: address,
-                                key: vk,
-                            };
+                            let address = key.bech32_address;
+                            let query =
+                                secret_toolkit_snip20::QueryMsg::Balance { address, key: vk };
                             debug!("query: {query:?}");
                             let result = compute
                                 .query_secret_contract(&token.contract_address, code_hash, query)
@@ -151,6 +92,96 @@ pub fn Trade() -> impl IntoView {
             })
         },
     );
+
+    view! {
+        <Suspense fallback=|| view! { "Loading..." }>
+            {move || Suspend::new(async move { token_balance.await })}
+        </Suspense>
+    }
+}
+
+#[component]
+pub fn Trade() -> impl IntoView {
+    info!("rendering <Pool/>");
+
+    on_cleanup(move || {
+        info!("cleaning up <Pool/>");
+    });
+
+    let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
+    let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
+    let wasm_client = use_context::<WasmClient>().expect("wasm client context missing!");
+    let token_map = use_context::<TokenMap>().expect("tokens context missing!");
+
+    // prevents scrolling to the top of the page each time a query param changes
+    let nav_options = NavigateOptions {
+        scroll: false,
+        ..Default::default()
+    };
+
+    let (token_x, set_token_x) = query_signal_with_options::<String>("from", nav_options.clone());
+    let (token_y, set_token_y) = query_signal_with_options::<String>("to", nav_options.clone());
+
+    // let token_map = Arc::new(token_map.0);
+    let (token_map, _) = signal(token_map.0);
+
+    // let token_x_balance = Resource::new(
+    //     move || (token_x.get(), keplr.enabled.get()),
+    //     move |(contract_address, enabled)| {
+    //         let map = token_map.get();
+    //
+    //         SendWrapper::new({
+    //             async move {
+    //                 if !enabled {
+    //                     return "Balance: 👀".to_string();
+    //                 }
+    //                 let Some(contract_address) = contract_address else {
+    //                     return "Select a token".to_string();
+    //                 };
+    //                 let Some(token) = map.get(&contract_address) else {
+    //                     return "Token not in map".to_string();
+    //                 };
+    //                 match Keplr::get_secret_20_viewing_key(CHAIN_ID, &contract_address).await {
+    //                     Ok(vk) => {
+    //                         debug!("Found viewing key for {}!\n{vk}", token.metadata.symbol);
+    //                         let compute = ComputeQuerier::new(
+    //                             wasm_client.get_untracked(),
+    //                             Keplr::get_enigma_utils(CHAIN_ID).into(),
+    //                         );
+    //                         let code_hash = compute
+    //                             .code_hash_by_contract_address(&token.contract_address)
+    //                             .await
+    //                             .expect("failed to query the code hash");
+    //                         debug!(
+    //                             "contract_address: {}\n\
+    //                                 code_hash: {}",
+    //                             &token.contract_address, code_hash
+    //                         );
+    //                         let address =
+    //                             keplr.key.get_untracked().unwrap().unwrap().bech32_address;
+    //                         let query = secret_toolkit_snip20::QueryMsg::Balance {
+    //                             address: address,
+    //                             key: vk,
+    //                         };
+    //                         debug!("query: {query:?}");
+    //                         let result = compute
+    //                             .query_secret_contract(&token.contract_address, code_hash, query)
+    //                             .await
+    //                             .unwrap();
+    //                         debug!("{result}");
+    //
+    //                         let result: BalanceResponse = serde_json::from_str(&result).unwrap();
+    //                         format!("Balance: {}", result.balance.amount.to_string())
+    //                     }
+    //                     Err(err) => {
+    //                         debug!("{}", err.to_string());
+    //                         "viewing key missing".to_string()
+    //                     }
+    //                 }
+    //             }
+    //         })
+    //     },
+    // );
 
     let token_y_balance = AsyncDerived::new_unsync({
         // let map = token_map.clone();
@@ -324,9 +355,10 @@ pub fn Trade() -> impl IntoView {
                         <div>"From"</div>
                         <div class="py-0 px-2 hover:bg-violet-500/20 text-ellipsis">
                             // "Balance: 👀"
-        <Suspense fallback=|| view! { "Loading..." }>
-            {move || Suspend::new(async move { token_x_balance.await })}
-        </Suspense>
+                        <SnipBalance token_address=token_x.into() />
+        // <Suspense fallback=|| view! { "Loading..." }>
+        //     {move || Suspend::new(async move { token_x_balance.await })}
+        // </Suspense>
                         </div>
                     </div>
                     <div class="flex justify-between space-x-2">
