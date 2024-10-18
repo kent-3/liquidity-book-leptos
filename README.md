@@ -1,4 +1,4 @@
-# secret-leptos
+# trader-crow-leptos
 
 This is a Client-Side-Rendered App showing how it's possible to interact with
 [Keplr](https://github.com/chainapsis/keplr-wallet) and Secret from WebAssembly,
@@ -50,7 +50,7 @@ trunk serve --open
 To create a production version of your app:
 
 ```bash
-trunk build --release --public-url "${GITHUB_REPOSITORY#*/}"
+trunk build --release --public-url "https://kent-3.github.io/trader-crow-leptos/"
 ```
 
 `trunk build` will create a number of build artifacts in a `dist/` directory.
