@@ -8,6 +8,7 @@ use crate::{
     LoadingModal,
 };
 use cosmwasm_std::Uint128;
+use leptos::either::Either;
 use leptos::{html::Select, prelude::*};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use rsecret::{
@@ -21,15 +22,28 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tonic_web_wasm_client::Client;
 use tracing::{debug, info};
+use web_sys::MouseEvent;
+
+// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+// pub struct BalanceResponse {
+//     pub balance: Balance,
+// }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-pub struct BalanceResponse {
-    pub balance: Balance,
+#[serde(rename_all = "snake_case")]
+pub enum SnipQueryResponse {
+    Balance(Balance),
+    ViewingKeyError(ViewingKeyError),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Balance {
     pub amount: Uint128,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
+pub struct ViewingKeyError {
+    pub msg: String,
 }
 
 pub trait BalanceFormatter {
@@ -104,6 +118,51 @@ impl BalanceFormatter for cosmwasm_std::Uint128 {
     }
 }
 
+#[derive(thiserror::Error, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
+pub enum Snip20Error {
+    #[error("{0}!")]
+    Generic(String),
+
+    #[error("Keplr is not enabled!")]
+    KeplrDisabled,
+
+    #[error("Keplr key not found!")]
+    KeplrKey,
+
+    #[error("No token address provided!")]
+    NoToken,
+
+    #[error("Token not in map!")]
+    UnknownToken,
+
+    #[error("Secret Client error: {0}")]
+    SecretError(String),
+
+    // #[error("Wrong viewing key for this address or viewing key not set")]
+    #[error("{0}")]
+    ViewingKeyError(String),
+}
+
+impl Snip20Error {
+    pub fn generic(msg: impl Into<String>) -> Self {
+        Self::Generic(msg.into())
+    }
+}
+
+use serde_json::Error as SerdeJsonError;
+impl From<SerdeJsonError> for Snip20Error {
+    fn from(err: SerdeJsonError) -> Self {
+        Snip20Error::Generic(format!("Deserialization error: {}", err))
+    }
+}
+
+use rsecret::Error as SecretError;
+impl From<SecretError> for Snip20Error {
+    fn from(err: SecretError) -> Self {
+        Snip20Error::SecretError(err.to_string())
+    }
+}
+
 #[component]
 pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
@@ -115,86 +174,91 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
     // TODO: this should return a Result<Uint128> instead. That way the value can be manipulated
     // elsewhere (like changing to full precision on hover).
     let token_balance = Resource::new(
-        move || (token_address.get(), keplr.enabled.get(), keplr.key.get()),
-        move |(contract_address, enabled, key)| {
+        move || (keplr.enabled.get(), keplr.key.get(), token_address.get()),
+        move |(enabled, maybe_key, maybe_contract_address)| {
             // let map = token_map.get();
             let endpoint = endpoint.get();
 
             SendWrapper::new({
                 async move {
                     if !enabled {
-                        return "Balance: 👀".to_string();
+                        return Err(Snip20Error::KeplrDisabled);
                     }
-                    let Some(Ok(key)) = key else {
-                        return "Balance: 👀".to_string();
-                    };
-                    let Some(contract_address) = contract_address else {
-                        return "Select a token".to_string();
-                    };
-                    let Some(token) = TOKEN_MAP.get(&contract_address) else {
-                        return "Token not in map".to_string();
-                    };
-                    match Keplr::get_secret_20_viewing_key(CHAIN_ID, &contract_address).await {
-                        Ok(vk) => {
-                            debug!("Found viewing key for {}!\n{vk}", token.metadata.symbol);
-                            let compute = ComputeQuerier::new(
-                                // wasm_client.get_untracked(),
-                                tonic_web_wasm_client::Client::new(endpoint),
-                                Keplr::get_enigma_utils(CHAIN_ID).into(),
-                            );
-                            let code_hash = compute
-                                .code_hash_by_contract_address(&token.contract_address)
-                                .await
-                                .expect("failed to query the code hash");
-                            debug!(
-                                "contract_address: {}\n\
+
+                    // let Some(Ok(key)) = key else {
+                    //     return Err(Snip20Error::KeplrKey);
+                    // };
+
+                    let key = maybe_key
+                        .and_then(|res| res.ok())
+                        .ok_or(Snip20Error::KeplrKey)?;
+
+                    // let Some(contract_address) = contract_address else {
+                    //     return Err(Snip20Error::NoToken);
+                    // };
+
+                    let contract_address = maybe_contract_address.ok_or(Snip20Error::NoToken)?;
+
+                    // let Some(token) = TOKEN_MAP.get(&contract_address) else {
+                    //     return Err(Snip20Error::UnknownToken);
+                    // };
+
+                    // TODO: if missing, query token info
+                    let token = TOKEN_MAP
+                        .get(&contract_address)
+                        .ok_or(Snip20Error::UnknownToken)?;
+
+                    let vk = Keplr::get_secret_20_viewing_key(CHAIN_ID, &contract_address)
+                        .await
+                        .inspect_err(|err| error!("{err}"))
+                        .map_err(|err| Snip20Error::Generic(err.to_string()))?;
+
+                    debug!("Found viewing key for {}: {}", token.metadata.symbol, vk);
+
+                    let compute = ComputeQuerier::new(
+                        // wasm_client.get_untracked(),
+                        tonic_web_wasm_client::Client::new(endpoint),
+                        Keplr::get_enigma_utils(CHAIN_ID).into(),
+                    );
+
+                    // TODO: make rsecret do this part?
+                    let code_hash = compute
+                        .code_hash_by_contract_address(&token.contract_address)
+                        .await
+                        .expect("failed to query the code hash");
+                    debug!(
+                        "contract_address: {}\n\
                                     code_hash: {}",
-                                &token.contract_address, code_hash
-                            );
-                            let address = key.bech32_address;
-                            let query =
-                                secret_toolkit_snip20::QueryMsg::Balance { address, key: vk };
-                            debug!("query: {query:?}");
-                            let result = compute
-                                .query_secret_contract(&token.contract_address, code_hash, query)
-                                .await
-                                .unwrap();
-                            debug!("{result}");
+                        &token.contract_address, code_hash
+                    );
 
-                            let BalanceResponse { balance } =
-                                serde_json::from_str(&result).unwrap();
+                    let address = key.bech32_address;
+                    let query = secret_toolkit_snip20::QueryMsg::Balance { address, key: vk };
+                    debug!("query: {query:#?}");
 
-                            balance
-                                .amount
-                                .humanize_with_precision(token.metadata.decimals, 3)
+                    // possible responses are:
+                    // {"balance":{"amount":"800000"}}
+                    // {"viewing_key_error":{"msg":"Wrong viewing key for this address or viewing key not set"}}
 
-                            // humanize_token_amount(balance.amount, token.metadata.decimals)
+                    let result = compute
+                        .query_secret_contract(&token.contract_address, code_hash, query)
+                        .await?;
+                    debug!("{result}");
 
-                            // let amount = result.balance.amount.u128();
-                            // let decimals = token.metadata.decimals;
-                            // let factor = 10u128.pow(decimals as u32);
-                            //
-                            // let integer_part = amount / factor;
-                            // let fractional_part = amount % factor;
-                            //
-                            // format!(
-                            //     "{}.{:0width$}",
-                            //     integer_part,
-                            //     fractional_part,
-                            //     width = decimals as usize
-                            // )
+                    let response = serde_json::from_str::<SnipQueryResponse>(&result);
 
-                            // format!(
-                            //     "Balance: {:.precision$}",
-                            //     result,
-                            //     precision = token.metadata.decimals as usize
-                            // )
-                            // Format with fixed decimal places
-                            // format!("Balance: {}", result.balance.amount.to_string())
+                    let Ok(response) = response else {
+                        return Err(Snip20Error::Generic(result));
+                    };
+
+                    match response {
+                        SnipQueryResponse::Balance(balance) => {
+                            // Do something with the balance
+                            Ok(balance.amount.humanize(token.metadata.decimals))
                         }
-                        Err(err) => {
-                            debug!("{}", err.to_string());
-                            "viewing key missing".to_string()
+                        SnipQueryResponse::ViewingKeyError(viewing_key_error) => {
+                            // Handle the viewing key error
+                            Err(Snip20Error::ViewingKeyError(viewing_key_error.msg))
                         }
                     }
                 }
@@ -203,9 +267,37 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
     );
 
     view! {
-        <Suspense fallback=|| view! { "Loading..." }>
-            {move || Suspend::new(async move { token_balance.await })}
-        </Suspense>
+        <div class="snip-balance" on:hover=|_: MouseEvent| ()>
+            <Suspense fallback=|| {
+                view! { "Loading..." }
+            }>
+                {move || Suspend::new(async move {
+                    match token_balance.await.clone() {
+                        Ok(amount) => {
+                            Either::Left(
+                                view! {
+                                    <div class="py-0 px-2 hover:bg-violet-500/20 text-ellipsis text-sm">
+                                        {amount}
+                                    </div>
+                                },
+                            )
+                        }
+                        Err(error) => {
+                            Either::Right(
+                                view! {
+                                    <div
+                                        title=error.to_string()
+                                        class="py-0 px-2 hover:cursor-default hover:bg-violet-500/20 text-ellipsis text-sm"
+                                    >
+                                        "⚠️"
+                                    </div>
+                                },
+                            )
+                        }
+                    }
+                })}
+            </Suspense>
+        </div>
     }
 }
 
@@ -461,13 +553,11 @@ pub fn Trade() -> impl IntoView {
                 <div class="space-y-2">
                     <div class="flex justify-between">
                         <div>"From"</div>
-                        <div class="py-0 px-2 hover:bg-violet-500/20 text-ellipsis text-sm">
                             // "Balance: 👀"
-                        <SnipBalance token_address=token_x.into() />
-        // <Suspense fallback=|| view! { "Loading..." }>
-        //     {move || Suspend::new(async move { token_x_balance.await })}
-        // </Suspense>
-                        </div>
+                            <SnipBalance token_address=token_x.into() />
+                        // <Suspense fallback=|| view! { "Loading..." }>
+                        // {move || Suspend::new(async move { token_x_balance.await })}
+                        // </Suspense>
                     </div>
                     <div class="flex justify-between space-x-2">
                         <input
@@ -496,11 +586,21 @@ pub fn Trade() -> impl IntoView {
                             <option value="" disabled selected>
                                 "Select Token"
                             </option>
-                            <option value="secret1k0jntykt7e4g3y88ltc60czgjuqdy4c9e8fzek">sSCRT</option>
-                            <option value="secret1k6u0cy4feepm6pehnz804zmwakuwdapm69tuc4">"stkd-SCRT"</option>
-                            <option value="secret153wu605vvp934xhd4k9dtd640zsep5jkesstdm">SHD</option>
-                            <option value="secret1fl449muk5yq8dlad7a22nje4p5d2pnsgymhjfd">SILK</option>
-                            <option value="secret1s09x2xvfd2lp2skgzm29w2xtena7s8fq98v852">AMBER</option>
+                            <option value="secret1k0jntykt7e4g3y88ltc60czgjuqdy4c9e8fzek">
+                                sSCRT
+                            </option>
+                            <option value="secret1k6u0cy4feepm6pehnz804zmwakuwdapm69tuc4">
+                                "stkd-SCRT"
+                            </option>
+                            <option value="secret153wu605vvp934xhd4k9dtd640zsep5jkesstdm">
+                                SHD
+                            </option>
+                            <option value="secret1fl449muk5yq8dlad7a22nje4p5d2pnsgymhjfd">
+                                SILK
+                            </option>
+                            <option value="secret1s09x2xvfd2lp2skgzm29w2xtena7s8fq98v852">
+                                AMBER
+                            </option>
                         </select>
                     </div>
                 </div>
@@ -538,11 +638,21 @@ pub fn Trade() -> impl IntoView {
                             <option value="" disabled selected>
                                 "Select Token"
                             </option>
-                            <option value="secret1k0jntykt7e4g3y88ltc60czgjuqdy4c9e8fzek">sSCRT</option>
-                            <option value="secret1k6u0cy4feepm6pehnz804zmwakuwdapm69tuc4">"stkd-SCRT"</option>
-                            <option value="secret153wu605vvp934xhd4k9dtd640zsep5jkesstdm">SHD</option>
-                            <option value="secret1fl449muk5yq8dlad7a22nje4p5d2pnsgymhjfd">SILK</option>
-                            <option value="secret1s09x2xvfd2lp2skgzm29w2xtena7s8fq98v852">AMBER</option>
+                            <option value="secret1k0jntykt7e4g3y88ltc60czgjuqdy4c9e8fzek">
+                                sSCRT
+                            </option>
+                            <option value="secret1k6u0cy4feepm6pehnz804zmwakuwdapm69tuc4">
+                                "stkd-SCRT"
+                            </option>
+                            <option value="secret153wu605vvp934xhd4k9dtd640zsep5jkesstdm">
+                                SHD
+                            </option>
+                            <option value="secret1fl449muk5yq8dlad7a22nje4p5d2pnsgymhjfd">
+                                SILK
+                            </option>
+                            <option value="secret1s09x2xvfd2lp2skgzm29w2xtena7s8fq98v852">
+                                AMBER
+                            </option>
                         </select>
                     </div>
                 </div>
