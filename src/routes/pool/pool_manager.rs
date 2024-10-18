@@ -185,7 +185,7 @@ pub fn PoolManager() -> impl IntoView {
 
     view! {
         <a
-            href="/pool"
+            href="/trader-crow-leptos/pool"
             class="block text-neutral-200/50 text-sm font-bold cursor-pointer no-underline"
         >
             "🡨 Back to pools list"

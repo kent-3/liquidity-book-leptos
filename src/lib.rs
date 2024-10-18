@@ -206,17 +206,17 @@ pub fn App() -> impl IntoView {
                 </div>
                 <hr />
                 <nav>
-                    <A href="/">"Home"</A>
-                    <A href="/pool">"Pool"</A>
-                    <A href="/trade">"Trade"</A>
-                    <A href="/analytics">"Analytics"</A>
+                    <A href="/trader-crow-leptos/">"Home"</A>
+                    <A href="/trader-crow-leptos/pool">"Pool"</A>
+                    <A href="/trader-crow-leptos/trade">"Trade"</A>
+                    <A href="/trader-crow-leptos/analytics">"Analytics"</A>
                 </nav>
                 <hr />
             </header>
             <main class="overflow-x-auto">
                 <Routes fallback=|| "This page could not be found.">
-                    <Route path=path!("/") view=Home />
-                    <ParentRoute path=path!("/pool") view=Pool>
+                    <Route path=path!("/trader-crow-leptos/") view=Home />
+                    <ParentRoute path=path!("/trader-crow-leptos/pool") view=Pool>
                         <Route path=path!("/") view=PoolBrowser />
                         <Route path=path!("/create") view=PoolCreator />
                         <ParentRoute path=path!("/:token_a/:token_b/:bps") view=PoolManager>
@@ -225,7 +225,7 @@ pub fn App() -> impl IntoView {
                             <Route path=path!("/remove") view=RemoveLiquidity />
                         </ParentRoute>
                     </ParentRoute>
-                    <Route path=path!("/trade") view=Trade />
+                    <Route path=path!("/trader-crow-leptos/trade") view=Trade />
                 </Routes>
             </main>
             <LoadingModal when=enable_keplr_action.pending() message="Requesting Connection" />
@@ -314,7 +314,7 @@ pub fn OptionsMenu(
                 <button on:click=toggle_menu class="self-stretch">
                     "Close Menu"
                 </button>
-                <div> "Node Configuration" </div>
+                <div>"Node Configuration"</div>
                 <form class="flex flex-col gap-4" on:submit=on_submit>
                     <input type="text" value=GRPC_URL node_ref=url_input class="w-64" />
                     <input type="text" value=CHAIN_ID node_ref=chain_id_input />

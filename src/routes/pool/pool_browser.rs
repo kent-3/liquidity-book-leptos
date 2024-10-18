@@ -66,7 +66,7 @@ pub fn PoolBrowser() -> impl IntoView {
                     view! {
                         <li>
                             <a href=format!(
-                                "/pool/{}/{}/{}",
+                                "/trader-crow-leptos/pool/{}/{}/{}",
                                 match n.token_x {
                                     TokenType::CustomToken { contract_addr, .. } => {
                                         contract_addr.to_string()
@@ -90,7 +90,7 @@ pub fn PoolBrowser() -> impl IntoView {
         // <h3>{move || resource.get()}</h3>
 
         <div class="mt-4">
-            <A href="/pool/create">
+            <A href="/trader-crow-leptos/pool/create">
                 <button class="p-1">"Create New Pool"</button>
             </A>
         </div>

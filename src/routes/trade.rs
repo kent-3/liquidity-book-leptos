@@ -165,33 +165,11 @@ impl From<SecretError> for Snip20Error {
 }
 
 pub async fn query_snip20_balance(
-    enabled: bool,
-    maybe_key: Option<Result<crate::keplr::Key, crate::Error>>,
-    maybe_contract_address: Option<String>,
+    key: crate::keplr::Key,
+    token: crate::keplr::tokens::ContractInfo,
+    viewing_key: String,
     endpoint: String,
 ) -> Result<String, Snip20Error> {
-    if !enabled {
-        return Err(Snip20Error::KeplrDisabled);
-    }
-
-    let key = maybe_key
-        .and_then(|res| res.ok())
-        .ok_or(Snip20Error::KeplrKey)?;
-
-    let contract_address = maybe_contract_address.ok_or(Snip20Error::NoToken)?;
-
-    // TODO: if missing, query token info (and add it to the map?)
-    let token = TOKEN_MAP
-        .get(&contract_address)
-        .ok_or(Snip20Error::UnknownToken)?;
-
-    let vk = Keplr::get_secret_20_viewing_key(CHAIN_ID, &contract_address)
-        .await
-        .inspect_err(|err| error!("{err:?}"))
-        .map_err(|err| Snip20Error::Generic(err.to_string()))?;
-
-    debug!("Found viewing key for {}: {}", token.metadata.symbol, vk);
-
     let compute = ComputeQuerier::new(
         WebWasmClient::new(endpoint),
         Keplr::get_enigma_utils(CHAIN_ID).into(),
@@ -209,7 +187,10 @@ pub async fn query_snip20_balance(
     );
 
     let address = key.bech32_address;
-    let query = secret_toolkit_snip20::QueryMsg::Balance { address, key: vk };
+    let query = secret_toolkit_snip20::QueryMsg::Balance {
+        address,
+        key: viewing_key,
+    };
 
     debug!("query: {query:#?}");
 
@@ -241,8 +222,6 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
 
     // let (token_map, _) = signal(token_map.0);
 
-    // TODO: this should return a Result<Uint128> instead. That way the value can be manipulated
-    // elsewhere (like changing to full precision on hover).
     let token_balance = Resource::new(
         move || (keplr.enabled.get(), keplr.key.get(), token_address.get()),
         move |(enabled, maybe_key, maybe_contract_address)| {
@@ -250,72 +229,75 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
             let endpoint = endpoint.get();
 
             SendWrapper::new({
-                query_snip20_balance(enabled, maybe_key, maybe_contract_address, endpoint)
-                // async move {
-                //     if !enabled {
-                //         return Err(Snip20Error::KeplrDisabled);
-                //     }
-                //
-                //     let key = maybe_key
-                //         .and_then(|res| res.ok())
-                //         .ok_or(Snip20Error::KeplrKey)?;
-                //
-                //     let contract_address = maybe_contract_address.ok_or(Snip20Error::NoToken)?;
-                //
-                //     // TODO: if missing, query token info (and add it to the map?)
-                //     let token = TOKEN_MAP
-                //         .get(&contract_address)
-                //         .ok_or(Snip20Error::UnknownToken)?;
-                //
-                //     let vk = Keplr::get_secret_20_viewing_key(CHAIN_ID, &contract_address)
-                //         .await
-                //         .inspect_err(|err| error!("{err:?}"))
-                //         .map_err(|err| Snip20Error::Generic(err.to_string()))?;
-                //
-                //     debug!("Found viewing key for {}: {}", token.metadata.symbol, vk);
-                //
-                //     let compute = ComputeQuerier::new(
-                //         WebWasmClient::new(endpoint),
-                //         Keplr::get_enigma_utils(CHAIN_ID).into(),
-                //     );
-                //
-                //     // TODO: make rsecret do this part?
-                //     let code_hash = compute
-                //         .code_hash_by_contract_address(&token.contract_address)
-                //         .await?;
-                //
-                //     debug!(
-                //         "contract_address: {}\n\
-                //                     code_hash: {}",
-                //         &token.contract_address, code_hash
-                //     );
-                //
-                //     let address = key.bech32_address;
-                //     let query = secret_toolkit_snip20::QueryMsg::Balance { address, key: vk };
-                //
-                //     debug!("query: {query:#?}");
-                //
-                //     // possible responses are:
-                //     // {"balance":{"amount":"800000"}}
-                //     // {"viewing_key_error":{"msg":"Wrong viewing key for this address or viewing key not set"}}
-                //
-                //     let response = compute
-                //         .query_secret_contract(&token.contract_address, code_hash, query)
-                //         .await?;
-                //
-                //     debug!("response: {response}");
-                //
-                //     let response = serde_json::from_str::<SnipQueryResponse>(&response)?;
-                //
-                //     match response {
-                //         SnipQueryResponse::Balance(balance) => {
-                //             Ok(balance.amount.humanize(token.metadata.decimals))
-                //         }
-                //         SnipQueryResponse::ViewingKeyError(viewing_key_error) => {
-                //             Err(Snip20Error::ViewingKey(viewing_key_error.msg))
-                //         }
-                //     }
-                // }
+                // query_snip20_balance(enabled, maybe_key, maybe_contract_address, endpoint)
+                async move {
+                    if !enabled {
+                        return Err(Snip20Error::KeplrDisabled);
+                    }
+
+                    let key = maybe_key
+                        .and_then(|res| res.ok())
+                        .ok_or(Snip20Error::KeplrKey)?;
+
+                    let contract_address = maybe_contract_address.ok_or(Snip20Error::NoToken)?;
+
+                    // TODO: if missing, query token info (and add it to the map?)
+                    let token = TOKEN_MAP
+                        .get(&contract_address)
+                        .ok_or(Snip20Error::UnknownToken)?;
+
+                    let vk = Keplr::get_secret_20_viewing_key(CHAIN_ID, &contract_address)
+                        .await
+                        .inspect_err(|err| error!("{err:?}"))
+                        .map_err(|err| Snip20Error::Generic(err.to_string()))?;
+
+                    debug!("Found viewing key for {}: {}", token.metadata.symbol, vk);
+
+                    query_snip20_balance(key, token.clone(), vk, endpoint).await
+
+                    // let compute = ComputeQuerier::new(
+                    //     WebWasmClient::new(endpoint),
+                    //     Keplr::get_enigma_utils(CHAIN_ID).into(),
+                    // );
+                    //
+                    // // TODO: make rsecret do this part?
+                    // let code_hash = compute
+                    //     .code_hash_by_contract_address(&token.contract_address)
+                    //     .await?;
+                    //
+                    // debug!(
+                    //     "contract_address: {}\n\
+                    //                 code_hash: {}",
+                    //     &token.contract_address, code_hash
+                    // );
+                    //
+                    // let address = key.bech32_address;
+                    // let query = secret_toolkit_snip20::QueryMsg::Balance { address, key: vk };
+                    //
+                    // debug!("query: {query:#?}");
+                    //
+                    // // possible responses are:
+                    // // {"balance":{"amount":"800000"}}
+                    // // {"viewing_key_error":{"msg":"Wrong viewing key for this address or viewing key not set"}}
+                    //
+                    // let response = compute
+                    //     .query_secret_contract(&token.contract_address, code_hash, query)
+                    //     .await?;
+                    //
+                    // debug!("response: {response}");
+                    //
+                    // let response = serde_json::from_str::<SnipQueryResponse>(&response)?;
+                    //
+                    // match response {
+                    //     SnipQueryResponse::Balance(balance) => {
+                    //         Ok(balance.amount.humanize(token.metadata.decimals))
+                    //     }
+                    //     SnipQueryResponse::ViewingKeyError(viewing_key_error) => {
+                    //         Err(Snip20Error::ViewingKey(viewing_key_error.msg))
+                    //             .inspect_err(|err| error!("{err}"))
+                    //     }
+                    // }
+                }
             })
         },
     );
@@ -328,9 +310,9 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
                 {move || Suspend::new(async move {
                     match token_balance.await.clone() {
                         Ok(amount) => {
-                            // not sure we even need the Either in this case
                             Either::Left(
                                 view! {
+                                    // not sure we even need the Either in this case
                                     // TODO: copy balance on click
                                     <div
                                         on:click=|_: MouseEvent| ()
@@ -341,7 +323,6 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
                                 },
                             )
                         }
-                        // These error types are mild enough that it's not worth showing an error
                         Err(
                             error @ (Snip20Error::KeplrDisabled
                             | Snip20Error::KeplrKey
@@ -349,6 +330,9 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
                         ) => {
                             Either::Right(
                                 view! {
+                                    // not sure we even need the Either in this case
+                                    // TODO: copy balance on click
+                                    // These error types are mild enough that it's not worth showing an error
                                     <div
                                         title=error.to_string()
                                         class="py-0 px-2 cursor-default text-ellipsis text-sm"
@@ -361,6 +345,9 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
                         Err(error) => {
                             Either::Right(
                                 view! {
+                                    // not sure we even need the Either in this case
+                                    // TODO: copy balance on click
+                                    // These error types are mild enough that it's not worth showing an error
                                     <div
                                         title=error.to_string()
                                         class="py-0 px-2 text-violet-400 text-bold text-sm cursor-default hover:bg-violet-500/20 text-ellipsis"
@@ -513,7 +500,7 @@ pub fn Trade() -> impl IntoView {
     });
 
     view! {
-        <LoadingModal when=swap.pending() message="Preparing Transaction" />
+        <LoadingModal when=swap.pending() message="Preparing Transaction... (watch the console)" />
         <div class="p-2">
             <div class="text-3xl font-bold mb-4">"Trade"</div>
             <div class="container max-w-sm space-y-6">
@@ -617,14 +604,17 @@ pub fn Trade() -> impl IntoView {
                         </select>
                     </div>
                 </div>
-                <button disabled class="p-1 block">"Estimate Swap"</button>
+                <button title="todo!()" disabled class="p-1 block">
+                    "Estimate Swap"
+                </button>
                 <button
                     class="p-1 block"
                     disabled=move || !keplr.enabled.get()
                     on:click=move |_| _ = swap.dispatch(())
                 >
-                    "Swap!"
+                    "Test Transaction!"
                 </button>
+                <span class="text-xs">"(This will send 1 micro sSCRT to yourself)"</span>
             </div>
         </div>
     }
