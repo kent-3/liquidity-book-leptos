@@ -398,115 +398,6 @@ pub fn Trade() -> impl IntoView {
     let (token_x, set_token_x) = query_signal_with_options::<String>("from", nav_options.clone());
     let (token_y, set_token_y) = query_signal_with_options::<String>("to", nav_options.clone());
 
-    // let token_map = Arc::new(token_map.0);
-    let (token_map, _) = signal(token_map.0);
-
-    // let token_x_balance = Resource::new(
-    //     move || (token_x.get(), keplr.enabled.get()),
-    //     move |(contract_address, enabled)| {
-    //         let map = token_map.get();
-    //
-    //         SendWrapper::new({
-    //             async move {
-    //                 if !enabled {
-    //                     return "Balance: 👀".to_string();
-    //                 }
-    //                 let Some(contract_address) = contract_address else {
-    //                     return "Select a token".to_string();
-    //                 };
-    //                 let Some(token) = map.get(&contract_address) else {
-    //                     return "Token not in map".to_string();
-    //                 };
-    //                 match Keplr::get_secret_20_viewing_key(CHAIN_ID, &contract_address).await {
-    //                     Ok(vk) => {
-    //                         debug!("Found viewing key for {}!\n{vk}", token.metadata.symbol);
-    //                         let compute = ComputeQuerier::new(
-    //                             wasm_client.get_untracked(),
-    //                             Keplr::get_enigma_utils(CHAIN_ID).into(),
-    //                         );
-    //                         let code_hash = compute
-    //                             .code_hash_by_contract_address(&token.contract_address)
-    //                             .await
-    //                             .expect("failed to query the code hash");
-    //                         debug!(
-    //                             "contract_address: {}\n\
-    //                                 code_hash: {}",
-    //                             &token.contract_address, code_hash
-    //                         );
-    //                         let address =
-    //                             keplr.key.get_untracked().unwrap().unwrap().bech32_address;
-    //                         let query = secret_toolkit_snip20::QueryMsg::Balance {
-    //                             address: address,
-    //                             key: vk,
-    //                         };
-    //                         debug!("query: {query:?}");
-    //                         let result = compute
-    //                             .query_secret_contract(&token.contract_address, code_hash, query)
-    //                             .await
-    //                             .unwrap();
-    //                         debug!("{result}");
-    //
-    //                         let result: BalanceResponse = serde_json::from_str(&result).unwrap();
-    //                         format!("Balance: {}", result.balance.amount.to_string())
-    //                     }
-    //                     Err(err) => {
-    //                         debug!("{}", err.to_string());
-    //                         "viewing key missing".to_string()
-    //                     }
-    //                 }
-    //             }
-    //         })
-    //     },
-    // );
-
-    let token_y_balance = AsyncDerived::new_unsync({
-        // let map = token_map.clone();
-        move || {
-            // let map = map.clone();
-            let url = endpoint.get();
-            async move {
-                if let Some(token) = token_y.get() {
-                    let map = token_map.get();
-                    let token = map.get(&token).unwrap();
-                    match Keplr::get_secret_20_viewing_key(CHAIN_ID, &token.contract_address).await
-                    {
-                        Ok(vk) => {
-                            debug!("Found viewing key for {}!", token.metadata.symbol);
-                            let compute = ComputeQuerier::new(
-                                WebWasmClient::new(url),
-                                Keplr::get_enigma_utils(CHAIN_ID).into(),
-                            );
-                            let code_hash = compute
-                                .code_hash_by_contract_address(&token.contract_address)
-                                .await
-                                .expect("failed to query the code hash");
-                            let address = keplr.key.get().unwrap().unwrap().bech32_address;
-                            let query = secret_toolkit_snip20::QueryMsg::Balance {
-                                address: address,
-                                key: vk,
-                            };
-                            let result = compute
-                                .query_secret_contract(&token.contract_address, code_hash, query)
-                                .await
-                                .unwrap();
-                            let result: secret_toolkit_snip20::Balance =
-                                serde_json::from_str(&result).unwrap();
-                            let factor = 10u128.pow(token.metadata.decimals as u32);
-                            let result = result.amount.u128() as f64 / factor as f64;
-                            format!("Balance: {}", result.to_string())
-                        }
-                        Err(err) => {
-                            debug!("{}", err.to_string());
-                            "viewing key missing".to_string()
-                        }
-                    }
-                } else {
-                    "Select a token".to_string()
-                }
-            }
-        }
-    });
-
     let (amount_x, set_amount_x) = signal(String::default());
     let (amount_y, set_amount_y) = signal(String::default());
     let (swap_for_y, set_swap_for_y) = signal(true);
@@ -679,9 +570,7 @@ pub fn Trade() -> impl IntoView {
                 <div class="space-y-2">
                     <div class="flex justify-between">
                         <div>"To"</div>
-                        <div class="py-0 px-2 hover:bg-violet-500/20 text-ellipsis">
-                            "Balance: 👀"
-                        </div>
+                        <SnipBalance token_address=token_y.into() />
                     </div>
                     <div class="flex justify-between space-x-2">
                         <input
@@ -728,7 +617,7 @@ pub fn Trade() -> impl IntoView {
                         </select>
                     </div>
                 </div>
-                <button class="p-1 block">"Estimate Swap"</button>
+                <button disabled class="p-1 block">"Estimate Swap"</button>
                 <button
                     class="p-1 block"
                     disabled=move || !keplr.enabled.get()
