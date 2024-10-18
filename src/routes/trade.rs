@@ -9,6 +9,7 @@ use crate::{
 };
 use cosmwasm_std::Uint128;
 use leptos::either::Either;
+use leptos::either::EitherOf3;
 use leptos::{html::Select, prelude::*};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use rsecret::{
@@ -20,7 +21,7 @@ use send_wrapper::SendWrapper;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::sync::Arc;
-use tonic_web_wasm_client::Client;
+use tonic_web_wasm_client::Client as WebWasmClient;
 use tracing::{debug, info};
 use web_sys::MouseEvent;
 
@@ -135,12 +136,12 @@ pub enum Snip20Error {
     #[error("Token not in map!")]
     UnknownToken,
 
-    #[error("Secret Client error: {0}")]
-    SecretError(String),
+    #[error("Secret Client error: {0}!")]
+    SecretClient(String),
 
     // #[error("Wrong viewing key for this address or viewing key not set")]
-    #[error("{0}")]
-    ViewingKeyError(String),
+    #[error("{0}!")]
+    ViewingKey(String),
 }
 
 impl Snip20Error {
@@ -159,7 +160,76 @@ impl From<SerdeJsonError> for Snip20Error {
 use rsecret::Error as SecretError;
 impl From<SecretError> for Snip20Error {
     fn from(err: SecretError) -> Self {
-        Snip20Error::SecretError(err.to_string())
+        Snip20Error::SecretClient(err.to_string())
+    }
+}
+
+pub async fn query_snip20_balance(
+    enabled: bool,
+    maybe_key: Option<Result<crate::keplr::Key, crate::Error>>,
+    maybe_contract_address: Option<String>,
+    endpoint: String,
+) -> Result<String, Snip20Error> {
+    if !enabled {
+        return Err(Snip20Error::KeplrDisabled);
+    }
+
+    let key = maybe_key
+        .and_then(|res| res.ok())
+        .ok_or(Snip20Error::KeplrKey)?;
+
+    let contract_address = maybe_contract_address.ok_or(Snip20Error::NoToken)?;
+
+    // TODO: if missing, query token info (and add it to the map?)
+    let token = TOKEN_MAP
+        .get(&contract_address)
+        .ok_or(Snip20Error::UnknownToken)?;
+
+    let vk = Keplr::get_secret_20_viewing_key(CHAIN_ID, &contract_address)
+        .await
+        .inspect_err(|err| error!("{err:?}"))
+        .map_err(|err| Snip20Error::Generic(err.to_string()))?;
+
+    debug!("Found viewing key for {}: {}", token.metadata.symbol, vk);
+
+    let compute = ComputeQuerier::new(
+        WebWasmClient::new(endpoint),
+        Keplr::get_enigma_utils(CHAIN_ID).into(),
+    );
+
+    // TODO: make rsecret do this part?
+    let code_hash = compute
+        .code_hash_by_contract_address(&token.contract_address)
+        .await?;
+
+    debug!(
+        "contract_address: {}\n\
+                                    code_hash: {}",
+        &token.contract_address, code_hash
+    );
+
+    let address = key.bech32_address;
+    let query = secret_toolkit_snip20::QueryMsg::Balance { address, key: vk };
+
+    debug!("query: {query:#?}");
+
+    // possible responses are:
+    // {"balance":{"amount":"800000"}}
+    // {"viewing_key_error":{"msg":"Wrong viewing key for this address or viewing key not set"}}
+
+    let response = compute
+        .query_secret_contract(&token.contract_address, code_hash, query)
+        .await?;
+
+    debug!("response: {response}");
+
+    let response = serde_json::from_str::<SnipQueryResponse>(&response)?;
+
+    match response {
+        SnipQueryResponse::Balance(balance) => Ok(balance.amount.humanize(token.metadata.decimals)),
+        SnipQueryResponse::ViewingKeyError(viewing_key_error) => {
+            Err(Snip20Error::ViewingKey(viewing_key_error.msg)).inspect_err(|err| error!("{err}"))
+        }
     }
 }
 
@@ -180,88 +250,72 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
             let endpoint = endpoint.get();
 
             SendWrapper::new({
-                async move {
-                    if !enabled {
-                        return Err(Snip20Error::KeplrDisabled);
-                    }
-
-                    // let Some(Ok(key)) = key else {
-                    //     return Err(Snip20Error::KeplrKey);
-                    // };
-
-                    let key = maybe_key
-                        .and_then(|res| res.ok())
-                        .ok_or(Snip20Error::KeplrKey)?;
-
-                    // let Some(contract_address) = contract_address else {
-                    //     return Err(Snip20Error::NoToken);
-                    // };
-
-                    let contract_address = maybe_contract_address.ok_or(Snip20Error::NoToken)?;
-
-                    // let Some(token) = TOKEN_MAP.get(&contract_address) else {
-                    //     return Err(Snip20Error::UnknownToken);
-                    // };
-
-                    // TODO: if missing, query token info
-                    let token = TOKEN_MAP
-                        .get(&contract_address)
-                        .ok_or(Snip20Error::UnknownToken)?;
-
-                    let vk = Keplr::get_secret_20_viewing_key(CHAIN_ID, &contract_address)
-                        .await
-                        .inspect_err(|err| error!("{err}"))
-                        .map_err(|err| Snip20Error::Generic(err.to_string()))?;
-
-                    debug!("Found viewing key for {}: {}", token.metadata.symbol, vk);
-
-                    let compute = ComputeQuerier::new(
-                        // wasm_client.get_untracked(),
-                        tonic_web_wasm_client::Client::new(endpoint),
-                        Keplr::get_enigma_utils(CHAIN_ID).into(),
-                    );
-
-                    // TODO: make rsecret do this part?
-                    let code_hash = compute
-                        .code_hash_by_contract_address(&token.contract_address)
-                        .await
-                        .expect("failed to query the code hash");
-                    debug!(
-                        "contract_address: {}\n\
-                                    code_hash: {}",
-                        &token.contract_address, code_hash
-                    );
-
-                    let address = key.bech32_address;
-                    let query = secret_toolkit_snip20::QueryMsg::Balance { address, key: vk };
-                    debug!("query: {query:#?}");
-
-                    // possible responses are:
-                    // {"balance":{"amount":"800000"}}
-                    // {"viewing_key_error":{"msg":"Wrong viewing key for this address or viewing key not set"}}
-
-                    let result = compute
-                        .query_secret_contract(&token.contract_address, code_hash, query)
-                        .await?;
-                    debug!("{result}");
-
-                    let response = serde_json::from_str::<SnipQueryResponse>(&result);
-
-                    let Ok(response) = response else {
-                        return Err(Snip20Error::Generic(result));
-                    };
-
-                    match response {
-                        SnipQueryResponse::Balance(balance) => {
-                            // Do something with the balance
-                            Ok(balance.amount.humanize(token.metadata.decimals))
-                        }
-                        SnipQueryResponse::ViewingKeyError(viewing_key_error) => {
-                            // Handle the viewing key error
-                            Err(Snip20Error::ViewingKeyError(viewing_key_error.msg))
-                        }
-                    }
-                }
+                query_snip20_balance(enabled, maybe_key, maybe_contract_address, endpoint)
+                // async move {
+                //     if !enabled {
+                //         return Err(Snip20Error::KeplrDisabled);
+                //     }
+                //
+                //     let key = maybe_key
+                //         .and_then(|res| res.ok())
+                //         .ok_or(Snip20Error::KeplrKey)?;
+                //
+                //     let contract_address = maybe_contract_address.ok_or(Snip20Error::NoToken)?;
+                //
+                //     // TODO: if missing, query token info (and add it to the map?)
+                //     let token = TOKEN_MAP
+                //         .get(&contract_address)
+                //         .ok_or(Snip20Error::UnknownToken)?;
+                //
+                //     let vk = Keplr::get_secret_20_viewing_key(CHAIN_ID, &contract_address)
+                //         .await
+                //         .inspect_err(|err| error!("{err:?}"))
+                //         .map_err(|err| Snip20Error::Generic(err.to_string()))?;
+                //
+                //     debug!("Found viewing key for {}: {}", token.metadata.symbol, vk);
+                //
+                //     let compute = ComputeQuerier::new(
+                //         WebWasmClient::new(endpoint),
+                //         Keplr::get_enigma_utils(CHAIN_ID).into(),
+                //     );
+                //
+                //     // TODO: make rsecret do this part?
+                //     let code_hash = compute
+                //         .code_hash_by_contract_address(&token.contract_address)
+                //         .await?;
+                //
+                //     debug!(
+                //         "contract_address: {}\n\
+                //                     code_hash: {}",
+                //         &token.contract_address, code_hash
+                //     );
+                //
+                //     let address = key.bech32_address;
+                //     let query = secret_toolkit_snip20::QueryMsg::Balance { address, key: vk };
+                //
+                //     debug!("query: {query:#?}");
+                //
+                //     // possible responses are:
+                //     // {"balance":{"amount":"800000"}}
+                //     // {"viewing_key_error":{"msg":"Wrong viewing key for this address or viewing key not set"}}
+                //
+                //     let response = compute
+                //         .query_secret_contract(&token.contract_address, code_hash, query)
+                //         .await?;
+                //
+                //     debug!("response: {response}");
+                //
+                //     let response = serde_json::from_str::<SnipQueryResponse>(&response)?;
+                //
+                //     match response {
+                //         SnipQueryResponse::Balance(balance) => {
+                //             Ok(balance.amount.humanize(token.metadata.decimals))
+                //         }
+                //         SnipQueryResponse::ViewingKeyError(viewing_key_error) => {
+                //             Err(Snip20Error::ViewingKey(viewing_key_error.msg))
+                //         }
+                //     }
+                // }
             })
         },
     );
@@ -269,15 +323,37 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
     view! {
         <div class="snip-balance" on:hover=|_: MouseEvent| ()>
             <Suspense fallback=|| {
-                view! { "Loading..." }
+                view! { <div class="py-0 px-2 text-ellipsis text-sm">"Loading..."</div> }
             }>
                 {move || Suspend::new(async move {
                     match token_balance.await.clone() {
                         Ok(amount) => {
+                            // not sure we even need the Either in this case
                             Either::Left(
                                 view! {
-                                    <div class="py-0 px-2 hover:bg-violet-500/20 text-ellipsis text-sm">
+                                    // TODO: copy balance on click
+                                    <div
+                                        on:click=|_: MouseEvent| ()
+                                        class="py-0 px-2 hover:bg-violet-500/20 text-ellipsis text-sm"
+                                    >
                                         {amount}
+                                    </div>
+                                },
+                            )
+                        }
+                        // These error types are mild enough that it's not worth showing an error
+                        Err(
+                            error @ (Snip20Error::KeplrDisabled
+                            | Snip20Error::KeplrKey
+                            | Snip20Error::NoToken),
+                        ) => {
+                            Either::Right(
+                                view! {
+                                    <div
+                                        title=error.to_string()
+                                        class="py-0 px-2 cursor-default text-ellipsis text-sm"
+                                    >
+                                        "Balance: 👀"
                                     </div>
                                 },
                             )
@@ -287,9 +363,9 @@ pub fn SnipBalance(token_address: Signal<Option<String>>) -> impl IntoView {
                                 view! {
                                     <div
                                         title=error.to_string()
-                                        class="py-0 px-2 hover:cursor-default hover:bg-violet-500/20 text-ellipsis text-sm"
+                                        class="py-0 px-2 text-violet-400 text-bold text-sm cursor-default hover:bg-violet-500/20 text-ellipsis"
                                     >
-                                        "⚠️"
+                                        "Error 🛈"
                                     </div>
                                 },
                             )
@@ -397,7 +473,7 @@ pub fn Trade() -> impl IntoView {
                         Ok(vk) => {
                             debug!("Found viewing key for {}!", token.metadata.symbol);
                             let compute = ComputeQuerier::new(
-                                Client::new(url),
+                                WebWasmClient::new(url),
                                 Keplr::get_enigma_utils(CHAIN_ID).into(),
                             );
                             let code_hash = compute
@@ -553,11 +629,7 @@ pub fn Trade() -> impl IntoView {
                 <div class="space-y-2">
                     <div class="flex justify-between">
                         <div>"From"</div>
-                            // "Balance: 👀"
-                            <SnipBalance token_address=token_x.into() />
-                        // <Suspense fallback=|| view! { "Loading..." }>
-                        // {move || Suspend::new(async move { token_x_balance.await })}
-                        // </Suspense>
+                        <SnipBalance token_address=token_x.into() />
                     </div>
                     <div class="flex justify-between space-x-2">
                         <input

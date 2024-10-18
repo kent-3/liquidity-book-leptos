@@ -270,10 +270,11 @@ pub fn OptionsMenu(
 ) -> impl IntoView {
     info!("rendering <OptionsMenu/>");
 
-    // let dialog_ref = NodeRef::<Dialog>::new();
-    let input_element = NodeRef::<Input>::new();
+    let url_input = NodeRef::<Input>::new();
+    let chain_id_input = NodeRef::<Input>::new();
 
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
+    let chain_id = use_context::<ChainId>().expect("chain id context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
 
     let disable_keplr = move |_| {
@@ -285,11 +286,8 @@ pub fn OptionsMenu(
     let on_submit = move |ev: leptos::ev::SubmitEvent| {
         // stop the page from reloading!
         ev.prevent_default();
-
-        debug!("updating wasm_client grpc_url");
-
         // here, we'll extract the value from the input
-        let value = input_element
+        let value = url_input
             .get()
             // event handlers can only fire after the view
             // is mounted to the DOM, so the `NodeRef` will be `Some`
@@ -299,7 +297,13 @@ pub fn OptionsMenu(
             // this means we can call`HtmlInputElement::value()`
             // to get the current value of the input
             .value();
-        endpoint.set(value)
+        endpoint.set(value);
+
+        let value = chain_id_input
+            .get()
+            .expect("<input> should be mounted")
+            .value();
+        chain_id.set(value);
     };
 
     view! {
@@ -310,9 +314,11 @@ pub fn OptionsMenu(
                 <button on:click=toggle_menu class="self-stretch">
                     "Close Menu"
                 </button>
-                <form class="flex gap-4" on:submit=on_submit>
-                    <input type="text" value=GRPC_URL node_ref=input_element />
-                    <input type="submit" value="Submit" class="min-w-fit" />
+                <div> "Node Configuration" </div>
+                <form class="flex flex-col gap-4" on:submit=on_submit>
+                    <input type="text" value=GRPC_URL node_ref=url_input class="w-64" />
+                    <input type="text" value=CHAIN_ID node_ref=chain_id_input />
+                    <input type="submit" value="Update" class="" />
                 </form>
                 <button
                     on:click=disable_keplr

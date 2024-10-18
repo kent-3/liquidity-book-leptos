@@ -32,6 +32,10 @@ body {
   @apply bg-neutral-900 text-neutral-200;
 }
 
+::selection {
+  @apply bg-violet-600 text-white;
+}
+
 a[aria-current] {
   font-weight: bold;
 }
