@@ -1,3 +1,4 @@
+use crate::components::SecretQuery;
 use crate::{
     constants::{CHAIN_ID, GRPC_URL},
     error::Error,
@@ -278,7 +279,9 @@ pub fn PoolManager() -> impl IntoView {
             SendWrapper::new(async move {
                 let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
                 let id = active_id.await?;
-                query_total_supply(&lb_pair_contract, id).await
+                query_total_supply(&lb_pair_contract, id)
+                    .await
+                    .map(|x| format!("{x:?}"))
             })
         },
     );
@@ -372,6 +375,7 @@ pub fn PoolManager() -> impl IntoView {
                         {move || Suspend::new(async move { next_non_empty_bin.await })}
                     </li>
                 </Suspense>
+                <SecretQuery query=bin_total_supply />
             </ul>
         </details>
 
