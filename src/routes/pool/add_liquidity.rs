@@ -2,7 +2,8 @@ use crate::state::*;
 use leptos::prelude::*;
 use leptos_router::{
     components::A,
-    hooks::{use_params, use_params_map, use_query_map},
+    hooks::{query_signal_with_options, use_params, use_params_map, use_query_map},
+    NavigateOptions,
 };
 use rsecret::query::tendermint::TendermintQuerier;
 use send_wrapper::SendWrapper;
@@ -39,7 +40,15 @@ pub fn AddLiquidity() -> impl IntoView {
     let token_a = move || params.read().get("token_a").unwrap_or("foo".to_string());
     let token_b = move || params.read().get("token_b").unwrap_or("bar".to_string());
     let basis_points = move || params.read().get("bps").unwrap_or("100".to_string());
-    // TODO: use a HashMap to translate token name/address to ContractInfo
+
+    // prevents scrolling to the top of the page each time a query param changes
+    let nav_options = NavigateOptions {
+        scroll: false,
+        ..Default::default()
+    };
+
+    let (price_option, set_price_option) =
+        query_signal_with_options::<String>("price", nav_options.clone());
 
     // TODO: use a lb_factory query to get the lb_pair contract info
     let lb_pair_information = Resource::new(
@@ -93,13 +102,13 @@ pub fn AddLiquidity() -> impl IntoView {
     );
 
     let query = use_query_map();
-    let price = move || query.read().get("price").unwrap_or("radius".to_string());
+    let price = move || price_option.get().unwrap_or("by_radius".to_string());
 
     let (token_x_amount, set_token_x_amount) = signal("0".to_string());
     let (token_y_amount, set_token_y_amount) = signal("0".to_string());
     let (liquidity_shape, set_liquidity_shape) = signal("uniform".to_string());
 
-    let liquidity_configuration_preset = match liquidity_shape.get().as_ref() {
+    let liquidity_configuration_preset = match liquidity_shape.get_untracked().as_ref() {
         "uniform" => SPOT_UNIFORM.clone(),
         "curve" => CURVE.clone(),
         "bid-ask" => BID_ASK.clone(),
@@ -296,17 +305,17 @@ pub fn AddLiquidity() -> impl IntoView {
             </select>
             <div class="flex items-center gap-2 !mt-6">
                 <div class="text-xl font-semibold mr-auto">Price</div>
-                <A href="?price=range">
-                    <button>By Range</button>
-                </A>
-                <A href="?price=radius">
-                    <button>By Radius</button>
-                </A>
+                <button on:click=move |_| {
+                    set_price_option.set(Some("by_range".to_string()));
+                }>"By Range"</button>
+                <button on:click=move |_| {
+                    set_price_option.set(Some("by_radius".to_string()));
+                }>"By Radius"</button>
             </div>
-            <Show when=move || price() == "range">
+            <Show when=move || price() == "by_range">
                 <div class="font-mono">"todo!()"</div>
             </Show>
-            <Show when=move || price() == "radius">
+            <Show when=move || price() == "by_radius">
                 <div class="flex items-center gap-2">
                     <div class="basis-1/3">"Target Price:"</div>
                     <input
