@@ -20,16 +20,14 @@ pub static TOKEN_MAP: LazyLock<HashMap<String, ContractInfo>> = LazyLock::new(||
 pub static WEB_WASM_CLIENT: LazyLock<WebWasmClient> =
     LazyLock::new(|| WebWasmClient::new(GRPC_URL.to_string()));
 
-pub static COMPUTE_QUERY: LazyLock<ComputeQuerier<WebWasmClient, EnigmaUtils>> =
-    LazyLock::new(|| {
-        ComputeQuerier::new(
-            // WebWasmClient::new(GRPC_URL.to_string()),
-            WEB_WASM_CLIENT.clone(),
-            EnigmaUtils::new(None, CHAIN_ID)
-                .expect("Failed to create EnigmaUtils")
-                .into(),
-        )
-    });
+pub static ENIGMA_UTILS: LazyLock<Arc<EnigmaUtils>> = LazyLock::new(|| {
+    EnigmaUtils::new(None, CHAIN_ID)
+        .expect("Failed to create EnigmaUtils")
+        .into()
+});
+
+pub static COMPUTE_QUERIER: LazyLock<ComputeQuerier<WebWasmClient, EnigmaUtils>> =
+    LazyLock::new(|| ComputeQuerier::new(WEB_WASM_CLIENT.clone(), ENIGMA_UTILS.clone()));
 
 pub fn compute_querier(
     url: impl Into<String>,

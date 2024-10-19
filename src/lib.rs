@@ -14,17 +14,16 @@ use leptos::{
 };
 use leptos_router::components::{ParentRoute, Route, Router, Routes, A};
 use leptos_router_macro::path;
-use secret_toolkit_snip20::{QueryMsg, TokenInfoResponse};
-use send_wrapper::SendWrapper;
-use tonic_web_wasm_client::Client;
-use tracing::{debug, error, info};
-use web_sys::{js_sys, wasm_bindgen::JsValue};
-
 use rsecret::{
     query::{bank::BankQuerier, compute::ComputeQuerier},
     secret_client::CreateQuerierOptions,
 };
+use secret_toolkit_snip20::{QueryMsg, TokenInfoResponse};
 use secretrs::utils::EnigmaUtils;
+use send_wrapper::SendWrapper;
+use tonic_web_wasm_client::Client;
+use tracing::{debug, error, info};
+use web_sys::{js_sys, wasm_bindgen::JsValue};
 
 mod components;
 mod constants;
