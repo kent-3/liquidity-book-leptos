@@ -15,7 +15,7 @@ use leptos_router::nested_router::Outlet;
 use send_wrapper::SendWrapper;
 use tracing::{debug, info};
 
-use crate::liquidity_book::Querier;
+use crate::liquidity_book::{constants::addrs::LB_FACTORY_CONTRACT, Querier};
 use shade_protocol::contract_interfaces::liquidity_book::lb_factory::QueryMsg;
 
 #[component]
@@ -29,7 +29,11 @@ pub fn Pool() -> impl IntoView {
     // Resources in this component can be shared with all children, so they only run once and are
     // persistent. This is just an example:
     let resource = LocalResource::new(move || {
-        SendWrapper::new(async move { QueryMsg::GetNumberOfLbPairs {}.do_query().await })
+        SendWrapper::new(async move {
+            QueryMsg::GetNumberOfLbPairs {}
+                .do_query(&LB_FACTORY_CONTRACT)
+                .await
+        })
     });
 
     provide_context(resource);

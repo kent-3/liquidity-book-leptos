@@ -1,13 +1,17 @@
 use crate::{
     liquidity_book::{
-        constants::liquidity_config::{
-            LiquidityConfiguration, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
+        constants::{
+            addrs::{LB_FACTORY_CONTRACT, LB_PAIR_CONTRACT},
+            liquidity_config::{
+                LiquidityConfiguration, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
+            },
         },
         contract_interfaces::{
             lb_factory,
             // TODO: rename all LB* to Lb*
             lb_pair::{self, LBPair, LBPairInformation, LiquidityParameters},
         },
+        Querier,
     },
     state::*,
 };
@@ -78,12 +82,19 @@ pub fn AddLiquidity() -> impl IntoView {
                     bin_step,
                 };
 
+                let response = query.do_query(&LB_FACTORY_CONTRACT).await;
+
+                debug!("response: {response}");
+
+                let response = serde_json::from_str::<LbPairInformationResponse>(&response)
+                    .expect("Unexpected response!");
+
                 let LbPairInformationResponse {
                     lb_pair_information,
                 } = LbPairInformationResponse {
                     lb_pair_information: LBPairInformation {
                         bin_step: 100,
-                        info: LBPair {
+                        lb_pair: LBPair {
                             token_x,
                             token_y,
                             bin_step: 100,
@@ -154,8 +165,8 @@ pub fn AddLiquidity() -> impl IntoView {
             .get()
             .expect("Unverified LB Pair information");
         // TODO: awkward naming... lb_pair_information.info is type LbPair
-        let token_x = lb_pair_information.info.token_x;
-        let token_y = lb_pair_information.info.token_y;
+        let token_x = lb_pair_information.lb_pair.token_x;
+        let token_y = lb_pair_information.lb_pair.token_y;
         let bin_step = lb_pair_information.bin_step;
 
         let amount_x = token_x_amount.get();

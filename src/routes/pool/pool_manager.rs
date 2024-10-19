@@ -1,14 +1,30 @@
-use crate::state::*;
+use crate::{
+    constants::{CHAIN_ID, GRPC_URL},
+    liquidity_book::constants::addrs::{LB_FACTORY_CONTRACT, LB_PAIR_CONTRACT},
+    prelude::TOKEN_MAP,
+    state::*,
+};
+use cosmwasm_std::{Addr, ContractInfo};
 use leptos::prelude::*;
 use leptos_router::{
     components::A,
     hooks::{use_params, use_params_map, use_query_map},
     nested_router::Outlet,
 };
+use rsecret::query::compute::ComputeQuerier;
+use secretrs::utils::EnigmaUtils;
 use send_wrapper::SendWrapper;
-use shade_protocol::liquidity_book::lb_pair::{
-    ActiveIdResponse, BinResponse, NextNonEmptyBinResponse, TotalSupplyResponse,
+use shade_protocol::{
+    liquidity_book::{
+        lb_factory,
+        lb_pair::{
+            ActiveIdResponse, BinResponse, LBPairInformation, NextNonEmptyBinResponse,
+            TotalSupplyResponse,
+        },
+    },
+    swap::core::TokenType,
 };
+use tonic_web_wasm_client::Client as WebWasmClient;
 use tracing::{debug, info};
 
 #[component]
@@ -18,6 +34,21 @@ pub fn PoolManager() -> impl IntoView {
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
+
+    let params = use_params_map();
+    let token_a = move || {
+        params
+            .read()
+            .get("token_a")
+            .expect("Missing token_a URL param")
+    };
+    let token_b = move || {
+        params
+            .read()
+            .get("token_b")
+            .expect("Missing token_b URL param")
+    };
+    let basis_points = move || params.read().get("bps").expect("Missing bps URL param");
 
     // whenever the key store changes, this will re-set 'is_keplr_enabled' to true, triggering a
     // reload of everything subscribed to that signal
@@ -30,26 +61,6 @@ pub fn PoolManager() -> impl IntoView {
         info!("cleaning up <PoolManager/>");
         keplr_keystorechange_handle.remove()
     });
-
-    let params = use_params_map();
-    let token_a = move || {
-        params
-            .read()
-            .get("token_a")
-            .unwrap_or_else(|| "foo".to_string())
-    };
-    let token_b = move || {
-        params
-            .read()
-            .get("token_b")
-            .unwrap_or_else(|| "bar".to_string())
-    };
-    let basis_points = move || {
-        params
-            .read()
-            .get("basis_points")
-            .unwrap_or_else(|| "100".to_string())
-    };
 
     // let resource = Resource::new(
     //     move || (token_a(), token_b(), basis_points()),
@@ -92,22 +103,56 @@ pub fn PoolManager() -> impl IntoView {
         pub bin_reserve_y: String,
     }
 
+    async fn addr_2_contract(contract_address: impl Into<String>) -> Result<ContractInfo> {
+        let contract_address = contract_address.into();
+        let client = WebWasmClient::new(GRPC_URL.to_string());
+        let encryption_utils = EnigmaUtils::new(None, CHAIN_ID).unwrap();
+        let compute = ComputeQuerier::new(client, encryption_utils.into());
+        let contract_info = compute
+            .code_hash_by_contract_address(contract_address.clone())
+            .await
+            .map(|code_hash| ContractInfo {
+                address: Addr::unchecked(contract_address),
+                code_hash,
+            })?;
+
+        Ok(contract_info)
+    }
+
     // TODO: Move these to a separate module
+    async fn query_lb_pair_information(
+        token_x: ContractInfo,
+        token_y: ContractInfo,
+        bin_step: u16,
+    ) -> lb_factory::LbPairInformationResponse {
+        let response = lb_factory::QueryMsg::GetLbPairInformation {
+            token_x: token_x.into(),
+            token_y: token_y.into(),
+            bin_step,
+        }
+        .do_query(&LB_FACTORY_CONTRACT)
+        .await;
+        debug!("{:?}", response);
+        serde_json::from_str::<lb_factory::LbPairInformationResponse>(&response)
+            .expect("Failed to deserialize LbPairInformationResponse!")
+    }
     async fn query_reserves() -> ReservesResponse {
-        let response = QueryMsg::GetReserves {}.do_query().await;
+        let response = QueryMsg::GetReserves {}.do_query(&LB_PAIR_CONTRACT).await;
         debug!("{:?}", response);
         serde_json::from_str::<ReservesResponse>(&response)
             .expect("Failed to deserialize ReservesResponse!")
     }
     async fn query_active_id() -> u32 {
-        let response = QueryMsg::GetActiveId {}.do_query().await;
+        let response = QueryMsg::GetActiveId {}.do_query(&LB_PAIR_CONTRACT).await;
         debug!("{:?}", response);
         serde_json::from_str::<ActiveIdResponse>(&response)
             .expect("Failed to deserialize ActiveIdResponse!")
             .active_id
     }
     async fn query_bin_reserves(id: u32) -> BinResponse {
-        let response = QueryMsg::GetBinReserves { id }.do_query().await;
+        let response = QueryMsg::GetBinReserves { id }
+            .do_query(&LB_PAIR_CONTRACT)
+            .await;
         debug!("{:?}", response);
         serde_json::from_str::<BinResponse>(&response).expect("Failed to deserialize BinResponse!")
     }
@@ -116,7 +161,7 @@ pub fn PoolManager() -> impl IntoView {
             swap_for_y: true,
             id,
         }
-        .do_query()
+        .do_query(&LB_PAIR_CONTRACT)
         .await;
         debug!("{:?}", response);
         serde_json::from_str::<NextNonEmptyBinResponse>(&response)
@@ -126,13 +171,41 @@ pub fn PoolManager() -> impl IntoView {
     // TODO: Figure out why this number is so huge, for example:
     //       12243017097593870802128434755484640756287535340
     async fn query_total_supply(id: u32) -> String {
-        let response = QueryMsg::TotalSupply { id }.do_query().await;
+        let response = QueryMsg::TotalSupply { id }
+            .do_query(&LB_PAIR_CONTRACT)
+            .await;
         debug!("{:?}", response);
         serde_json::from_str::<TotalSupplyResponse>(&response)
             .expect("Failed to deserialize TotalSupplyResponse!")
             .total_supply
             .to_string()
     }
+
+    let lb_pair_information = Resource::new(
+        move || (token_a(), token_b(), basis_points()),
+        move |(token_a, token_b, basis_points)| {
+            SendWrapper::new(async move {
+                // let token_x = addr_2_contract(token_a).await.unwrap();
+                // let token_y = addr_2_contract(token_b).await.unwrap();
+                let token_x = ContractInfo {
+                    address: Addr::unchecked(token_a),
+                    code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
+                        .to_string(),
+                };
+                let token_y = ContractInfo {
+                    address: Addr::unchecked(token_b),
+                    code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
+                        .to_string(),
+                };
+                let bin_step = basis_points.parse::<u16>().unwrap();
+                query_lb_pair_information(token_x, token_y, bin_step)
+                    .await
+                    .lb_pair_information
+            })
+        },
+    );
+
+    Effect::new(move |_| debug!("{:?}", lb_pair_information.get()));
 
     let total_reserves = Resource::new(
         // move || (token_a(), token_b(), basis_points()),

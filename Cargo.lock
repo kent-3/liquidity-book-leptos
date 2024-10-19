@@ -614,7 +614,6 @@ checksum = "f67855af358fcb20fac58f9d714c94e2b228fe5694c1c9b4ead4a366343eda1b"
 [[package]]
 name = "contract-derive"
 version = "0.1.0"
-source = "git+https://github.com/securesecrets/shade.git?branch=orderbook/library#30c3bcae81b26f5b228a62984d1caad32e27ceb8"
 dependencies = [
  "syn 1.0.109",
 ]
@@ -1969,6 +1968,20 @@ name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+
+[[package]]
+name = "lb-libraries"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema 2.1.4",
+ "ethnum",
+ "primitive-types",
+ "schemars",
+ "secret-cosmwasm-std",
+ "secret-toolkit",
+ "serde",
+ "thiserror",
+]
 
 [[package]]
 name = "lb-libraries"
@@ -3563,7 +3576,6 @@ dependencies = [
 [[package]]
 name = "shade-protocol"
 version = "0.1.0"
-source = "git+https://github.com/securesecrets/shade.git?branch=orderbook/library#30c3bcae81b26f5b228a62984d1caad32e27ceb8"
 dependencies = [
  "base64 0.12.3",
  "chrono",
@@ -3571,7 +3583,7 @@ dependencies = [
  "contract-derive",
  "cosmwasm-schema 1.5.8",
  "ethnum",
- "lb-libraries",
+ "lb-libraries 0.1.0",
  "primitive-types",
  "query-authentication",
  "rand_chacha 0.2.2",
@@ -4226,7 +4238,7 @@ dependencies = [
  "futures",
  "git2",
  "keplr-sys",
- "lb-libraries",
+ "lb-libraries 0.1.0 (git+https://github.com/securesecrets/shade.git?branch=orderbook/library)",
  "leptos",
  "leptos_meta",
  "leptos_router",

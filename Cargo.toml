@@ -84,6 +84,9 @@ rsecret = { git = "https://github.com/kent-3/secret-clients" }
 shade-protocol = { git = "https://github.com/securesecrets/shade.git", branch = "orderbook/library", features = ["liquidity-book"] }
 lb-libraries = { git = "https://github.com/securesecrets/shade.git", branch = "orderbook/library" }
 
+[patch."https://github.com/securesecrets/shade.git"]
+shade-protocol = { path = "../shade/packages/shade_protocol" }
+
 # Uncomment during local development
 # [patch.crates-io]
 # keplr-sys = { path = "../keplr/keplr-sys" }
