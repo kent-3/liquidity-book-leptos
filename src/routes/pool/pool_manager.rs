@@ -1,5 +1,6 @@
 use crate::{
     constants::{CHAIN_ID, GRPC_URL},
+    error::Error,
     liquidity_book::constants::addrs::{LB_FACTORY_CONTRACT, LB_PAIR_CONTRACT},
     prelude::TOKEN_MAP,
     state::*,
@@ -119,69 +120,90 @@ pub fn PoolManager() -> impl IntoView {
         Ok(contract_info)
     }
 
-    // TODO: Move these to a separate module
+    // TODO: Move these to a separate module. IDK if it's worth splitting up the query functions
+    // from the resources.
+
+    // TODO: Each response can be either the specific expected response struct, or any of the potential
+    // error types within the contract. Figure out how to handle this.
+
     async fn query_lb_pair_information(
         token_x: ContractInfo,
         token_y: ContractInfo,
         bin_step: u16,
-    ) -> lb_factory::LbPairInformationResponse {
-        let response = lb_factory::QueryMsg::GetLbPairInformation {
+    ) -> Result<lb_factory::LbPairInformationResponse, Error> {
+        lb_factory::QueryMsg::GetLbPairInformation {
             token_x: token_x.into(),
             token_y: token_y.into(),
             bin_step,
         }
         .do_query(&LB_FACTORY_CONTRACT)
-        .await;
-        debug!("{:?}", response);
-        serde_json::from_str::<lb_factory::LbPairInformationResponse>(&response)
-            .expect("Failed to deserialize LbPairInformationResponse!")
+        .await
+        .inspect(|response| debug!("{:?}", response))
+        .and_then(|response| {
+            Ok(serde_json::from_str::<lb_factory::LbPairInformationResponse>(&response)?)
+        })
+        // serde_json::from_str::<lb_factory::LbPairInformationResponse>(&response)
+        //     .expect("Failed to deserialize LbPairInformationResponse!")
     }
-    async fn query_reserves() -> ReservesResponse {
-        let response = QueryMsg::GetReserves {}.do_query(&LB_PAIR_CONTRACT).await;
-        debug!("{:?}", response);
-        serde_json::from_str::<ReservesResponse>(&response)
-            .expect("Failed to deserialize ReservesResponse!")
+
+    async fn query_reserves(lb_pair_contract: &ContractInfo) -> Result<ReservesResponse, Error> {
+        QueryMsg::GetReserves {}
+            .do_query(lb_pair_contract)
+            .await
+            .inspect(|response| debug!("{:?}", response))
+            .and_then(|response| Ok(serde_json::from_str::<ReservesResponse>(&response)?))
+        // serde_json::from_str::<ReservesResponse>(&response)
+        //     .expect("Failed to deserialize ReservesResponse!")
     }
-    async fn query_active_id() -> u32 {
-        let response = QueryMsg::GetActiveId {}.do_query(&LB_PAIR_CONTRACT).await;
-        debug!("{:?}", response);
-        serde_json::from_str::<ActiveIdResponse>(&response)
-            .expect("Failed to deserialize ActiveIdResponse!")
-            .active_id
+
+    async fn query_active_id(lb_pair_contract: &ContractInfo) -> Result<u32, Error> {
+        QueryMsg::GetActiveId {}
+            .do_query(lb_pair_contract)
+            .await
+            .inspect(|response| debug!("{:?}", response))
+            .and_then(|response| Ok(serde_json::from_str::<ActiveIdResponse>(&response)?))
+            .map(|x| x.active_id)
+        // .expect("Failed to deserialize ActiveIdResponse!")
     }
-    async fn query_bin_reserves(id: u32) -> BinResponse {
-        let response = QueryMsg::GetBinReserves { id }
-            .do_query(&LB_PAIR_CONTRACT)
-            .await;
-        debug!("{:?}", response);
-        serde_json::from_str::<BinResponse>(&response).expect("Failed to deserialize BinResponse!")
+
+    async fn query_bin_reserves(
+        lb_pair_contract: &ContractInfo,
+        id: u32,
+    ) -> Result<BinResponse, Error> {
+        QueryMsg::GetBinReserves { id }
+            .do_query(lb_pair_contract)
+            .await
+            .inspect(|response| debug!("{:?}", response))
+            .and_then(|response| Ok(serde_json::from_str::<BinResponse>(&response)?))
     }
-    async fn query_next_non_empty_bin(id: u32) -> u32 {
-        let response = QueryMsg::GetNextNonEmptyBin {
+
+    async fn query_next_non_empty_bin(
+        lb_pair_contract: &ContractInfo,
+        id: u32,
+    ) -> Result<u32, Error> {
+        QueryMsg::GetNextNonEmptyBin {
             swap_for_y: true,
             id,
         }
-        .do_query(&LB_PAIR_CONTRACT)
-        .await;
-        debug!("{:?}", response);
-        serde_json::from_str::<NextNonEmptyBinResponse>(&response)
-            .expect("Failed to deserialize BinResponse!")
-            .next_id
-    }
-    // TODO: Figure out why this number is so huge, for example:
-    //       12243017097593870802128434755484640756287535340
-    async fn query_total_supply(id: u32) -> String {
-        let response = QueryMsg::TotalSupply { id }
-            .do_query(&LB_PAIR_CONTRACT)
-            .await;
-        debug!("{:?}", response);
-        serde_json::from_str::<TotalSupplyResponse>(&response)
-            .expect("Failed to deserialize TotalSupplyResponse!")
-            .total_supply
-            .to_string()
+        .do_query(lb_pair_contract)
+        .await
+        .inspect(|response| debug!("{:?}", response))
+        .and_then(|response| Ok(serde_json::from_str::<NextNonEmptyBinResponse>(&response)?))
+        .map(|x| x.next_id)
     }
 
-    let lb_pair_information = Resource::new(
+    // TODO: Figure out why this number is so huge, for example:
+    //       12243017097593870802128434755484640756287535340
+    async fn query_total_supply(lb_pair_contract: &ContractInfo, id: u32) -> Result<String, Error> {
+        QueryMsg::TotalSupply { id }
+            .do_query(lb_pair_contract)
+            .await
+            .inspect(|response| debug!("{:?}", response))
+            .and_then(|response| Ok(serde_json::from_str::<TotalSupplyResponse>(&response)?))
+            .map(|x| x.total_supply.to_string())
+    }
+
+    let lb_pair_information: Resource<LBPairInformation> = Resource::new(
         move || (token_a(), token_b(), basis_points()),
         move |(token_a, token_b, basis_points)| {
             SendWrapper::new(async move {
@@ -200,7 +222,8 @@ pub fn PoolManager() -> impl IntoView {
                 let bin_step = basis_points.parse::<u16>().unwrap();
                 query_lb_pair_information(token_x, token_y, bin_step)
                     .await
-                    .lb_pair_information
+                    .map(|x| x.lb_pair_information)
+                    .unwrap()
             })
         },
     );
@@ -208,50 +231,54 @@ pub fn PoolManager() -> impl IntoView {
     Effect::new(move |_| debug!("{:?}", lb_pair_information.get()));
 
     let total_reserves = Resource::new(
-        // move || (token_a(), token_b(), basis_points()),
-        || (),
-        move |_| SendWrapper::new(async move { query_reserves().await }),
-    );
-    let active_id = Resource::new(
-        || (),
-        move |_| SendWrapper::new(async move { query_active_id().await }),
-    );
-    // TODO: Figure out how to prevent these from running twice
-    let bin_reserves = Resource::new(
-        move || active_id.track(),
+        move || lb_pair_information.track(),
         move |_| {
-            debug!("bin_reserves");
             SendWrapper::new(async move {
-                let id = active_id.await;
-                query_bin_reserves(id).await
+                let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
+                query_reserves(&lb_pair_contract).await
             })
         },
     );
-    // let bin_reserves = Action::new(move |input: &u32| {
-    //     debug!("bin_reserves");
-    //     let id = input.clone();
-    //     SendWrapper::new(async move {
-    //         // let id = active_id.await;
-    //         query_bin_reserves(id).await
-    //     })
-    // });
+
+    let active_id = Resource::new(
+        move || lb_pair_information.track(),
+        move |_| {
+            SendWrapper::new(async move {
+                let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
+                query_active_id(&lb_pair_contract).await
+            })
+        },
+    );
+    let bin_reserves = Resource::new(
+        move || (lb_pair_information.track(), active_id.track()),
+        move |_| {
+            debug!("bin_reserves");
+            SendWrapper::new(async move {
+                let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
+                let id = active_id.await?;
+                query_bin_reserves(&lb_pair_contract, id).await
+            })
+        },
+    );
     let next_non_empty_bin = Resource::new(
-        move || active_id.track(),
+        move || (lb_pair_information.track(), active_id.track()),
         move |_| {
             debug!("next_non_empty_bin");
             SendWrapper::new(async move {
-                let id = active_id.await;
-                query_next_non_empty_bin(id).await
+                let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
+                let id = active_id.await?;
+                query_next_non_empty_bin(&lb_pair_contract, id).await
             })
         },
     );
     let bin_total_supply = Resource::new(
-        move || active_id.track(),
+        move || (lb_pair_information.track(), active_id.track()),
         move |_| {
             debug!("bin_total_supply");
             SendWrapper::new(async move {
-                let id = active_id.await;
-                query_total_supply(id).await
+                let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
+                let id = active_id.await?;
+                query_total_supply(&lb_pair_contract, id).await
             })
         },
     );
@@ -310,7 +337,7 @@ pub fn PoolManager() -> impl IntoView {
                             "🛈 Reserves may be in reverse order"
                         </li>
                         {move || Suspend::new(async move {
-                            let reserves = total_reserves.await;
+                            let reserves = total_reserves.await.unwrap();
                             view! {
                                 <li class="pl-4 list-none">"reserve_x: "{reserves.reserve_x}</li>
                                 <li class="pl-4 list-none">"reserve_y: "{reserves.reserve_y}</li>
@@ -327,7 +354,7 @@ pub fn PoolManager() -> impl IntoView {
                     <li>
                         "Active Bin Reserves: "
                         {move || Suspend::new(async move {
-                            let reserves = bin_reserves.await;
+                            let reserves = bin_reserves.await.unwrap();
                             view! {
                                 <li class="pl-4 list-none">
                                     "bin_reserve_x: "{reserves.bin_reserve_x}

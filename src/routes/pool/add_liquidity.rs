@@ -82,13 +82,6 @@ pub fn AddLiquidity() -> impl IntoView {
                     bin_step,
                 };
 
-                let response = query.do_query(&LB_FACTORY_CONTRACT).await;
-
-                debug!("response: {response}");
-
-                let response = serde_json::from_str::<LbPairInformationResponse>(&response)
-                    .expect("Unexpected response!");
-
                 let LbPairInformationResponse {
                     lb_pair_information,
                 } = LbPairInformationResponse {

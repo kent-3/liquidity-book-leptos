@@ -10,17 +10,18 @@ use rsecret::{query::compute::ComputeQuerier, secret_client::CreateQuerierOption
 use secretrs::utils::EnigmaUtils;
 use tonic_web_wasm_client::Client;
 
+use crate::error::Error;
 use crate::keplr::Keplr;
 
 static CHAIN_ID: &str = "pulsar-3";
 static GRPC_URL: &str = "https://grpc.pulsar.scrttestnet.com";
 
 pub trait Querier {
-    async fn do_query(&self, contract: &ContractInfo) -> String;
+    async fn do_query(&self, contract: &ContractInfo) -> Result<String, Error>;
 }
 
 impl Querier for lb_factory::QueryMsg {
-    async fn do_query(&self, contract: &ContractInfo) -> String {
+    async fn do_query(&self, contract: &ContractInfo) -> Result<String, Error> {
         let contract_address = &contract.address;
         let code_hash = &contract.code_hash;
 
@@ -31,12 +32,12 @@ impl Querier for lb_factory::QueryMsg {
         compute
             .query_secret_contract(contract_address, code_hash, query)
             .await
-            .unwrap_or_else(|err| err.to_string())
+            .map_err(Into::into)
     }
 }
 
 impl Querier for lb_pair::QueryMsg {
-    async fn do_query(&self, contract: &ContractInfo) -> String {
+    async fn do_query(&self, contract: &ContractInfo) -> Result<String, Error> {
         let contract_address = &contract.address;
         let code_hash = &contract.code_hash;
 
@@ -47,6 +48,6 @@ impl Querier for lb_pair::QueryMsg {
         compute
             .query_secret_contract(contract_address, code_hash, query)
             .await
-            .unwrap_or_else(|err| err.to_string())
+            .map_err(Into::into)
     }
 }
