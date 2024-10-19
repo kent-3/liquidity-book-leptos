@@ -1,40 +1,40 @@
 {
-  "short_name": "sLeptos",
-  "name": "Secret Leptos",
+  "short_name": "Trader Crow",
+  "name": "Trader Crow",
   "icons": [
     {
-      "src": "/secret-leptos/icons/scrt-black.svg",
+      "src": "/trader-crow-leptos/icons/scrt-black.svg",
       "type": "image/svg+xml",
       "sizes": "148x148",
       "purpose": "any"
     },
     {
-      "src": "/secret-leptos/icons/scrt-black-192.png",
+      "src": "/trader-crow-leptos/icons/scrt-black-192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/secret-leptos/icons/scrt-black-512.png",
+      "src": "/trader-crow-leptos/icons/scrt-black-512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
-  "id": "/secret-leptos",
-  "start_url": "/secret-leptos",
+  "id": "/trader-crow-leptos",
+  "start_url": "/trader-crow-leptos",
   "background_color": "#171717",
   "display": "standalone",
-  "scope": "/secret-leptos",
+  "scope": "/trader-crow-leptos",
   "theme_color": "#000000",
   "description": "ho ho ho",
   "screenshots": [
     {
-      "src": "/secret-leptos/images/screenshot2.png",
+      "src": "/trader-crow-leptos/images/screenshot2.png",
       "type": "image/png",
       "sizes": "540x720",
       "form_factor": "narrow"
     },
     {
-      "src": "/secret-leptos/images/screenshot1.png",
+      "src": "/trader-crow-leptos/images/screenshot1.png",
       "type": "image/png",
       "sizes": "720x540",
       "form_factor": "wide"
