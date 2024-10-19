@@ -1,4 +1,17 @@
-use crate::state::*;
+use crate::{
+    liquidity_book::{
+        constants::liquidity_config::{
+            LiquidityConfiguration, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
+        },
+        contract_interfaces::{
+            lb_factory,
+            // TODO: rename all LB* to Lb*
+            lb_pair::{self, LBPair, LBPairInformation, LiquidityParameters},
+        },
+    },
+    state::*,
+};
+use lb_libraries::math::liquidity_configurations::LiquidityConfigurations;
 use leptos::prelude::*;
 use leptos_router::{
     components::A,
@@ -7,26 +20,14 @@ use leptos_router::{
 };
 use rsecret::query::tendermint::TendermintQuerier;
 use send_wrapper::SendWrapper;
+use shade_protocol::{
+    c_std::{Addr, ContractInfo, Uint128},
+    liquidity_book::lb_factory::{LbPairInformationResponse, QueryMsg::GetLbPairInformation},
+    swap::core::TokenType,
+};
 use std::str::FromStr;
 use tonic_web_wasm_client::Client;
 use tracing::{debug, info};
-
-use crate::liquidity_book::{
-    constants::liquidity_config::{
-        LiquidityConfiguration, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
-    },
-    contract_interfaces::{
-        lb_factory,
-        // TODO: rename all LB* to Lb*
-        lb_pair::{self, LBPair, LBPairInformation, LiquidityParameters},
-    },
-};
-use lb_libraries::math::liquidity_configurations::LiquidityConfigurations;
-use shade_protocol::{
-    c_std::{Addr, ContractInfo, Uint128},
-    liquidity_book::lb_factory::LbPairInformationResponse,
-    swap::core::TokenType,
-};
 
 #[component]
 pub fn AddLiquidity() -> impl IntoView {
@@ -52,18 +53,18 @@ pub fn AddLiquidity() -> impl IntoView {
 
     // TODO: use a lb_factory query to get the lb_pair contract info
     let lb_pair_information = Resource::new(
-        || (),
-        move |_| {
+        move || (token_a(), token_b(), basis_points()),
+        move |(token_a, token_b, basis_points)| {
             // TODO: Map token address to contract info and more
             let token_x = TokenType::CustomToken {
-                contract_addr: Addr::unchecked("secret123"),
+                contract_addr: Addr::unchecked(&token_a),
                 token_code_hash: "foo".to_string(),
             };
             let token_y = TokenType::CustomToken {
-                contract_addr: Addr::unchecked("secret456"),
+                contract_addr: Addr::unchecked(&token_b),
                 token_code_hash: "bar".to_string(),
             };
-            let bin_step = basis_points()
+            let bin_step = basis_points
                 .parse::<u16>()
                 .expect("Invalid basis_points value");
 
