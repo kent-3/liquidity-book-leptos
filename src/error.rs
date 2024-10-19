@@ -5,6 +5,9 @@ pub enum Error {
     #[error("An error occurred: {0}")]
     Generic(String),
 
+    #[error("Serde Error: {0}")]
+    Serde(String),
+
     #[error("An error related to Secret occurred: {0}")]
     Secret(String),
 
@@ -19,6 +22,10 @@ impl Error {
     pub fn generic(message: impl ToString) -> Self {
         let message = message.to_string();
         Error::Generic(message)
+    }
+    pub fn serde(message: impl ToString) -> Self {
+        let message = message.to_string();
+        Error::Serde(message)
     }
 }
 
@@ -49,5 +56,11 @@ impl From<secretrs::ErrorReport> for Error {
 impl From<crate::keplr::Error> for Error {
     fn from(error: crate::keplr::Error) -> Self {
         Error::Keplr(error.to_string())
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(error: serde_json::Error) -> Self {
+        Error::Serde(error.to_string())
     }
 }
