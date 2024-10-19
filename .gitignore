@@ -3,4 +3,4 @@
 !.github
 
 /target
-# /dist
+/dist

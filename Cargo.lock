@@ -136,9 +136,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.89"
+version = "1.0.90"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "86fdf8605db99b54d3cd748a44c6d04df638eb5dafb219b135d0149bd0db01f6"
+checksum = "37bf3594c4c988a53154954629820791dde498571819ae4ca50ca811e060cc95"
 
 [[package]]
 name = "anymap2"
@@ -1800,9 +1800,9 @@ dependencies = [
 
 [[package]]
 name = "ibc-proto"
-version = "0.49.0"
+version = "0.49.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "873b573edee1ac325770ae1db824702e1c3b63b0db91edaeeed263a2d72d7643"
+checksum = "694657ebe503dc1cb1c67ed5c7ca880479c026a37004808ee94505df5b0cbf60"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -1956,7 +1956,9 @@ dependencies = [
 
 [[package]]
 name = "keplr-sys"
-version = "0.0.2"
+version = "0.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d8a074be277cc00d41556ab153eee025e125ea042ea08efd8adc71f5d091c995"
 dependencies = [
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -2159,9 +2161,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.159"
+version = "0.2.161"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "561d97a539a36e26a9a5fad1ea11a3039a67714694aaa379433e580854bc3dc5"
+checksum = "8e9489c2807c139ffd9c1794f4af0ebe86a828db53ecdc7fea2111d0fed085d1"
 
 [[package]]
 name = "libgit2-sys"
@@ -2632,9 +2634,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.87"
+version = "1.0.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3e4daa0dcf6feba26f985457cdf104d4b4256fc5a09547140f3631bb076b19a"
+checksum = "7c3a7fc5db1e57d5a779a352c8cdb57b29aa4c40cc69c3a68a7fedc815fbf2f9"
 dependencies = [
  "unicode-ident",
 ]
@@ -2907,6 +2909,7 @@ dependencies = [
 [[package]]
 name = "rsecret"
 version = "0.1.0"
+source = "git+https://github.com/kent-3/secret-clients#273eb66f8d5840b202a88ffdec6a7598d8af7109"
 dependencies = [
  "aes-siv",
  "async-trait",
@@ -2973,9 +2976,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.23.14"
+version = "0.23.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "415d9944693cb90382053259f89fbb077ea730ad7273047ec63b19bc9b160ba8"
+checksum = "5fbb44d7acc4e873d613422379f69f237a1b141928c02f6bc6ccfddddc2d7993"
 dependencies = [
  "log",
  "once_cell",
@@ -3154,6 +3157,8 @@ dependencies = [
 [[package]]
 name = "secret-sdk-proto"
 version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28abca64e5f0cc54c81810be6b479930e77783a8301dbbc4b05294601de85b43"
 dependencies = [
  "bumpalo",
  "cosmos-sdk-proto",
@@ -3296,7 +3301,9 @@ dependencies = [
 
 [[package]]
 name = "secretrs"
-version = "0.1.2"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b94b75e8d61143cb2174463af50ebdef77ab2542ddea875f543c40c8f5a32687"
 dependencies = [
  "aes-siv",
  "async-trait",
@@ -3422,9 +3429,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.128"
+version = "1.0.131"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6ff5456707a1de34e7e37f2a6fd3d3f808c318259cbd01ab6377795054b483d8"
+checksum = "67d42a0bd4ac281beff598909bb56a86acaf979b84483e1c79c10dcaf98f8cf3"
 dependencies = [
  "itoa",
  "memchr",
@@ -4351,9 +4358,9 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "uuid"
-version = "1.10.0"
+version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81dfa00651efa65069b0b6b651f4aaa31ba9e3c3ce0137aaad053604ee7e0314"
+checksum = "f8c5f0a0af699448548ad1a2fbf920fb4bee257eae39953ba95cb84891a0446a"
 dependencies = [
  "getrandom",
 ]
