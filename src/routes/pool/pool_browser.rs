@@ -17,12 +17,14 @@ pub fn PoolBrowser() -> impl IntoView {
 
     let pair_1 = LBPair {
         token_x: TokenType::CustomToken {
-            contract_addr: Addr::unchecked("foo"),
-            token_code_hash: "code_hash".to_string(),
+            contract_addr: Addr::unchecked("secret1cm5tnqda0vecc6tx0vlp7fpfwj5uu85xn3vu2n"),
+            token_code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
+                .to_string(),
         },
         token_y: TokenType::CustomToken {
-            contract_addr: Addr::unchecked("bar"),
-            token_code_hash: "code_hash".to_string(),
+            contract_addr: Addr::unchecked("secret1072wn6au3m002vsz8ej7upnudm3evuz7vujjwl"),
+            token_code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
+                .to_string(),
         },
         bin_step: 100,
         contract: ContractInfo {
@@ -52,7 +54,7 @@ pub fn PoolBrowser() -> impl IntoView {
     // TODO: query for the pools
     let pools = vec![pair_1, pair_2];
 
-    let resource = use_context::<LocalResource<String>>().expect("Context missing!");
+    // let resource = use_context::<LocalResource<String>>().expect("Context missing!");
 
     view! {
         <div class="text-3xl font-bold">"Pool"</div>

@@ -3,7 +3,7 @@ use crate::{
     constants::{GRPC_URL, TOKEN_MAP},
     keplr::Keplr,
     liquidity_book::{constants::addrs::LB_PAIR_CONTRACT, contract_interfaces::*},
-    prelude::{CHAIN_ID, COMPUTE_QUERY},
+    prelude::CHAIN_ID,
     state::*,
     LoadingModal,
 };

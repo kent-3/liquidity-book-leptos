@@ -1,4 +1,5 @@
 use crate::components::SecretQuery;
+use crate::utils::shorten_address;
 use crate::{
     constants::{CHAIN_ID, GRPC_URL},
     error::Error,
@@ -8,6 +9,8 @@ use crate::{
 };
 use cosmwasm_std::{Addr, ContractInfo};
 use leptos::prelude::*;
+use leptos_router::hooks::{query_signal_with_options, use_location, use_navigate};
+use leptos_router::NavigateOptions;
 use leptos_router::{
     components::A,
     hooks::{use_params, use_params_map, use_query_map},
@@ -27,11 +30,14 @@ use shade_protocol::{
     swap::core::TokenType,
 };
 use tonic_web_wasm_client::Client as WebWasmClient;
-use tracing::{debug, info};
+use tracing::{debug, info, trace};
 
 #[component]
 pub fn PoolManager() -> impl IntoView {
     info!("rendering <PoolManager/>");
+
+    let navigate = use_navigate();
+    let location = use_location();
 
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
@@ -51,6 +57,75 @@ pub fn PoolManager() -> impl IntoView {
             .expect("Missing token_b URL param")
     };
     let basis_points = move || params.read().get("bps").expect("Missing bps URL param");
+
+    // not sure if possible
+    fn token_symbol_converter(address: String) -> AsyncDerived<String> {
+        AsyncDerived::new(move || {
+            let address = address.clone();
+            SendWrapper::new(async move {
+                let address = Addr::unchecked(address);
+                let code_hash =
+                    "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159".to_string();
+                let contract = ContractInfo { address, code_hash };
+                let name = secret_toolkit_snip20::QueryMsg::TokenInfo {}
+                    .do_query(&contract)
+                    .await
+                    .inspect(|response| trace!("{:?}", response))
+                    .and_then(|response| Ok(serde_json::from_str::<serde_json::Value>(&response)?))
+                    .map(|x| x.get("token_info").unwrap().to_owned())
+                    .map(|x| {
+                        serde_json::from_value::<secret_toolkit_snip20::TokenInfo>(x.clone())
+                            .unwrap()
+                    })
+                    .map(|x| x.symbol)
+                    .unwrap();
+
+                name
+            })
+        })
+    }
+
+    let token_a_symbol: AsyncDerived<String> = AsyncDerived::new(move || {
+        SendWrapper::new(async move {
+            let address = Addr::unchecked(token_a());
+            let code_hash =
+                "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159".to_string();
+            let contract = ContractInfo { address, code_hash };
+            let symbol = secret_toolkit_snip20::QueryMsg::TokenInfo {}
+                .do_query(&contract)
+                .await
+                .inspect(|response| trace!("{:?}", response))
+                .and_then(|response| Ok(serde_json::from_str::<serde_json::Value>(&response)?))
+                .map(|x| x.get("token_info").unwrap().to_owned())
+                .map(|x| {
+                    serde_json::from_value::<secret_toolkit_snip20::TokenInfo>(x.clone()).unwrap()
+                })
+                .map(|x| x.symbol)
+                .unwrap();
+
+            symbol
+        })
+    });
+
+    let token_b_symbol: AsyncDerived<String> = AsyncDerived::new(move || {
+        SendWrapper::new(async move {
+            let address = Addr::unchecked(token_b());
+            let code_hash =
+                "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159".to_string();
+            let contract = ContractInfo { address, code_hash };
+            let symbol = secret_toolkit_snip20::QueryMsg::TokenInfo {}
+                .do_query(&contract)
+                .await
+                .inspect(|response| trace!("{:?}", response))
+                .and_then(|response| Ok(serde_json::from_str::<serde_json::Value>(&response)?))
+                .map(|x| x.get("token_info").unwrap().to_owned())
+                .map(|x| serde_json::from_value::<secret_toolkit_snip20::TokenInfo>(x).unwrap())
+                .map(|x| x.symbol)
+                .unwrap();
+
+            symbol
+        })
+    });
 
     // whenever the key store changes, this will re-set 'is_keplr_enabled' to true, triggering a
     // reload of everything subscribed to that signal
@@ -139,7 +214,7 @@ pub fn PoolManager() -> impl IntoView {
         }
         .do_query(&LB_FACTORY_CONTRACT)
         .await
-        .inspect(|response| debug!("{:?}", response))
+        .inspect(|response| trace!("{:?}", response))
         .and_then(|response| {
             Ok(serde_json::from_str::<lb_factory::LbPairInformationResponse>(&response)?)
         })
@@ -151,7 +226,7 @@ pub fn PoolManager() -> impl IntoView {
         QueryMsg::GetReserves {}
             .do_query(lb_pair_contract)
             .await
-            .inspect(|response| debug!("{:?}", response))
+            .inspect(|response| trace!("{:?}", response))
             .and_then(|response| Ok(serde_json::from_str::<ReservesResponse>(&response)?))
         // serde_json::from_str::<ReservesResponse>(&response)
         //     .expect("Failed to deserialize ReservesResponse!")
@@ -161,7 +236,7 @@ pub fn PoolManager() -> impl IntoView {
         QueryMsg::GetActiveId {}
             .do_query(lb_pair_contract)
             .await
-            .inspect(|response| debug!("{:?}", response))
+            .inspect(|response| trace!("{:?}", response))
             .and_then(|response| Ok(serde_json::from_str::<ActiveIdResponse>(&response)?))
             .map(|x| x.active_id)
         // .expect("Failed to deserialize ActiveIdResponse!")
@@ -174,7 +249,7 @@ pub fn PoolManager() -> impl IntoView {
         QueryMsg::GetBinReserves { id }
             .do_query(lb_pair_contract)
             .await
-            .inspect(|response| debug!("{:?}", response))
+            .inspect(|response| trace!("{:?}", response))
             .and_then(|response| Ok(serde_json::from_str::<BinResponse>(&response)?))
     }
 
@@ -188,7 +263,7 @@ pub fn PoolManager() -> impl IntoView {
         }
         .do_query(lb_pair_contract)
         .await
-        .inspect(|response| debug!("{:?}", response))
+        .inspect(|response| trace!("{:?}", response))
         .and_then(|response| Ok(serde_json::from_str::<NextNonEmptyBinResponse>(&response)?))
         .map(|x| x.next_id)
     }
@@ -199,7 +274,7 @@ pub fn PoolManager() -> impl IntoView {
         QueryMsg::TotalSupply { id }
             .do_query(lb_pair_contract)
             .await
-            .inspect(|response| debug!("{:?}", response))
+            .inspect(|response| trace!("{:?}", response))
             .and_then(|response| Ok(serde_json::from_str::<TotalSupplyResponse>(&response)?))
             .map(|x| x.total_supply.to_string())
     }
@@ -229,7 +304,10 @@ pub fn PoolManager() -> impl IntoView {
         },
     );
 
-    Effect::new(move |_| debug!("{:?}", lb_pair_information.get()));
+    // Potentially nicer, but not necessary.
+    // let lb_pair_contract = AsyncDerived::new(move || {
+    //     SendWrapper::new(async move { lb_pair_information.await.lb_pair.contract })
+    // });
 
     let total_reserves = Resource::new(
         move || lb_pair_information.track(),
@@ -241,19 +319,28 @@ pub fn PoolManager() -> impl IntoView {
         },
     );
 
+    // prevents scrolling to the top of the page each time a query param changes
+    let nav_options = NavigateOptions {
+        scroll: false,
+        ..Default::default()
+    };
+    let (_, set_active_id) = query_signal_with_options::<String>("active_id", nav_options.clone());
+
     let active_id = Resource::new(
         move || lb_pair_information.track(),
         move |_| {
             SendWrapper::new(async move {
                 let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
-                query_active_id(&lb_pair_contract).await
+                query_active_id(&lb_pair_contract)
+                    .await
+                    .inspect(|id| set_active_id.set(Some(id.to_string())))
             })
         },
     );
+
     let bin_reserves = Resource::new(
         move || (lb_pair_information.track(), active_id.track()),
         move |_| {
-            debug!("bin_reserves");
             SendWrapper::new(async move {
                 let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
                 let id = active_id.await?;
@@ -261,10 +348,10 @@ pub fn PoolManager() -> impl IntoView {
             })
         },
     );
+
     let next_non_empty_bin = Resource::new(
         move || (lb_pair_information.track(), active_id.track()),
         move |_| {
-            debug!("next_non_empty_bin");
             SendWrapper::new(async move {
                 let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
                 let id = active_id.await?;
@@ -275,7 +362,6 @@ pub fn PoolManager() -> impl IntoView {
     let bin_total_supply = Resource::new(
         move || (lb_pair_information.track(), active_id.track()),
         move |_| {
-            debug!("bin_total_supply");
             SendWrapper::new(async move {
                 let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
                 let id = active_id.await?;
@@ -294,14 +380,27 @@ pub fn PoolManager() -> impl IntoView {
             "🡨 Back to pools list"
         </a>
         <div class="flex flex-wrap py-2 items-center gap-x-4 gap-y-2">
-            <div class="text-3xl font-bold">{token_a}" / "{token_b}</div>
+
+            <Suspense fallback=move || {
+                view! { <div class="text-3xl font-bold">{token_a}" / "{token_b}</div> }
+            }>
+                <div class="text-3xl font-bold">
+                    {move || Suspend::new(async move { token_a_symbol.await })}" / "
+                    {move || Suspend::new(async move { token_b_symbol.await })}
+                </div>
+            </Suspense>
+
             <div class="flex items-center gap-x-4">
                 <div class="text-md font-bold p-1 outline outline-1 outline-offset-2 outline-neutral-500/50">
                     {basis_points}" bps"
                 </div>
                 <a href="about:blank" target="_blank" rel="noopener">
                     <div class="text-md font-bold p-1 outline outline-1 outline-offset-2 outline-neutral-500/50">
-                        "secret123...xyz ↗"
+                        {move || {
+                            lb_pair_information
+                                .get()
+                                .map(|x| shorten_address(x.lb_pair.contract.address))
+                        }}" ↗"
                     </div>
                 </a>
             </div>
@@ -380,12 +479,16 @@ pub fn PoolManager() -> impl IntoView {
         </details>
 
         <div class="flex gap-4 py-2">
-            <A href="add">
-                <button>Add Liquidity</button>
-            </A>
+            // This works to preserve the query params when navigating to nested routes.
+            <button on:click=move |_| {
+                let pathname = location.pathname.get();
+                let query_params = location.search.get();
+                let new_route = format!("{pathname}/add/?{query_params}");
+                navigate(&new_route, Default::default())
+            }>"Add Liquidity"</button>
 
             <A href="remove">
-                <button>Remove Liquidity</button>
+                <button>"Remove Liquidity"</button>
             </A>
 
             <A href="">

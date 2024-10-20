@@ -75,10 +75,10 @@ pub fn App() -> impl IntoView {
     Effect::new(move |_| {
         let enabled = keplr.enabled.get();
         let key = keplr.key.get();
-        debug!("\nKeplr enabled: {}\nKeplr Key: {:#?}", enabled, key)
+        debug!("\nKeplr enabled?: {}\nKeplr Key: {:#?}", enabled, key)
     });
-    Effect::new(move |_| debug!("Endpoint set to {}", endpoint.get()));
-    Effect::new(move |_| debug!("Chain ID set to {:?}", chain_id.get()));
+    Effect::new(move |_| info!("Endpoint set to {}", endpoint.get()));
+    Effect::new(move |_| info!("Chain ID set to {:?}", chain_id.get()));
 
     // Event Listeners
 

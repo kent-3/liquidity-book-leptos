@@ -1,4 +1,6 @@
 use crate::{
+    error::Error,
+    keplr::Keplr,
     liquidity_book::{
         constants::{
             addrs::{LB_FACTORY_CONTRACT, LB_PAIR_CONTRACT},
@@ -11,10 +13,14 @@ use crate::{
             // TODO: rename all LB* to Lb*
             lb_pair::{self, LBPair, LBPairInformation, LiquidityParameters},
         },
+        utils::{get_id_from_price, get_price_from_id},
         Querier,
     },
+    prelude::{CHAIN_ID, GRPC_URL},
     state::*,
+    utils::{alert, latest_block},
 };
+use cosmwasm_std::{Addr, ContractInfo, Uint128};
 use lb_libraries::math::liquidity_configurations::LiquidityConfigurations;
 use leptos::prelude::*;
 use leptos_router::{
@@ -22,97 +28,88 @@ use leptos_router::{
     hooks::{query_signal_with_options, use_params, use_params_map, use_query_map},
     NavigateOptions,
 };
-use rsecret::query::tendermint::TendermintQuerier;
+use rsecret::{
+    query::tendermint::TendermintQuerier,
+    secret_client::CreateTxSenderOptions,
+    tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
+    TxOptions,
+};
+use secretrs::AccountId;
 use send_wrapper::SendWrapper;
 use shade_protocol::{
-    c_std::{Addr, ContractInfo, Uint128},
     liquidity_book::lb_factory::{LbPairInformationResponse, QueryMsg::GetLbPairInformation},
     swap::core::TokenType,
 };
 use std::str::FromStr;
 use tonic_web_wasm_client::Client;
-use tracing::{debug, info};
+use tracing::{debug, info, trace};
+use web_sys::MouseEvent;
 
 #[component]
 pub fn AddLiquidity() -> impl IntoView {
     info!("rendering <AddLiquidity/>");
 
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
+    let chain_id = use_context::<ChainId>().expect("chain_id context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
     let params = use_params_map();
-    let token_a = move || params.read().get("token_a").unwrap_or("foo".to_string());
-    let token_b = move || params.read().get("token_b").unwrap_or("bar".to_string());
-    let basis_points = move || params.read().get("bps").unwrap_or("100".to_string());
+    let token_a = move || params.read().get("token_a").unwrap_or_default();
+    let token_b = move || params.read().get("token_b").unwrap_or_default();
+    let basis_points = move || params.read().get("bps").unwrap_or_default();
 
     // prevents scrolling to the top of the page each time a query param changes
     let nav_options = NavigateOptions {
         scroll: false,
         ..Default::default()
     };
+    let (active_id, _) = query_signal_with_options::<String>("active_id", nav_options.clone());
+    let (price_by, set_price_by) =
+        query_signal_with_options::<String>("price_by", nav_options.clone());
 
-    let (price_option, set_price_option) =
-        query_signal_with_options::<String>("price", nav_options.clone());
-
-    // TODO: use a lb_factory query to get the lb_pair contract info
-    let lb_pair_information = Resource::new(
+    let lb_pair_information: Resource<LBPairInformation> = Resource::new(
         move || (token_a(), token_b(), basis_points()),
         move |(token_a, token_b, basis_points)| {
-            // TODO: Map token address to contract info and more
-            let token_x = TokenType::CustomToken {
-                contract_addr: Addr::unchecked(&token_a),
-                token_code_hash: "foo".to_string(),
-            };
-            let token_y = TokenType::CustomToken {
-                contract_addr: Addr::unchecked(&token_b),
-                token_code_hash: "bar".to_string(),
-            };
-            let bin_step = basis_points
-                .parse::<u16>()
-                .expect("Invalid basis_points value");
-
             SendWrapper::new(async move {
-                // TODO: do actual query
-                // TODO: this query should just take token addresses, I think. It can take in
-                // strings and give back structured data to be used in the execute msg.
-                let query = lb_factory::QueryMsg::GetLbPairInformation {
-                    token_x: token_x.clone(),
-                    token_y: token_y.clone(),
+                // TODO: figure out how to obtain the token code hashes efficiently
+                let token_x = ContractInfo {
+                    address: Addr::unchecked(token_a),
+                    code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
+                        .to_string(),
+                };
+                let token_y = ContractInfo {
+                    address: Addr::unchecked(token_b),
+                    code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
+                        .to_string(),
+                };
+                let bin_step = basis_points.parse::<u16>().unwrap();
+
+                lb_factory::QueryMsg::GetLbPairInformation {
+                    token_x: token_x.into(),
+                    token_y: token_y.into(),
                     bin_step,
-                };
-
-                let LbPairInformationResponse {
-                    lb_pair_information,
-                } = LbPairInformationResponse {
-                    lb_pair_information: LBPairInformation {
-                        bin_step: 100,
-                        lb_pair: LBPair {
-                            token_x,
-                            token_y,
-                            bin_step: 100,
-                            contract: ContractInfo {
-                                address: Addr::unchecked("secretxyz"),
-                                code_hash: "lb_pair_code_hash".to_string(),
-                            },
-                        },
-                        created_by_owner: true,
-                        ignored_for_routing: false,
-                    },
-                };
-
-                lb_pair_information
+                }
+                .do_query(&LB_FACTORY_CONTRACT)
+                .await
+                .inspect(|response| trace!("{:?}", response))
+                .and_then(|response| {
+                    Ok(serde_json::from_str::<lb_factory::LbPairInformationResponse>(&response)?)
+                })
+                .map(|x| x.lb_pair_information)
+                .unwrap()
             })
         },
     );
 
     let query = use_query_map();
-    let price = move || price_option.get().unwrap_or("by_radius".to_string());
+    let price_by = move || price_by.get().unwrap_or("radius".to_string());
 
     let (token_x_amount, set_token_x_amount) = signal("0".to_string());
     let (token_y_amount, set_token_y_amount) = signal("0".to_string());
     let (liquidity_shape, set_liquidity_shape) = signal("uniform".to_string());
 
+    // This is so I can change the default liquidity shape above and still load the correct preset
     let liquidity_configuration_preset = match liquidity_shape.get_untracked().as_ref() {
         "uniform" => SPOT_UNIFORM.clone(),
         "curve" => CURVE.clone(),
@@ -124,40 +121,43 @@ pub fn AddLiquidity() -> impl IntoView {
     let (liquidity_configuration, set_liquidity_configuration) =
         signal(liquidity_configuration_preset);
 
-    let (target_price, set_target_price) = signal("1.00".to_string());
+    let (target_price, set_target_price) = signal("Loading...".to_string());
     let (radius, set_radius) = signal("5".to_string());
 
-    fn get_id_from_price(price: f64, bin_step: impl Into<f64>) -> u32 {
-        ((price.ln() / (1.0 + bin_step.into() / 10_000.0).ln()).trunc() as u32) + 8_388_608
-    }
+    Effect::new(move || {
+        if let Some(id) = active_id.get() {
+            let price: f64 = get_price_from_id(id, basis_points());
+            set_target_price.set(price.to_string());
+        }
+    });
 
+    // TODO: account for decimals
     fn amount_min(input: &str) -> u32 {
         let number: f64 = input.parse().expect("Error parsing float");
-        let adjusted_value = number * 0.95 * 1_000_000.0;
+        let adjusted_value = number * 0.95 * number / 1_000_000.0;
         adjusted_value.round() as u32
     }
 
-    let latest_block = Resource::new(
-        move || endpoint.get(),
-        move |endpoint| {
-            SendWrapper::new(async move {
-                let tendermint = TendermintQuerier::new(Client::new(endpoint));
-                let latest_block = tendermint.get_latest_block().await;
+    // let latest_block = Resource::new(
+    //     move || endpoint.get(),
+    //     move |endpoint| {
+    //         SendWrapper::new(async move {
+    //             let tendermint = TendermintQuerier::new(Client::new(endpoint));
+    //             let latest_block = tendermint.get_latest_block().await;
+    //
+    //             latest_block
+    //                 .and_then(|block| Ok(block.header.height))
+    //                 .inspect(|height| debug!("{:#?}", height))
+    //                 .map_err(Into::<crate::Error>::into)
+    //         })
+    //     },
+    // );
 
-                latest_block
-                    .and_then(|block| Ok(block.header.height))
-                    .inspect(|height| debug!("{:#?}", height))
-                    .map_err(|e| crate::Error::from(e))
-            })
-        },
-    );
-
-    let liquidity_parameters = move |_| {
+    let liquidity_parameters = move || {
         // By using the information returned by query, we can be sure it is correct
         let lb_pair_information = lb_pair_information
             .get()
             .expect("Unverified LB Pair information");
-        // TODO: awkward naming... lb_pair_information.info is type LbPair
         let token_x = lb_pair_information.lb_pair.token_x;
         let token_y = lb_pair_information.lb_pair.token_y;
         let bin_step = lb_pair_information.bin_step;
@@ -196,11 +196,13 @@ pub fn AddLiquidity() -> impl IntoView {
         let delta_ids = liquidity_configuration.delta_ids();
         let distribution_x = liquidity_configuration.distribution_x(6);
         let distribution_y = liquidity_configuration.distribution_y(6);
+        let deadline = 20000000;
 
         let liquidity_parameters = LiquidityParameters {
             token_x,
             token_y,
             bin_step,
+            // This Uint128 buisiness seems unneccesary
             amount_x: Uint128::from_str(&amount_x).unwrap(),
             amount_y: Uint128::from_str(&amount_y).unwrap(),
             amount_x_min: Uint128::from(amount_x_min),
@@ -211,59 +213,76 @@ pub fn AddLiquidity() -> impl IntoView {
             delta_ids,
             distribution_x,
             distribution_y,
-            deadline: latest_block
-                .get()
-                .map(|res| res.ok())
-                .flatten()
-                .unwrap()
-                .value()
-                + 100,
-            // deadline: 999999999999999,
+            deadline,
         };
 
         debug!("{:#?}", liquidity_parameters);
 
-        // liquidity_parameters
+        liquidity_parameters
     };
 
-    let add_liquidity = Action::new(move |_: &()| {
-        let url = endpoint.get();
+    let add_liquidity_action = Action::new(move |liquidity_parameters: &LiquidityParameters| {
+        // let url = endpoint.get();
+        // let chain_id = chain_id.get();
+        let url = GRPC_URL;
+        let chain_id = CHAIN_ID;
+        let mut liquidity_parameters = liquidity_parameters.clone();
         SendWrapper::new(async move {
-            let tendermint = TendermintQuerier::new(Client::new(url));
-            let latest_block = tendermint.get_latest_block().await;
+            if liquidity_parameters.amount_x.is_zero() && liquidity_parameters.amount_y.is_zero() {
+                alert("Amounts must not be 0!");
+                return Err(Error::generic("Amounts must not be 0!"));
+            }
 
-            latest_block
-                .and_then(|block| Ok(block.header.height))
-                .inspect(|height| debug!("{:#?}", height))
+            let key = Keplr::get_key(&chain_id).await?;
+            keplr.enabled.set(true);
+            let wallet = Keplr::get_offline_signer_only_amino(&chain_id);
+            let enigma_utils = Keplr::get_enigma_utils(&chain_id).into();
+
+            // TODO: I guess I need to make this type use Strings instead of &str, because the
+            // values are not static in this application (user is able to set them to anything).
+            let options = CreateTxSenderOptions {
+                url,
+                chain_id,
+                wallet: wallet.into(),
+                wallet_address: key.bech32_address.into(),
+                enigma_utils,
+            };
+            let wasm_web_client = tonic_web_wasm_client::Client::new(url.to_string());
+            let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
+
+            // Recheck the latest block height to update the deadline.
+            let tendermint = TendermintQuerier::new(Client::new(url.to_string()));
+            let latest_block = latest_block(tendermint).await?;
+            liquidity_parameters.deadline = latest_block + 100;
+
+            let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
+
+            let msg = MsgExecuteContractRaw {
+                sender: AccountId::new("secret", &key.address)?,
+                contract: AccountId::new("secret", lb_pair_contract.address.as_bytes())?,
+                msg: lb_pair::ExecuteMsg::AddLiquidity {
+                    liquidity_parameters,
+                },
+                sent_funds: vec![],
+            };
+
+            let tx_options = TxOptions {
+                gas_limit: 500_000,
+                ..Default::default()
+            };
+
+            compute_service_client
+                .execute_contract(msg, lb_pair_contract.code_hash, tx_options)
+                .await
+                .map_err(Error::from)
+                .inspect(|tx_response| info!("{tx_response:?}"))
+                .inspect_err(|error| error!("{error}"))
         })
     });
 
-    // liquidityParameters:
-    // 	active_id_desired: 2 ** 23,
-    // 	amount_x: amountX.toFixed(0),
-    // 	amount_y: amountY.toFixed(0),
-    // 	amount_x_min: (0.95 * amountX).toFixed(0),
-    // 	amount_y_min: (0.95 * amountY).toFixed(0),
-    // 	bin_step: binStep,
-    // 	deadline: 999999999999999,
-    // 	delta_ids: [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5].map((el) => el * binStep),
-    // 	distribution_x: [
-    // 		0, 0, 0, 0, 0, 0.090909, 0.181818, 0.181818, 0.181818, 0.181818, 0.181818
-    // 	].map((el) => el * 1e18),
-    // 	distribution_y: [
-    // 		0.181818, 0.181818, 0.181818, 0.181818, 0.181818, 0.090909, 0, 0, 0, 0, 0
-    // 	].map((el) => el * 1e18),
-    // 	id_slippage: 10,
-    // 	token_x: tokenX,
-    // 	token_y: tokenY
-
-    // let navigate = leptos_router::hooks::use_navigate();
-    // let nav_options = NavigateOptions {
-    //     resolve: true,
-    //     replace: true,
-    //     scroll: false,
-    //     state: leptos_router::location::State::new(None),
-    // };
+    let add_liquidity = move |_: MouseEvent| {
+        let _ = add_liquidity_action.dispatch(liquidity_parameters());
+    };
 
     view! {
         <div class="container max-w-xs py-2 space-y-2">
@@ -278,7 +297,7 @@ pub fn AddLiquidity() -> impl IntoView {
                 />
             </div>
             <div class="flex items-center gap-2">
-                <div class="basis-1/3 text-md text-ellipsis line-clamp-1">{token_b}</div>
+                <div class="basis-1/3 text-md text-ellipsis overflow-hidden">{token_b}</div>
                 <input
                     class="p-1 basis-2/3"
                     type="number"
@@ -286,6 +305,7 @@ pub fn AddLiquidity() -> impl IntoView {
                     on:change=move |ev| set_token_y_amount.set(event_target_value(&ev))
                 />
             </div>
+
             <div class="text-xl font-semibold !mt-6">Choose Liquidity Shape</div>
             <select
                 class="block p-1"
@@ -300,36 +320,35 @@ pub fn AddLiquidity() -> impl IntoView {
                     set_liquidity_shape.set(shape);
                     set_liquidity_configuration.set(preset);
                     set_radius.set("5".to_string());
-                    set_target_price.set("1.00".to_string());
                 }
             >
-                // on:input=move |_ev| navigate("&shape=curve", nav_options.clone())
                 <option value="uniform">"Spot/Uniform"</option>
                 <option value="curve">"Curve"</option>
                 <option value="bid-ask">"Bid-Ask"</option>
             </select>
+
             <div class="flex items-center gap-2 !mt-6">
                 <div class="text-xl font-semibold mr-auto">Price</div>
                 <button on:click=move |_| {
-                    set_price_option.set(Some("by_range".to_string()));
+                    set_price_by.set(Some("range".to_string()));
                 }>"By Range"</button>
                 <button on:click=move |_| {
-                    set_price_option.set(Some("by_radius".to_string()));
+                    set_price_by.set(Some("radius".to_string()));
                 }>"By Radius"</button>
             </div>
-            <Show when=move || price() == "by_range">
+
+            <Show when=move || price_by() == "range">
                 <div class="font-mono">"todo!()"</div>
             </Show>
-            <Show when=move || price() == "by_radius">
+            <Show when=move || price_by() == "radius">
                 <div class="flex items-center gap-2">
                     <div class="basis-1/3">"Target Price:"</div>
                     <input
                         class="p-1 basis-2/3"
-                        type="number"
+                        type="decimal"
                         placeholder="Enter Target Price"
-                        value="1.00"
                         min="0"
-                        // prop:value=move|| target_price.get()
+                        prop:value=move || target_price.get()
                         on:change=move |ev| set_target_price.set(event_target_value(&ev))
                     />
                 </div>
@@ -339,34 +358,14 @@ pub fn AddLiquidity() -> impl IntoView {
                         class="p-1 basis-2/3"
                         type="number"
                         placeholder="Enter Bin Radius"
-                        value="5"
                         min="0"
-                        // prop:value=move|| radius.get()
+                        prop:value=move || radius.get()
                         on:change=move |ev| set_radius.set(event_target_value(&ev))
                     />
                 </div>
-                // <div class="grid grid-cols-2 items-center gap-2" >
-                // <div class="">"Target Price:"</div>
-                // <input
-                // class="p-1"
-                // type="number"
-                // placeholder="Enter Amount"
-                // on:change=move |ev| set_target_price.set(event_target_value(&ev))
-                // />
-                // <div class="">"Radius:"</div>
-                // <input
-                // class="p-1"
-                // type="number"
-                // placeholder="Enter Amount"
-                // on:change=move |ev| set_radius.set(event_target_value(&ev))
-                // />
-                // </div>
 
-                <button class="w-full p-1 !mt-6" on:click=liquidity_parameters>
+                <button class="w-full p-1 !mt-6" on:click=add_liquidity>
                     "Add Liquidity"
-                </button>
-                <button class="w-full p-1 !mt-6" on:click=move |_| _ = add_liquidity.dispatch(())>
-                    "get latest block"
                 </button>
             </Show>
         </div>

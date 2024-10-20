@@ -28,15 +28,15 @@ pub fn Pool() -> impl IntoView {
 
     // Resources in this component can be shared with all children, so they only run once and are
     // persistent. This is just an example:
-    let resource = LocalResource::new(move || {
-        SendWrapper::new(async move {
-            QueryMsg::GetNumberOfLbPairs {}
-                .do_query(&LB_FACTORY_CONTRACT)
-                .await
-        })
-    });
+    // let resource = LocalResource::new(move || {
+    //     SendWrapper::new(async move {
+    //         QueryMsg::GetNumberOfLbPairs {}
+    //             .do_query(&LB_FACTORY_CONTRACT)
+    //             .await
+    //     })
+    // });
 
-    provide_context(resource);
+    // provide_context(resource);
 
     view! {
         <div class="p-2">

@@ -35,17 +35,15 @@ pub fn SecretQuery(query: Resource<Result<String, Error>>) -> impl IntoView {
                         Ok(response) => {
                             Either::Left(
                                 view! {
-                                    <div class="py-0 px-2 text-ellipsis text-sm" >
-                                        {response}
-                                    </div>
+                                    <div class="py-0 px-2 text-ellipsis text-sm">{response}</div>
                                 },
                             )
                         }
                         Err(error) => {
                             Either::Right(
                                 view! {
-                                    <div class="py-0 px-2 text-violet-400 text-bold text-sm" >
-                                        { error.to_string() }
+                                    <div class="py-0 px-2 text-violet-400 text-bold text-sm">
+                                        {error.to_string()}
                                     </div>
                                 },
                             )

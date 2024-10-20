@@ -61,13 +61,13 @@ impl AsRef<RwSignal<String>> for Endpoint {
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct ChainId {
-    pub url: RwSignal<String>,
+    pub chain_id: RwSignal<String>,
 }
 
 impl ChainId {
-    pub fn new(url: impl Into<String>) -> Self {
+    pub fn new(chain_id: impl Into<String>) -> Self {
         Self {
-            url: RwSignal::new(url.into()),
+            chain_id: RwSignal::new(chain_id.into()),
         }
     }
 }
@@ -75,7 +75,7 @@ impl ChainId {
 impl Default for ChainId {
     fn default() -> Self {
         Self {
-            url: RwSignal::new(CHAIN_ID.to_string()),
+            chain_id: RwSignal::new(CHAIN_ID.to_string()),
         }
     }
 }
@@ -84,13 +84,13 @@ impl std::ops::Deref for ChainId {
     type Target = RwSignal<String>;
 
     fn deref(&self) -> &Self::Target {
-        &self.url
+        &self.chain_id
     }
 }
 
 impl AsRef<RwSignal<String>> for ChainId {
     fn as_ref(&self) -> &RwSignal<String> {
-        &self.url
+        &self.chain_id
     }
 }
 
