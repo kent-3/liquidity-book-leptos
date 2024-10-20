@@ -4,9 +4,7 @@ use crate::{
     keplr::{tokens::ContractInfo, Keplr, Key},
 };
 use leptos::prelude::*;
-use send_wrapper::SendWrapper;
 use std::{collections::HashMap, ops::Deref};
-use tonic_web_wasm_client::Client;
 use tracing::{debug, trace};
 
 #[derive(Clone, Debug, PartialEq)]

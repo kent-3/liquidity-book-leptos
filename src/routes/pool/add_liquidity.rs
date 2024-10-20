@@ -138,6 +138,7 @@ pub fn AddLiquidity() -> impl IntoView {
         adjusted_value.round() as u32
     }
 
+    // Might be useful to have this re-run regularly at the top-level and provide a context
     // let latest_block = Resource::new(
     //     move || endpoint.get(),
     //     move |endpoint| {
@@ -222,6 +223,7 @@ pub fn AddLiquidity() -> impl IntoView {
     };
 
     let add_liquidity_action = Action::new(move |liquidity_parameters: &LiquidityParameters| {
+        // TODO: Use the dynamic versions instead.
         // let url = endpoint.get();
         // let chain_id = chain_id.get();
         let url = GRPC_URL;
@@ -238,7 +240,7 @@ pub fn AddLiquidity() -> impl IntoView {
             let wallet = Keplr::get_offline_signer_only_amino(&chain_id);
             let enigma_utils = Keplr::get_enigma_utils(&chain_id).into();
 
-            // TODO: I guess I need to make this type use Strings instead of &str, because the
+            // TODO: I guess I need to make this type use Strings instead of &'static str, because the
             // values are not static in this application (user is able to set them to anything).
             let options = CreateTxSenderOptions {
                 url,

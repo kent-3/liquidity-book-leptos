@@ -1,5 +1,7 @@
+use serde::{Deserialize, Serialize};
+
 // TODO: include the decimals somehow, and use that in the Display trait
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Coin {
     pub denom: String,
     pub amount: String,

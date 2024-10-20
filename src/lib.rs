@@ -1,6 +1,4 @@
 #![allow(unused)]
-#![allow(mixed_script_confusables)]
-#![allow(confusable_idents)]
 
 // use codee::string::FromToStringCodec;
 // use leptos_use::storage::use_local_storage;
@@ -10,14 +8,10 @@ use leptos::{
     html::{Dialog, Input},
     logging::log,
     prelude::*,
-    reactive::graph::ReactiveNode,
 };
 use leptos_router::components::{ParentRoute, Route, Router, Routes, A};
 use leptos_router_macro::path;
-use rsecret::{
-    query::{bank::BankQuerier, compute::ComputeQuerier},
-    secret_client::CreateQuerierOptions,
-};
+use rsecret::query::{bank::BankQuerier, compute::ComputeQuerier};
 use secret_toolkit_snip20::{QueryMsg, TokenInfoResponse};
 use secretrs::utils::EnigmaUtils;
 use send_wrapper::SendWrapper;
@@ -41,7 +35,7 @@ use constants::{CHAIN_ID, GRPC_URL};
 use error::Error;
 use keplr::{Keplr, Key};
 use routes::{pool::*, trade::*};
-use state::{ChainId, Endpoint, KeplrSignals, ProviderConfig, TokenMap};
+use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
 use types::Coin;
 
 #[component]
@@ -50,14 +44,11 @@ pub fn App() -> impl IntoView {
 
     // Global Contexts
 
-    // provide_context(RwSignal::new(ProviderConfig::new(GRPC_URL, CHAIN_ID)));
     provide_context(Endpoint::default());
     provide_context(ChainId::default());
     provide_context(KeplrSignals::new());
     provide_context(TokenMap::new());
 
-    // let provider =
-    //     use_context::<RwSignal<ProviderConfig>>().expect("provider config context missing!");
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let chain_id = use_context::<ChainId>().expect("chain id context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
@@ -65,13 +56,6 @@ pub fn App() -> impl IntoView {
 
     debug!("Loaded {} tokens", token_map.len());
 
-    // Effect::new(move |_| {
-    //     let provider = provider.get();
-    //     debug!(
-    //         "Endpoint: {}\nChain ID: {}",
-    //         provider.url, provider.chain_id
-    //     )
-    // });
     Effect::new(move |_| {
         let enabled = keplr.enabled.get();
         let key = keplr.key.get();
@@ -90,10 +74,10 @@ pub fn App() -> impl IntoView {
             keplr.enabled.set(true);
         });
 
-    // let update_grpc_url = move |_| {
-    //     debug!("updating client_options.grpc_url");
-    //     wasm_client.set(Client::new("https://foobar.com".to_string()))
-    // };
+    on_cleanup(move || {
+        info!("cleaning up <App/>");
+        keplr_keystorechange_handle.remove()
+    });
 
     // Actions
 
@@ -127,37 +111,18 @@ pub fn App() -> impl IntoView {
 
     // on:click handlers
 
-    let enable_keplr = move |_| {
+    let enable_keplr = move |_: MouseEvent| {
         enable_keplr_action.dispatch(());
     };
 
-    // let disable_keplr = move |_| {
-    //     keplr_sys::disable(CHAIN_ID);
-    //     keplr.enabled.set(false);
-    //     keplr.key.set(None);
-    // };
+    let disable_keplr = move |_: MouseEvent| {
+        Keplr::disable(CHAIN_ID);
+        keplr.enabled.set(false);
+    };
 
     // Node references
 
     let options_dialog_ref = NodeRef::<Dialog>::new();
-
-    // Effects
-
-    // open the dialog whenever the "enable_keplr_action" is pending
-    // Effect::new(move |_| match dialog_ref.get() {
-    //     Some(dialog) => match enable_keplr_action.pending().get() {
-    //         true => {
-    //             let _ = dialog.show_modal();
-    //         }
-    //         false => dialog.close(),
-    //     },
-    //     None => (),
-    // });
-
-    Owner::on_cleanup(move || {
-        info!("cleaning up <Aoo/>");
-        keplr_keystorechange_handle.remove()
-    });
 
     // HTML Elements
 
@@ -180,7 +145,6 @@ pub fn App() -> impl IntoView {
             <div class="background-image"></div>
             <header>
                 <div class="flex justify-between items-center">
-                    // <span class="italic font-extrabold">ρ</span>
                     <div class="my-3 font-bold text-3xl line-clamp-1">"Trader Crow 2"</div>
                     <Show when=move || keplr.key.get().and_then(|key| key.ok()).is_some()>
                         <p class="hidden sm:block text-sm outline outline-2 outline-offset-8 outline-neutral-500">
@@ -338,27 +302,6 @@ fn Home() -> impl IntoView {
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
-    // whenever the key store changes, this will re-set 'is_keplr_enabled' to true, triggering a
-    // reload of everything subscribed to that signal
-    let keplr_keystorechange_handle =
-        window_event_listener_untyped("keplr_keystorechange", move |_| {
-            keplr.enabled.set(true);
-        });
-
-    on_cleanup(move || {
-        info!("cleaning up <Home/>");
-        keplr_keystorechange_handle.remove()
-    });
-
-    // Effect::new(move |_| {
-    //     if keplr.enabled.get() {
-    //         spawn_local(async move {
-    //             let key: Option<Key> = Keplr::get_key(CHAIN_ID).await.ok();
-    //             keplr.key.set(key);
-    //         })
-    //     }
-    // });
-
     let viewing_keys = Resource::new(
         move || keplr.key.track(),
         move |_| {
@@ -380,6 +323,7 @@ fn Home() -> impl IntoView {
                             ));
                         }
                     }
+                    debug!("Found {} viewing keys.", keys.len());
                     keys
                 } else {
                     vec![]
@@ -408,29 +352,25 @@ fn Home() -> impl IntoView {
         })
     };
 
-    let user_balance = AsyncDerived::new_unsync(move || {
-        let client = Client::new(endpoint.get());
-        async move {
-            if let Some(Ok(key)) = keplr.key.get() {
+    let user_balance = Resource::new(
+        move || keplr.key.track(),
+        move |_| {
+            let client = Client::new(endpoint.get());
+            SendWrapper::new(async move {
                 let bank = BankQuerier::new(client);
-                match bank.balance(key.bech32_address, "uscrt").await {
-                    Ok(balance) => {
-                        let balance: Coin = balance.balance.unwrap().into();
-                        Ok(balance.to_string())
-                    }
-                    // TODO: do better with these Error semantics
-                    Err(error) => {
-                        error!("{error}");
-                        Err(Error::from(error))
-                    }
-                }
-            } else {
-                Err(Error::generic("no wallet key found"))
-            }
-        }
-    });
+                let key = keplr.key.await?;
 
-    let encryption_utils = EnigmaUtils::new(None, "secret-4").unwrap();
+                bank.balance(key.bech32_address, "uscrt")
+                    .await
+                    .map(|balance| Coin::from(balance.balance.unwrap()))
+                    .map_err(Error::from)
+                    .inspect(|coin| debug!("{coin:?}"))
+                    .inspect_err(|err| error!("{err:?}"))
+            })
+        },
+    );
+
+    let enigma_utils = EnigmaUtils::new(None, "secret-4").unwrap();
 
     // TODO: move all static resources like this (query response is always the same) to a separate
     // module. Implement caching with local storage. They can all use a random account for the
@@ -442,7 +382,7 @@ fn Home() -> impl IntoView {
         move |_| {
             debug!("loading token_info resource");
             let compute =
-                ComputeQuerier::new(Client::new(endpoint.get()), encryption_utils.clone().into());
+                ComputeQuerier::new(Client::new(endpoint.get()), enigma_utils.clone().into());
             SendWrapper::new(async move {
                 let query = QueryMsg::TokenInfo {};
                 compute
@@ -524,9 +464,6 @@ fn Modal() -> impl IntoView {
         log!("show modal");
         let node = dialog_ref.get().unwrap();
         node.show_modal().expect("I don't know what I expected");
-
-        // Example using context
-        // ctx.keplr_enabled.update(|value| *value = !*value);
     };
     let close_modal = move |_| {
         log!("close modal");

@@ -15,8 +15,9 @@ use leptos_router::nested_router::Outlet;
 use send_wrapper::SendWrapper;
 use tracing::{debug, info};
 
-use crate::liquidity_book::{constants::addrs::LB_FACTORY_CONTRACT, Querier};
-use shade_protocol::contract_interfaces::liquidity_book::lb_factory::QueryMsg;
+use crate::liquidity_book::{
+    constants::addrs::LB_FACTORY_CONTRACT, contract_interfaces::lb_factory::QueryMsg, Querier,
+};
 
 #[component]
 pub fn Pool() -> impl IntoView {
@@ -44,6 +45,8 @@ pub fn Pool() -> impl IntoView {
         </div>
     }
 }
+
+// NOTE: If the Router gets complicated enough, it's possible to split it up like this:
 
 // use leptos_router::{
 //     components::{ParentRoute, Route},

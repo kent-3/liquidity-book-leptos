@@ -1,20 +1,23 @@
-use crate::components::SecretQuery;
-use crate::utils::shorten_address;
 use crate::{
-    constants::{CHAIN_ID, GRPC_URL},
+    components::SecretQuery,
+    constants::{CHAIN_ID, GRPC_URL, TOKEN_MAP},
     error::Error,
-    liquidity_book::constants::addrs::{LB_FACTORY_CONTRACT, LB_PAIR_CONTRACT},
-    prelude::TOKEN_MAP,
+    liquidity_book::{
+        constants::addrs::{LB_FACTORY_CONTRACT, LB_PAIR_CONTRACT},
+        contract_interfaces::lb_pair::QueryMsg,
+        Querier,
+    },
     state::*,
+    utils::shorten_address,
 };
 use cosmwasm_std::{Addr, ContractInfo};
 use leptos::prelude::*;
 use leptos_router::hooks::{query_signal_with_options, use_location, use_navigate};
-use leptos_router::NavigateOptions;
 use leptos_router::{
     components::A,
     hooks::{use_params, use_params_map, use_query_map},
     nested_router::Outlet,
+    NavigateOptions,
 };
 use rsecret::query::compute::ComputeQuerier;
 use secretrs::utils::EnigmaUtils;
@@ -58,114 +61,30 @@ pub fn PoolManager() -> impl IntoView {
     };
     let basis_points = move || params.read().get("bps").expect("Missing bps URL param");
 
-    // not sure if possible
-    fn token_symbol_converter(address: String) -> AsyncDerived<String> {
-        AsyncDerived::new(move || {
-            let address = address.clone();
-            SendWrapper::new(async move {
-                let address = Addr::unchecked(address);
-                let code_hash =
-                    "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159".to_string();
-                let contract = ContractInfo { address, code_hash };
-                let name = secret_toolkit_snip20::QueryMsg::TokenInfo {}
-                    .do_query(&contract)
-                    .await
-                    .inspect(|response| trace!("{:?}", response))
-                    .and_then(|response| Ok(serde_json::from_str::<serde_json::Value>(&response)?))
-                    .map(|x| x.get("token_info").unwrap().to_owned())
-                    .map(|x| {
-                        serde_json::from_value::<secret_toolkit_snip20::TokenInfo>(x.clone())
-                            .unwrap()
-                    })
-                    .map(|x| x.symbol)
-                    .unwrap();
-
-                name
-            })
-        })
+    // TODO: no hardcoded code_hash
+    async fn token_symbol_convert(address: String) -> String {
+        let contract = ContractInfo {
+            address: Addr::unchecked(address),
+            code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
+                .to_string(),
+        };
+        secret_toolkit_snip20::QueryMsg::TokenInfo {}
+            .do_query(&contract)
+            .await
+            .inspect(|response| trace!("{:?}", response))
+            .and_then(|response| Ok(serde_json::from_str::<serde_json::Value>(&response)?))
+            .map(|x| x.get("token_info").unwrap().to_owned())
+            .map(|x| serde_json::from_value::<secret_toolkit_snip20::TokenInfo>(x.clone()).unwrap())
+            .map(|x| x.symbol)
+            .unwrap()
     }
 
-    let token_a_symbol: AsyncDerived<String> = AsyncDerived::new(move || {
-        SendWrapper::new(async move {
-            let address = Addr::unchecked(token_a());
-            let code_hash =
-                "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159".to_string();
-            let contract = ContractInfo { address, code_hash };
-            let symbol = secret_toolkit_snip20::QueryMsg::TokenInfo {}
-                .do_query(&contract)
-                .await
-                .inspect(|response| trace!("{:?}", response))
-                .and_then(|response| Ok(serde_json::from_str::<serde_json::Value>(&response)?))
-                .map(|x| x.get("token_info").unwrap().to_owned())
-                .map(|x| {
-                    serde_json::from_value::<secret_toolkit_snip20::TokenInfo>(x.clone()).unwrap()
-                })
-                .map(|x| x.symbol)
-                .unwrap();
+    let token_a_symbol =
+        AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_a()).await });
+    let token_b_symbol =
+        AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_b()).await });
 
-            symbol
-        })
-    });
-
-    let token_b_symbol: AsyncDerived<String> = AsyncDerived::new(move || {
-        SendWrapper::new(async move {
-            let address = Addr::unchecked(token_b());
-            let code_hash =
-                "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159".to_string();
-            let contract = ContractInfo { address, code_hash };
-            let symbol = secret_toolkit_snip20::QueryMsg::TokenInfo {}
-                .do_query(&contract)
-                .await
-                .inspect(|response| trace!("{:?}", response))
-                .and_then(|response| Ok(serde_json::from_str::<serde_json::Value>(&response)?))
-                .map(|x| x.get("token_info").unwrap().to_owned())
-                .map(|x| serde_json::from_value::<secret_toolkit_snip20::TokenInfo>(x).unwrap())
-                .map(|x| x.symbol)
-                .unwrap();
-
-            symbol
-        })
-    });
-
-    // whenever the key store changes, this will re-set 'is_keplr_enabled' to true, triggering a
-    // reload of everything subscribed to that signal
-    let keplr_keystorechange_handle =
-        window_event_listener_untyped("keplr_keystorechange", move |_| {
-            keplr.enabled.set(true);
-        });
-
-    on_cleanup(move || {
-        info!("cleaning up <PoolManager/>");
-        keplr_keystorechange_handle.remove()
-    });
-
-    // let resource = Resource::new(
-    //     move || (token_a(), token_b(), basis_points()),
-    //     move |(token_a, token_b, basis_points)| {
-    //         SendWrapper::new(async move {
-    //             let encryption_utils = secretrs::EncryptionUtils::new(None, CHAIN_ID).unwrap();
-    //             // TODO: revisit this. url is not needed, EncryptionUtils should be a trait
-    //             let options = CreateQuerierOptions {
-    //                 url: "https://grpc.mainnet.secretsaturn.net",
-    //                 chain_id: CHAIN_ID,
-    //                 encryption_utils,
-    //             };
-    //             let compute = ComputeQuerier::new(wasm_client.get(), options);
-    //             // TODO:
-    //             let query = format!("{}, {}, {}", token_a, token_b, basis_points);
-    //             debug!("{query}");
-    //
-    //             let result = compute.address_by_label("amber-24").await;
-    //             result.map_err(Into::<crate::Error>::into)
-    //         })
-    //     },
-    // );
-    // let (pending, set_pending) = signal(false);
-
-    use crate::liquidity_book::contract_interfaces::lb_pair::QueryMsg;
-    use crate::liquidity_book::Querier;
-
-    // TODO: change contract_interfaces to not use u128 in response types.
+    // TODO: Change contract_interfaces to not use u128 in response types. Use Uint128 instead!
 
     #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
     pub struct ReservesResponse {
@@ -180,20 +99,19 @@ pub fn PoolManager() -> impl IntoView {
         pub bin_reserve_y: String,
     }
 
-    async fn addr_2_contract(contract_address: impl Into<String>) -> Result<ContractInfo> {
-        let contract_address = contract_address.into();
+    async fn addr_2_contract(contract_address: impl AsRef<str>) -> Result<ContractInfo, Error> {
         let client = WebWasmClient::new(GRPC_URL.to_string());
         let encryption_utils = EnigmaUtils::new(None, CHAIN_ID).unwrap();
         let compute = ComputeQuerier::new(client, encryption_utils.into());
-        let contract_info = compute
-            .code_hash_by_contract_address(contract_address.clone())
-            .await
-            .map(|code_hash| ContractInfo {
-                address: Addr::unchecked(contract_address),
-                code_hash,
-            })?;
 
-        Ok(contract_info)
+        compute
+            .code_hash_by_contract_address(contract_address.as_ref())
+            .await
+            .map_err(Error::from)
+            .map(|code_hash| ContractInfo {
+                address: Addr::unchecked(contract_address.as_ref()),
+                code_hash,
+            })
     }
 
     // TODO: Move these to a separate module. IDK if it's worth splitting up the query functions
@@ -218,8 +136,6 @@ pub fn PoolManager() -> impl IntoView {
         .and_then(|response| {
             Ok(serde_json::from_str::<lb_factory::LbPairInformationResponse>(&response)?)
         })
-        // serde_json::from_str::<lb_factory::LbPairInformationResponse>(&response)
-        //     .expect("Failed to deserialize LbPairInformationResponse!")
     }
 
     async fn query_reserves(lb_pair_contract: &ContractInfo) -> Result<ReservesResponse, Error> {
@@ -228,8 +144,6 @@ pub fn PoolManager() -> impl IntoView {
             .await
             .inspect(|response| trace!("{:?}", response))
             .and_then(|response| Ok(serde_json::from_str::<ReservesResponse>(&response)?))
-        // serde_json::from_str::<ReservesResponse>(&response)
-        //     .expect("Failed to deserialize ReservesResponse!")
     }
 
     async fn query_active_id(lb_pair_contract: &ContractInfo) -> Result<u32, Error> {
@@ -239,7 +153,6 @@ pub fn PoolManager() -> impl IntoView {
             .inspect(|response| trace!("{:?}", response))
             .and_then(|response| Ok(serde_json::from_str::<ActiveIdResponse>(&response)?))
             .map(|x| x.active_id)
-        // .expect("Failed to deserialize ActiveIdResponse!")
     }
 
     async fn query_bin_reserves(
@@ -319,11 +232,13 @@ pub fn PoolManager() -> impl IntoView {
         },
     );
 
-    // prevents scrolling to the top of the page each time a query param changes
     let nav_options = NavigateOptions {
+        // prevents scrolling to the top of the page each time a query param changes
         scroll: false,
         ..Default::default()
     };
+
+    // This component only needs to write to the signal
     let (_, set_active_id) = query_signal_with_options::<String>("active_id", nav_options.clone());
 
     let active_id = Resource::new(
@@ -333,10 +248,14 @@ pub fn PoolManager() -> impl IntoView {
                 let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
                 query_active_id(&lb_pair_contract)
                     .await
+                    // This will set a URL query param "active_id" for nested routes to use
                     .inspect(|id| set_active_id.set(Some(id.to_string())))
             })
         },
     );
+
+    // NOTE: We have a lot of Resources depending on other Resources.
+    //       It works, but I wonder if there is a better way.
 
     let bin_reserves = Resource::new(
         move || (lb_pair_information.track(), active_id.track()),
@@ -406,27 +325,6 @@ pub fn PoolManager() -> impl IntoView {
             </div>
         </div>
 
-        // <Suspense fallback=|| view! { <p>"Loading..."</p> }>
-        // // you can `.await` resources to avoid dealing with the `None` state
-        // <p>
-        // "User ID: "
-        // {move || Suspend::new(async move {
-        // match resource.await {
-        // Ok(response) => response,
-        // Err(_) => "error".to_string(),
-        // }
-        // })}
-        // </p>
-        // or you can still use .get() to access resources in things like component props
-        // <For
-        // each=move || resource.get().and_then(Result::ok).unwrap_or_default()
-        // key=|resource| resource.id
-        // let:post
-        // >
-        // // ...
-        // </For>
-        // </Suspense>
-
         <details class="text-neutral-300 font-bold">
             <summary class="text-lg cursor-pointer">Pool Details</summary>
             <ul class="my-1 font-normal text-base text-neutral-200 ">
@@ -479,7 +377,7 @@ pub fn PoolManager() -> impl IntoView {
         </details>
 
         <div class="flex gap-4 py-2">
-            // This works to preserve the query params when navigating to nested routes.
+            // This preserves the query params when navigating to nested routes.
             <button on:click=move |_| {
                 let pathname = location.pathname.get();
                 let query_params = location.search.get();
@@ -499,3 +397,24 @@ pub fn PoolManager() -> impl IntoView {
         <Outlet />
     }
 }
+
+// <Suspense fallback=|| view! { <p>"Loading..."</p> }>
+// // you can `.await` resources to avoid dealing with the `None` state
+// <p>
+// "User ID: "
+// {move || Suspend::new(async move {
+// match resource.await {
+// Ok(response) => response,
+// Err(_) => "error".to_string(),
+// }
+// })}
+// </p>
+// or you can still use .get() to access resources in things like component props
+// <For
+// each=move || resource.get().and_then(Result::ok).unwrap_or_default()
+// key=|resource| resource.id
+// let:post
+// >
+// // ...
+// </For>
+// </Suspense>

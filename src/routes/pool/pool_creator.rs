@@ -14,6 +14,7 @@ pub fn PoolCreator() -> impl IntoView {
     let (bin_step, set_bin_step) = signal("100".to_string());
     let (active_price, set_active_price) = signal("1".to_string());
 
+    // TODO:
     let create_pool = move |ev: leptos::ev::SubmitEvent| {
         ev.prevent_default();
         let token_x = token_x.get();
