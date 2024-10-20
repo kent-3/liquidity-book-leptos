@@ -28,23 +28,23 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo
-            target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-      - uses: mozilla-actions/sccache-action@v0.0.5
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-          targets: wasm32-unknown-unknown
-      - name: Download and install Trunk binary
-        run: wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.21.1/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
-      - name: Build with Trunk
-        run: ./trunk build --release --public-url "${GITHUB_REPOSITORY#*/}"
+      # - uses: actions/checkout@v4
+      # - uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/.cargo
+      #       target/
+      #     key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      #     restore-keys: ${{ runner.os }}-cargo-
+      # - uses: mozilla-actions/sccache-action@v0.0.5
+      # - uses: dtolnay/rust-toolchain@master
+      #   with:
+      #     toolchain: stable
+      #     targets: wasm32-unknown-unknown
+      # - name: Download and install Trunk binary
+      #   run: wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.21.1/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+      # - name: Build with Trunk
+      #   run: ./trunk build --release --public-url "${GITHUB_REPOSITORY#*/}"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

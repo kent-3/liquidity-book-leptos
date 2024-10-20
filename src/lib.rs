@@ -246,6 +246,8 @@ pub fn OptionsMenu(
         // keplr.key.set(None);
     };
 
+    // This is an example of using "uncontrolled" inputs. The values are not known by the
+    // application until the form is submitted.
     let on_submit = move |ev: leptos::ev::SubmitEvent| {
         // stop the page from reloading!
         ev.prevent_default();
