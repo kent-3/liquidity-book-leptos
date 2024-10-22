@@ -3,6 +3,7 @@ use crate::{
     keplr::Keplr,
     state::{ChainId, Endpoint, KeplrSignals, TokenMap},
 };
+use cosmwasm_std::ContractInfo;
 use cosmwasm_std::Uint128;
 use leptos::either::Either;
 use leptos::prelude::*;
@@ -38,7 +39,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                         .await
                         .inspect_err(|err| error!("{err:?}"))
                         .map_err(|err| Error::Generic(err.to_string()))?;
-                    trace!("Found viewing key for {}: {}", token.metadata.symbol, vk);
+                    trace!("Found viewing key for {}: {}", token.symbol, vk);
                     query_snip20_balance(key, token.clone(), vk, endpoint).await
                 }
             })
@@ -99,7 +100,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
 
 pub async fn query_snip20_balance(
     key: crate::keplr::Key,
-    token: crate::keplr::tokens::ContractInfo,
+    token: crate::constants::Token,
     viewing_key: String,
     endpoint: String,
 ) -> Result<String, Error> {
@@ -140,7 +141,7 @@ pub async fn query_snip20_balance(
     let response = serde_json::from_str::<SnipQueryResponse>(&response)?;
 
     match response {
-        SnipQueryResponse::Balance(balance) => Ok(balance.amount.humanize(token.metadata.decimals)),
+        SnipQueryResponse::Balance(balance) => Ok(balance.amount.humanize(token.decimals)),
         SnipQueryResponse::ViewingKeyError(viewing_key_error) => {
             Err(Error::ViewingKey(viewing_key_error.msg)).inspect_err(|err| error!("{err}"))
         }

@@ -19,7 +19,7 @@ pub struct ContractInfo {
 }
 
 pub fn keplr_contract_registry_tokens() -> HashMap<String, ContractInfo> {
-    let json = include_str!(concat!(env!("OUT_DIR"), "/token_map.json"));
+    let json = include_str!(concat!(env!("OUT_DIR"), "/keplr_token_map.json"));
     let token_map: HashMap<String, ContractInfo> =
         serde_json::from_str(json).expect("Failed to deserialize token_map");
 

@@ -1,20 +1,50 @@
-#![allow(unused)]
-use crate::keplr::tokens::{keplr_contract_registry_tokens, ContractInfo};
+use crate::keplr::tokens::ContractInfo;
+use cosmwasm_std::Addr;
 use rsecret::query::compute::ComputeQuerier;
 use secretrs::utils::EnigmaUtils;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
-    sync::{Arc, LazyLock, RwLock},
+    sync::{Arc, LazyLock},
 };
 use tonic_web_wasm_client::Client as WebWasmClient;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Token {
+    pub contract_address: String,
+    pub code_hash: String,
+    pub decimals: u8,
+    pub name: String,
+    pub symbol: String,
+    pub display_name: Option<String>,
+    pub denom: Option<String>,
+    pub version: Option<String>,
+}
 
 pub static CHAIN_ID: &str = "secret-4";
 pub static LCD_URL: &str = "https://lcd.mainnet.secretsaturn.net";
 pub static GRPC_URL: &str = "https://grpc.mainnet.secretsaturn.net";
 
-pub static TOKEN_MAP: LazyLock<HashMap<String, ContractInfo>> = LazyLock::new(|| {
-    let json = include_str!(concat!(env!("OUT_DIR"), "/token_map.json"));
+pub static KEPLR_TOKEN_MAP: LazyLock<HashMap<String, ContractInfo>> = LazyLock::new(|| {
+    let json = include_str!(concat!(env!("OUT_DIR"), "/keplr_token_map.json"));
     serde_json::from_str(json).expect("Failed to deserialize token_map")
+});
+
+pub static TOKEN_MAP: LazyLock<HashMap<String, Token>> = LazyLock::new(|| {
+    let json = include_str!(concat!(env!("OUT_DIR"), "/sf_token_map.json"));
+    serde_json::from_str(json).expect("Failed to deserialize token_map")
+});
+
+pub static SYMBOL_TO_ADDR: LazyLock<HashMap<String, Addr>> = LazyLock::new(|| {
+    TOKEN_MAP
+        .iter()
+        .map(|(contract_address, token)| {
+            (
+                token.symbol.clone(),
+                Addr::unchecked(contract_address.clone()),
+            )
+        })
+        .collect()
 });
 
 pub static WEB_WASM_CLIENT: LazyLock<WebWasmClient> =

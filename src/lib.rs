@@ -11,12 +11,13 @@ use leptos::{
 };
 use leptos_router::components::{ParentRoute, Route, Router, Routes, A};
 use leptos_router_macro::path;
+use prelude::SYMBOL_TO_ADDR;
 use rsecret::query::{bank::BankQuerier, compute::ComputeQuerier};
 use secret_toolkit_snip20::{QueryMsg, TokenInfoResponse};
 use secretrs::utils::EnigmaUtils;
 use send_wrapper::SendWrapper;
 use tonic_web_wasm_client::Client;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, trace};
 use web_sys::{js_sys, wasm_bindgen::JsValue};
 
 mod components;
@@ -31,7 +32,7 @@ mod types;
 mod utils;
 
 use components::Spinner2;
-use constants::{CHAIN_ID, GRPC_URL};
+use constants::{CHAIN_ID, GRPC_URL, TOKEN_MAP};
 use error::Error;
 use keplr::{Keplr, Key};
 use routes::{pool::*, trade::*};
@@ -54,7 +55,25 @@ pub fn App() -> impl IntoView {
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
-    debug!("Loaded {} tokens", token_map.len());
+    debug!("{} Keplr tokens", token_map.len());
+    debug!(
+        "{:#?}",
+        token_map
+            .iter()
+            .map(|(_, token)| token.metadata.symbol.clone())
+            .collect::<Vec<String>>()
+    );
+    debug!("{} SecretFoundation tokens", TOKEN_MAP.len());
+    debug!(
+        "{:#?}",
+        TOKEN_MAP
+            .iter()
+            .map(|(_, token)| token.symbol.clone())
+            .collect::<Vec<String>>()
+    );
+
+    let sscrt_address = SYMBOL_TO_ADDR.get("sSCRT");
+    debug!("{sscrt_address:?}");
 
     Effect::new(move |_| {
         let enabled = keplr.enabled.get();
