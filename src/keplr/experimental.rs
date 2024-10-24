@@ -1,26 +1,27 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ChainInfo {
-    pub chain_id: String,
-    pub chain_name: String,
     pub rpc: String,
     pub rest: String,
+    pub chain_id: String,
+    pub chain_name: String,
+    pub stake_currency: Currency,
     pub bip44: Bip44,
     pub bech32_config: Bech32Config,
     pub currencies: Vec<Currency>,
     pub fee_currencies: Vec<FeeCurrency>,
-    pub stake_currency: Currency,
+    pub features: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Bip44 {
     pub coin_type: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Bech32Config {
     pub bech32_prefix_acc_addr: String,
@@ -31,7 +32,7 @@ pub struct Bech32Config {
     pub bech32_prefix_cons_pub: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Currency {
     pub coin_denom: String,
@@ -40,7 +41,7 @@ pub struct Currency {
     pub coin_gecko_id: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct FeeCurrency {
     pub coin_denom: String,
@@ -50,7 +51,7 @@ pub struct FeeCurrency {
     pub gas_price_step: GasPriceStep,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct GasPriceStep {
     pub low: f64,
