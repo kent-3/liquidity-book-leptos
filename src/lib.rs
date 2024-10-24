@@ -31,8 +31,7 @@ mod state;
 mod types;
 mod utils;
 
-use components::Spinner2;
-use components::SuggestChain;
+use components::{Spinner2, SuggestChains};
 use constants::{CHAIN_ID, GRPC_URL, TOKEN_MAP};
 use error::Error;
 use keplr::{Keplr, Key};
@@ -299,7 +298,7 @@ pub fn OptionsMenu(
                 <button on:click=toggle_menu class="self-stretch">
                     "Close Menu"
                 </button>
-                <SuggestChain/>
+                <SuggestChains/>
                 <div>"Node Configuration"</div>
                 <form class="flex flex-col gap-4" on:submit=on_submit>
                     <input type="text" value=GRPC_URL node_ref=url_input class="w-64" />

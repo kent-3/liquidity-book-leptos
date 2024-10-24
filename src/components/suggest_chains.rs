@@ -87,7 +87,7 @@ static TESTNET: LazyLock<ChainInfo> = LazyLock::new(|| ChainInfo {
 });
 
 #[component]
-pub fn SuggestChain() -> impl IntoView {
+pub fn SuggestChains() -> impl IntoView {
     let suggest_chain_action: Action<ChainInfo, bool, LocalStorage> =
         Action::new_unsync(move |chain_info: &ChainInfo| {
             let chain_info = chain_info.to_owned();
