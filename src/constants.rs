@@ -20,10 +20,15 @@ pub struct Token {
     pub denom: Option<String>,
     pub version: Option<String>,
 }
+// pub static CHAIN_ID: &str = "secretdev-1";
+// pub static GRPC_URL: &str = "http://localhost:9091";
 
-pub static CHAIN_ID: &str = "secret-4";
-pub static LCD_URL: &str = "https://lcd.mainnet.secretsaturn.net";
-pub static GRPC_URL: &str = "https://grpc.mainnet.secretsaturn.net";
+pub static CHAIN_ID: &str = "pulsar-3";
+pub static GRPC_URL: &str = "https://grpc.pulsar.scrttestnet.com";
+
+// pub static CHAIN_ID: &str = "secret-4";
+// pub static LCD_URL: &str = "https://lcd.mainnet.secretsaturn.net";
+// pub static GRPC_URL: &str = "https://grpc.mainnet.secretsaturn.net";
 
 pub static KEPLR_TOKEN_MAP: LazyLock<HashMap<String, ContractInfo>> = LazyLock::new(|| {
     let json = include_str!(concat!(env!("OUT_DIR"), "/keplr_token_map.json"));

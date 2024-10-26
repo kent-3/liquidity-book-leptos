@@ -2,10 +2,12 @@ use leptos::prelude::*;
 use leptos_router::components::A;
 use shade_protocol::{
     c_std::{Addr, ContractInfo, Uint128, Uint256},
-    contract_interfaces::liquidity_book::lb_pair::LBPair,
+    contract_interfaces::liquidity_book::lb_pair::LbPair,
     swap::core::{TokenAmount, TokenType},
 };
 use tracing::{debug, info};
+
+use crate::liquidity_book::constants::addrs::{LB_CONTRACTS, LB_PAIR};
 
 #[component]
 pub fn PoolBrowser() -> impl IntoView {
@@ -15,39 +17,35 @@ pub fn PoolBrowser() -> impl IntoView {
         info!("cleaning up <PoolBrowser/>");
     });
 
-    let pair_1 = LBPair {
+    let pair_1 = LbPair {
         token_x: TokenType::CustomToken {
-            contract_addr: Addr::unchecked("secret1cm5tnqda0vecc6tx0vlp7fpfwj5uu85xn3vu2n"),
-            token_code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
-                .to_string(),
+            contract_addr: LB_CONTRACTS.snip25.address.clone(),
+            token_code_hash: LB_CONTRACTS.snip25.code_hash.clone(),
         },
         token_y: TokenType::CustomToken {
-            contract_addr: Addr::unchecked("secret1072wn6au3m002vsz8ej7upnudm3evuz7vujjwl"),
-            token_code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
-                .to_string(),
+            contract_addr: LB_CONTRACTS.snip20.address.clone(),
+            token_code_hash: LB_CONTRACTS.snip20.code_hash.clone(),
         },
         bin_step: 100,
         contract: ContractInfo {
-            address: Addr::unchecked("secret1pt5nd3fuevamy5lqcv53jqsvytspmknanf5c28"),
-            code_hash: "9768cfd5753a7fa2b51b30a3fc41632df2b3bc31801dece2d6111f321a3e4252"
-                .to_string(),
+            address: LB_PAIR.address.clone(),
+            code_hash: LB_PAIR.code_hash.clone(),
         },
     };
 
-    let pair_2 = LBPair {
+    let pair_2 = LbPair {
         token_x: TokenType::CustomToken {
-            contract_addr: Addr::unchecked("bar"),
+            contract_addr: Addr::unchecked("foo"),
             token_code_hash: "code_hash".to_string(),
         },
         token_y: TokenType::CustomToken {
-            contract_addr: Addr::unchecked("baz"),
+            contract_addr: Addr::unchecked("bar"),
             token_code_hash: "code_hash".to_string(),
         },
         bin_step: 100,
         contract: ContractInfo {
             address: Addr::unchecked("a second LB Pair"),
-            code_hash: "9768cfd5753a7fa2b51b30a3fc41632df2b3bc31801dece2d6111f321a3e4252"
-                .to_string(),
+            code_hash: "tbd".to_string(),
         },
     };
 

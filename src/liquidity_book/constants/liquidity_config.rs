@@ -1,6 +1,8 @@
 /// Configurations for Adding Liquidity Presets
 use std::sync::LazyLock;
 
+use cosmwasm_std::Uint64;
+
 // TODO: decide if we keep 10^18 PRECISION or use the token decimal as PRECISION
 // 10^18 is because ethereum. Token decimals could work, but requires an extra step. And I'm not
 // sure if that would affect the contract implementation (I don't think so).
@@ -25,21 +27,23 @@ impl LiquidityConfiguration {
         self.delta_ids.clone()
     }
 
-    pub fn distribution_x(&self, decimals: u8) -> Vec<u64> {
+    pub fn distribution_x(&self, decimals: u8) -> Vec<Uint64> {
         let factor = 10f64.powi(decimals as i32);
 
         self.distribution_x
             .iter()
             .map(|el| (el * factor).trunc() as u64)
+            .map(Uint64::new)
             .collect()
     }
 
-    pub fn distribution_y(&self, decimals: u8) -> Vec<u64> {
+    pub fn distribution_y(&self, decimals: u8) -> Vec<Uint64> {
         let factor = 10f64.powi(decimals as i32);
 
         self.distribution_y
             .iter()
             .map(|el| (el * factor).trunc() as u64)
+            .map(Uint64::new)
             .collect()
     }
 }

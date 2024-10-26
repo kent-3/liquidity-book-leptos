@@ -16,6 +16,7 @@ pub struct DeployedContractInfo {
 pub struct DeployedContracts {
     pub admin_auth: DeployedContractInfo,
     pub query_auth: DeployedContractInfo,
+    pub snip20: DeployedContractInfo,
     pub snip25: DeployedContractInfo,
     pub lb_factory: DeployedContractInfo,
     pub lb_pair: DeployedContractInfo,
@@ -27,7 +28,8 @@ pub struct DeployedContracts {
 pub static LB_CONTRACTS: LazyLock<Arc<DeployedContracts>> = LazyLock::new(|| {
     let lb_contracts = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),
-        "/public/lb_contracts.json"
+        // TODO: Need a better way to change this.
+        "/public/lb_contracts_pulsar.json"
     ));
     serde_json::from_str::<DeployedContracts>(lb_contracts)
         .expect("Failed to deserialize contract info")
@@ -35,7 +37,7 @@ pub static LB_CONTRACTS: LazyLock<Arc<DeployedContracts>> = LazyLock::new(|| {
 });
 
 // TODO: I only need the LazyLock due to Addr::unchecked not being const...
-pub static LB_FACTORY_CONTRACT: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
+pub static LB_FACTORY: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
     // ContractInfo {
     //     address: Addr::unchecked("secret1dp50y8ehgrew2jne6jyews45k64ulfxtmqewjd"),
     //     code_hash: "0db90ee73825a5464f487655e030a8e5972f37a3f11536e5172d036a5ff6e96c".to_string(),
@@ -49,7 +51,7 @@ pub static LB_FACTORY_CONTRACT: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
 });
 
 // NOTE: This should not be a static value, but it's here for dev purposes.
-pub static LB_PAIR_CONTRACT: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
+pub static LB_PAIR: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
     // ContractInfo {
     //     address: Addr::unchecked("secret1pt5nd3fuevamy5lqcv53jqsvytspmknanf5c28"),
     //     code_hash: "9768cfd5753a7fa2b51b30a3fc41632df2b3bc31801dece2d6111f321a3e4252".to_string(),
@@ -63,7 +65,7 @@ pub static LB_PAIR_CONTRACT: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
 });
 
 // NOTE: This should not be a static value, but it's here for dev purposes.
-pub static LB_STAKING_CONTRACT: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
+pub static LB_STAKING: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
     // ContractInfo {
     //     address: Addr::unchecked("secret1rqdgd33sg7kz7msz5dlury3dqvtghglrpu5dkj"),
     //     code_hash: "16946a1f044d2ad55baf4a108bae2090d491cb47f92400c4c99cdadd6a344cdd".to_string(),

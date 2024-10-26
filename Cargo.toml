@@ -69,6 +69,7 @@ base64 = "0.22.1"
 futures = "0.3.20"
 async-trait = "0.1.81"
 thiserror = "1.0.63"
+hex-literal = "0.4"
 
 # Logging
 tracing = "0.1.40"
@@ -86,6 +87,9 @@ lb-libraries = { git = "https://github.com/securesecrets/shade.git", branch = "o
 
 [patch."https://github.com/securesecrets/shade.git"]
 shade-protocol = { path = "../shade/packages/shade_protocol" }
+
+[patch."https://github.com/kent-3/secret-clients.git"]
+rsecret = { path = "../secret-clients/rsecret" }
 
 # Uncomment during local development
 # [patch.crates-io]

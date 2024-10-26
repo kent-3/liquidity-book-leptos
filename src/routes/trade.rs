@@ -2,7 +2,7 @@ use crate::{
     components::Secret20Balance,
     constants::{GRPC_URL, TOKEN_MAP},
     keplr::Keplr,
-    liquidity_book::{constants::addrs::LB_PAIR_CONTRACT, contract_interfaces::*},
+    liquidity_book::contract_interfaces::*,
     prelude::CHAIN_ID,
     state::*,
     LoadingModal,

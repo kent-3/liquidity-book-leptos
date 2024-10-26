@@ -2922,7 +2922,6 @@ dependencies = [
 [[package]]
 name = "rsecret"
 version = "0.1.0"
-source = "git+https://github.com/kent-3/secret-clients#273eb66f8d5840b202a88ffdec6a7598d8af7109"
 dependencies = [
  "aes-siv",
  "async-trait",
@@ -4237,6 +4236,7 @@ dependencies = [
  "console_error_panic_hook",
  "futures",
  "git2",
+ "hex-literal",
  "keplr-sys",
  "lb-libraries 0.1.0 (git+https://github.com/securesecrets/shade.git?branch=orderbook/library)",
  "leptos",

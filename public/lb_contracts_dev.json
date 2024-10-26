@@ -1,0 +1,47 @@
+{
+  "admin_auth": {
+    "address": "secret1dj2yvaaerj6ha0p0ghf3lc2zylxa6fyvff2npr",
+    "code_hash": "99d0cf3119b5bf51cf2d97c5c0ea23a267bbbc46934c3d87f265756a55103c0f",
+    "code_id": 95
+  },
+  "query_auth": {
+    "address": "secret1mjh2z8llssgqd7qx2nnj99pn7cc27p8ne5v96f",
+    "code_hash": "ed32ac91e689afd6a6be6e21276df0c727803b288c4de5836bd6eab2d2cfb4d0",
+    "code_id": 96
+  },
+  "snip20": {
+    "address": "secret1t9yppcc8jgzjystgnr8uspr6ywnstffkg8j00m",
+    "code_hash": "af74387e276be8874f07bec3a87023ee49b0e7ebe08178c49d0a49c3c98ed60e",
+    "code_id": 97
+  },
+  "snip25": {
+    "address": "secret1zs4e24q2etay5sms8luseks0csj4lxzwk9w0t6",
+    "code_hash": "9a00ca4ad505e9be7e6e6dddf8d939b7ec7e9ac8e109c8681f10db9cacb36d42",
+    "code_id": 98
+  },
+  "lb_factory": {
+    "address": "secret1rgafe5ugfevqv0a3ywpj2afws6l8g6trvyszm8",
+    "code_hash": "e34633d7bb6a7c967347413609001c27c98ea9e6c4e061f5e549d7604e3c2eb0",
+    "code_id": 99
+  },
+  "lb_pair": {
+    "address": "secret15u4850u353n5cfgwdm95zky96ugzlalqdklrm9",
+    "code_hash": "df7196ee406d6f0a8fae9912cfdc5ad0654cb1f7bdc50adf33adbd0184eae33e",
+    "code_id": 100
+  },
+  "lb_token": {
+    "address": "",
+    "code_hash": "087d0f4af822fd24b605080b488bb331507d827bb701346452e400d90f591e62",
+    "code_id": 101
+  },
+  "lb_router": {
+    "address": "",
+    "code_hash": "dbeea5c90ebf3bdcf44f80942cf99851acd7bfe741a6655be26a27b34a9eb910",
+    "code_id": 102
+  },
+  "lb_staking": {
+    "address": "",
+    "code_hash": "4786d9c5ff3cab7809c16aa2c13dec1de958146a28534ac64aad9f8d1daeeee1",
+    "code_id": 103
+  }
+}

@@ -3,7 +3,7 @@ use crate::{
     constants::{CHAIN_ID, GRPC_URL, TOKEN_MAP},
     error::Error,
     liquidity_book::{
-        constants::addrs::{LB_FACTORY_CONTRACT, LB_PAIR_CONTRACT},
+        constants::addrs::{LB_CONTRACTS, LB_FACTORY, LB_PAIR},
         contract_interfaces::lb_pair::QueryMsg,
         Querier,
     },
@@ -26,7 +26,7 @@ use shade_protocol::{
     liquidity_book::{
         lb_factory,
         lb_pair::{
-            ActiveIdResponse, BinResponse, LBPairInformation, NextNonEmptyBinResponse,
+            ActiveIdResponse, BinResponse, LbPairInformation, NextNonEmptyBinResponse,
             TotalSupplyResponse,
         },
     },
@@ -63,10 +63,10 @@ pub fn PoolManager() -> impl IntoView {
 
     // TODO: no hardcoded code_hash
     async fn token_symbol_convert(address: String) -> String {
+        // Assume token_x has the code_hash from the current deployment.
         let contract = ContractInfo {
             address: Addr::unchecked(address),
-            code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
-                .to_string(),
+            code_hash: LB_CONTRACTS.snip25.code_hash.clone(),
         };
         secret_toolkit_snip20::QueryMsg::TokenInfo {}
             .do_query(&contract)
@@ -81,8 +81,23 @@ pub fn PoolManager() -> impl IntoView {
 
     let token_a_symbol =
         AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_a()).await });
-    let token_b_symbol =
-        AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_b()).await });
+
+    let token_b_symbol = AsyncDerived::new_unsync(move || async move {
+        // Assume token_y is sSCRT
+        let contract = ContractInfo {
+            address: Addr::unchecked(token_b()),
+            code_hash: LB_CONTRACTS.snip20.code_hash.clone(),
+        };
+        secret_toolkit_snip20::QueryMsg::TokenInfo {}
+            .do_query(&contract)
+            .await
+            .inspect(|response| trace!("{:?}", response))
+            .and_then(|response| Ok(serde_json::from_str::<serde_json::Value>(&response)?))
+            .map(|x| x.get("token_info").unwrap().to_owned())
+            .map(|x| serde_json::from_value::<secret_toolkit_snip20::TokenInfo>(x.clone()).unwrap())
+            .map(|x| x.symbol)
+            .unwrap()
+    });
 
     // TODO: Change contract_interfaces to not use u128 in response types. Use Uint128 instead!
 
@@ -130,7 +145,7 @@ pub fn PoolManager() -> impl IntoView {
             token_y: token_y.into(),
             bin_step,
         }
-        .do_query(&LB_FACTORY_CONTRACT)
+        .do_query(&LB_FACTORY)
         .await
         .inspect(|response| trace!("{:?}", response))
         .and_then(|response| {
@@ -192,7 +207,7 @@ pub fn PoolManager() -> impl IntoView {
             .map(|x| x.total_supply.to_string())
     }
 
-    let lb_pair_information: Resource<LBPairInformation> = Resource::new(
+    let lb_pair_information: Resource<LbPairInformation> = Resource::new(
         move || (token_a(), token_b(), basis_points()),
         move |(token_a, token_b, basis_points)| {
             SendWrapper::new(async move {

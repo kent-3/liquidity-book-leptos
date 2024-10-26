@@ -3,7 +3,7 @@ use crate::{
     keplr::Keplr,
     liquidity_book::{
         constants::{
-            addrs::{LB_FACTORY_CONTRACT, LB_PAIR_CONTRACT},
+            addrs::{LB_CONTRACTS, LB_FACTORY, LB_PAIR},
             liquidity_config::{
                 LiquidityConfiguration, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
             },
@@ -11,7 +11,7 @@ use crate::{
         contract_interfaces::{
             lb_factory,
             // TODO: rename all LB* to Lb*
-            lb_pair::{self, LBPair, LBPairInformation, LiquidityParameters},
+            lb_pair::{self, LbPair, LbPairInformation, LiquidityParameters},
         },
         utils::{get_id_from_price, get_price_from_id},
         Querier,
@@ -20,7 +20,7 @@ use crate::{
     state::*,
     utils::{alert, latest_block},
 };
-use cosmwasm_std::{Addr, ContractInfo, Uint128};
+use cosmwasm_std::{Addr, ContractInfo, Uint128, Uint64};
 use lb_libraries::math::liquidity_configurations::LiquidityConfigurations;
 use leptos::prelude::*;
 use leptos_router::{
@@ -68,20 +68,20 @@ pub fn AddLiquidity() -> impl IntoView {
     let (price_by, set_price_by) =
         query_signal_with_options::<String>("price_by", nav_options.clone());
 
-    let lb_pair_information: Resource<LBPairInformation> = Resource::new(
+    // TODO: Figure out how to obtain the token code hashes efficiently.
+    let lb_pair_information: Resource<LbPairInformation> = Resource::new(
         move || (token_a(), token_b(), basis_points()),
         move |(token_a, token_b, basis_points)| {
             SendWrapper::new(async move {
-                // TODO: figure out how to obtain the token code hashes efficiently
+                // Assume token_x has the code_hash from the current deployment.
                 let token_x = ContractInfo {
                     address: Addr::unchecked(token_a),
-                    code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
-                        .to_string(),
+                    code_hash: LB_CONTRACTS.snip25.code_hash.clone(),
                 };
+                // Assume token_y is sSCRT
                 let token_y = ContractInfo {
                     address: Addr::unchecked(token_b),
-                    code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
-                        .to_string(),
+                    code_hash: LB_CONTRACTS.snip20.code_hash.clone(),
                 };
                 let bin_step = basis_points.parse::<u16>().unwrap();
 
@@ -90,7 +90,7 @@ pub fn AddLiquidity() -> impl IntoView {
                     token_y: token_y.into(),
                     bin_step,
                 }
-                .do_query(&LB_FACTORY_CONTRACT)
+                .do_query(&LB_FACTORY)
                 .await
                 .inspect(|response| trace!("{:?}", response))
                 .and_then(|response| {
@@ -159,8 +159,9 @@ pub fn AddLiquidity() -> impl IntoView {
         let lb_pair_information = lb_pair_information
             .get()
             .expect("Unverified LB Pair information");
-        let token_x = lb_pair_information.lb_pair.token_x;
-        let token_y = lb_pair_information.lb_pair.token_y;
+        // FIXME: The tokens are backwards!
+        let token_x = lb_pair_information.lb_pair.token_y;
+        let token_y = lb_pair_information.lb_pair.token_x;
         let bin_step = lb_pair_information.bin_step;
 
         let amount_x = token_x_amount.get();
@@ -195,9 +196,9 @@ pub fn AddLiquidity() -> impl IntoView {
 
         let liquidity_configuration = liquidity_configuration.get();
         let delta_ids = liquidity_configuration.delta_ids();
-        let distribution_x = liquidity_configuration.distribution_x(6);
-        let distribution_y = liquidity_configuration.distribution_y(6);
-        let deadline = 20000000;
+        let distribution_x = liquidity_configuration.distribution_x(18);
+        let distribution_y = liquidity_configuration.distribution_y(18);
+        let deadline = Uint64::MIN;
 
         let liquidity_parameters = LiquidityParameters {
             token_x,
@@ -246,7 +247,7 @@ pub fn AddLiquidity() -> impl IntoView {
                 url,
                 chain_id,
                 wallet: wallet.into(),
-                wallet_address: key.bech32_address.into(),
+                wallet_address: key.bech32_address.clone().into(),
                 enigma_utils,
             };
             let wasm_web_client = tonic_web_wasm_client::Client::new(url.to_string());
@@ -254,31 +255,45 @@ pub fn AddLiquidity() -> impl IntoView {
 
             // Recheck the latest block height to update the deadline.
             let tendermint = TendermintQuerier::new(Client::new(url.to_string()));
-            let latest_block = latest_block(tendermint).await?;
-            liquidity_parameters.deadline = latest_block + 100;
+            let latest_block_time = tendermint
+                .get_latest_block()
+                .await
+                .map(|block| block.header.time.unix_timestamp() as u64)
+                .map_err(Error::from)?;
+            liquidity_parameters.deadline = (latest_block_time + 100).into();
 
             let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
 
             let msg = MsgExecuteContractRaw {
-                sender: AccountId::new("secret", &key.address)?,
-                contract: AccountId::new("secret", lb_pair_contract.address.as_bytes())?,
+                // sender: AccountId::new("secret", &key.address)?,
+                sender: AccountId::from_str(key.bech32_address.as_ref())?,
+                contract: AccountId::from_str(lb_pair_contract.address.as_ref())?,
                 msg: lb_pair::ExecuteMsg::AddLiquidity {
                     liquidity_parameters,
                 },
                 sent_funds: vec![],
             };
 
+            debug!("{:#?}", lb_pair_information.get());
+            debug!("{:#?}", msg);
+
             let tx_options = TxOptions {
-                gas_limit: 500_000,
+                gas_limit: 1_000_000,
                 ..Default::default()
             };
 
-            compute_service_client
+            let tx = compute_service_client
                 .execute_contract(msg, lb_pair_contract.code_hash, tx_options)
                 .await
                 .map_err(Error::from)
                 .inspect(|tx_response| info!("{tx_response:?}"))
-                .inspect_err(|error| error!("{error}"))
+                .inspect_err(|error| error!("{error}"))?;
+
+            if tx.code != 0 {
+                error!("{}", tx.raw_log);
+            }
+
+            Ok(())
         })
     });
 

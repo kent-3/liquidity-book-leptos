@@ -16,7 +16,7 @@ use send_wrapper::SendWrapper;
 use tracing::{debug, info};
 
 use crate::liquidity_book::{
-    constants::addrs::LB_FACTORY_CONTRACT, contract_interfaces::lb_factory::QueryMsg, Querier,
+    constants::addrs::LB_FACTORY, contract_interfaces::lb_factory::QueryMsg, Querier,
 };
 
 #[component]
@@ -32,7 +32,7 @@ pub fn Pool() -> impl IntoView {
     // let resource = LocalResource::new(move || {
     //     SendWrapper::new(async move {
     //         QueryMsg::GetNumberOfLbPairs {}
-    //             .do_query(&LB_FACTORY_CONTRACT)
+    //             .do_query(&LB_FACTORY)
     //             .await
     //     })
     // });
