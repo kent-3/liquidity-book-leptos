@@ -16,17 +16,11 @@ use std::sync::{Arc, LazyLock, OnceLock};
 use tonic_web_wasm_client::Client as WebWasmClient;
 use tracing::info;
 
-// NOTE: LB stuff is currently locked to testnet.
+// static CHAIN_ID: &str = "pulsar-3";
+// static GRPC_URL: &str = "https://api.pulsar.scrttestnet.com";
 
-static CHAIN_ID: &str = "pulsar-3";
-static GRPC_URL: &str = "https://grpc.pulsar.scrttestnet.com";
-
-// static CHAIN_ID: &str = "secretdev-1";
-// static GRPC_URL: &str = "http://localhost:9091";
-// WARN: This key is randomly generated when localsecret is started for the first time.
-// Reuse containers to avoid needing changing this every time.
-pub static DEVNET_IO_PUBKEY: [u8; 32] =
-    hex!("7e6cfbda947c3d7070a76136ed5bb9bbde6f99485713bf005eb4a2799b05de62");
+// TODO: don't rely on this. this module should not depend on the main crate.
+use crate::constants::{CHAIN_ID, DEVNET_IO_PUBKEY, GRPC_URL};
 
 // TODO: Querying of io key is problematic due to async. Explore further.
 //

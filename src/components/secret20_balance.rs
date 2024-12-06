@@ -6,6 +6,7 @@ use crate::{
 use cosmwasm_std::ContractInfo;
 use cosmwasm_std::Uint128;
 use leptos::either::Either;
+use leptos::logging::*;
 use leptos::prelude::*;
 use rsecret::query::compute::ComputeQuerier;
 use send_wrapper::SendWrapper;

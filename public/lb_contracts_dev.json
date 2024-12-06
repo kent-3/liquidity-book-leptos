@@ -1,47 +1,47 @@
 {
   "admin_auth": {
-    "address": "secret1dj2yvaaerj6ha0p0ghf3lc2zylxa6fyvff2npr",
+    "address": "secret1p4rwgy4xwu0qszesakmx92hgkxynswhezq25e9",
     "code_hash": "99d0cf3119b5bf51cf2d97c5c0ea23a267bbbc46934c3d87f265756a55103c0f",
-    "code_id": 95
+    "code_id": 2
   },
   "query_auth": {
-    "address": "secret1mjh2z8llssgqd7qx2nnj99pn7cc27p8ne5v96f",
+    "address": "secret1me5hu4s9ypkspkg5eazy4sv2ncqkrsw9rj4auh",
     "code_hash": "ed32ac91e689afd6a6be6e21276df0c727803b288c4de5836bd6eab2d2cfb4d0",
-    "code_id": 96
+    "code_id": 3
   },
   "snip20": {
-    "address": "secret1t9yppcc8jgzjystgnr8uspr6ywnstffkg8j00m",
+    "address": "secret1rygwr49jhksun3zusyj4yj5d4cn25la7yfsaac",
     "code_hash": "af74387e276be8874f07bec3a87023ee49b0e7ebe08178c49d0a49c3c98ed60e",
-    "code_id": 97
+    "code_id": 4
   },
   "snip25": {
-    "address": "secret1zs4e24q2etay5sms8luseks0csj4lxzwk9w0t6",
+    "address": "secret1uvpkfj7war2wka7pq0wwvcftes3ktv8m8d6xw0",
     "code_hash": "9a00ca4ad505e9be7e6e6dddf8d939b7ec7e9ac8e109c8681f10db9cacb36d42",
-    "code_id": 98
+    "code_id": 5
   },
   "lb_factory": {
-    "address": "secret1rgafe5ugfevqv0a3ywpj2afws6l8g6trvyszm8",
-    "code_hash": "e34633d7bb6a7c967347413609001c27c98ea9e6c4e061f5e549d7604e3c2eb0",
-    "code_id": 99
+    "address": "secret12fes0hm507jvd0vhhanckuqf3gxu82h8pjrpny",
+    "code_hash": "ea8b6c1d50ef182030a4c206793d12229e6728dcb3245fd0d8364284b4ba477a",
+    "code_id": 6
   },
   "lb_pair": {
-    "address": "secret15u4850u353n5cfgwdm95zky96ugzlalqdklrm9",
-    "code_hash": "df7196ee406d6f0a8fae9912cfdc5ad0654cb1f7bdc50adf33adbd0184eae33e",
-    "code_id": 100
+    "address": "secret1y3ujlekamvfra8ha58xu75pe0ytuszcwtfcgvy",
+    "code_hash": "4220ad065a7720b0e30ec7fea979f97abe88da4290ce9c9268202d7ab53a8c34",
+    "code_id": 7
   },
   "lb_token": {
     "address": "",
-    "code_hash": "087d0f4af822fd24b605080b488bb331507d827bb701346452e400d90f591e62",
-    "code_id": 101
+    "code_hash": "d81bff4d7df2246fe937c7f0825e3f3262e6e0a340627743b8e4067e413dc951",
+    "code_id": 8
   },
   "lb_router": {
     "address": "",
-    "code_hash": "dbeea5c90ebf3bdcf44f80942cf99851acd7bfe741a6655be26a27b34a9eb910",
-    "code_id": 102
+    "code_hash": "7bd0a883248f0564aa9b80f40fb831e7ab4319ee00ca3325f0b639bd6ad8dff6",
+    "code_id": 9
   },
   "lb_staking": {
     "address": "",
-    "code_hash": "4786d9c5ff3cab7809c16aa2c13dec1de958146a28534ac64aad9f8d1daeeee1",
-    "code_id": 103
+    "code_hash": "ded8699851b73863497b8a63a2a0e6b6441507406ae96de1f0d21a2e0ff5ca42",
+    "code_id": 10
   }
 }

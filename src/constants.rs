@@ -1,5 +1,6 @@
 use crate::keplr::tokens::ContractInfo;
 use cosmwasm_std::Addr;
+use hex_literal::hex;
 use rsecret::query::compute::ComputeQuerier;
 use secretrs::utils::EnigmaUtils;
 use serde::{Deserialize, Serialize};
@@ -20,11 +21,17 @@ pub struct Token {
     pub denom: Option<String>,
     pub version: Option<String>,
 }
-// pub static CHAIN_ID: &str = "secretdev-1";
-// pub static GRPC_URL: &str = "http://localhost:9091";
+// WARN: This key is randomly generated when localsecret is started for the first time.
+// Reuse containers to avoid needing changing this every time.
+pub static DEVNET_IO_PUBKEY: [u8; 32] =
+    hex!("c74e52edac6cdffb50f876927140766fb81b1aa7ae89804a1666df84d9cf9e73");
 
-pub static CHAIN_ID: &str = "pulsar-3";
-pub static GRPC_URL: &str = "https://grpc.pulsar.scrttestnet.com";
+pub static CHAIN_ID: &str = "secretdev-1";
+pub static GRPC_URL: &str = "http://localhost:1317";
+
+// pub static CHAIN_ID: &str = "pulsar-3";
+// pub static GRPC_URL: &str = "https://api.pulsar.scrttestnet.com";
+// pub static GRPC_URL: &str = "https://lcd.testnet.secretsaturn.net";
 
 // pub static CHAIN_ID: &str = "secret-4";
 // pub static LCD_URL: &str = "https://lcd.mainnet.secretsaturn.net";
@@ -56,9 +63,13 @@ pub static WEB_WASM_CLIENT: LazyLock<WebWasmClient> =
     LazyLock::new(|| WebWasmClient::new(GRPC_URL.to_string()));
 
 pub static ENIGMA_UTILS: LazyLock<Arc<EnigmaUtils>> = LazyLock::new(|| {
-    EnigmaUtils::new(None, CHAIN_ID)
-        .expect("Failed to create EnigmaUtils")
-        .into()
+    if CHAIN_ID == "secretdev-1" {
+        EnigmaUtils::from_io_key(None, DEVNET_IO_PUBKEY).into()
+    } else {
+        EnigmaUtils::new(None, CHAIN_ID)
+            .expect("Failed to create EnigmaUtils")
+            .into()
+    }
 });
 
 pub static COMPUTE_QUERIER: LazyLock<ComputeQuerier<WebWasmClient, EnigmaUtils>> =

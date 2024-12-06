@@ -4,7 +4,13 @@ use crate::{
     error::Error,
     liquidity_book::{
         constants::addrs::{LB_CONTRACTS, LB_FACTORY, LB_PAIR},
-        contract_interfaces::lb_pair::QueryMsg,
+        contract_interfaces::{
+            lb_factory,
+            lb_pair::{
+                ActiveIdResponse, BinResponse, LbPairInformation, NextNonEmptyBinResponse,
+                QueryMsg, TotalSupplyResponse,
+            },
+        },
         Querier,
     },
     state::*,
@@ -22,16 +28,7 @@ use leptos_router::{
 use rsecret::query::compute::ComputeQuerier;
 use secretrs::utils::EnigmaUtils;
 use send_wrapper::SendWrapper;
-use shade_protocol::{
-    liquidity_book::{
-        lb_factory,
-        lb_pair::{
-            ActiveIdResponse, BinResponse, LbPairInformation, NextNonEmptyBinResponse,
-            TotalSupplyResponse,
-        },
-    },
-    swap::core::TokenType,
-};
+use shade_protocol::swap::core::TokenType;
 use tonic_web_wasm_client::Client as WebWasmClient;
 use tracing::{debug, info, trace};
 
@@ -61,9 +58,7 @@ pub fn PoolManager() -> impl IntoView {
     };
     let basis_points = move || params.read().get("bps").expect("Missing bps URL param");
 
-    // TODO: no hardcoded code_hash
     async fn token_symbol_convert(address: String) -> String {
-        // Assume token_x has the code_hash from the current deployment.
         let contract = ContractInfo {
             address: Addr::unchecked(address),
             code_hash: LB_CONTRACTS.snip25.code_hash.clone(),

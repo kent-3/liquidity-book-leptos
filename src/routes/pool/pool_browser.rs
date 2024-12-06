@@ -1,13 +1,12 @@
+use crate::liquidity_book::{
+    constants::addrs::{LB_CONTRACTS, LB_PAIR},
+    contract_interfaces::lb_pair::LbPair,
+};
+use cosmwasm_std::{Addr, ContractInfo, Uint128, Uint256};
 use leptos::prelude::*;
 use leptos_router::components::A;
-use shade_protocol::{
-    c_std::{Addr, ContractInfo, Uint128, Uint256},
-    contract_interfaces::liquidity_book::lb_pair::LbPair,
-    swap::core::{TokenAmount, TokenType},
-};
+use shade_protocol::swap::core::{TokenAmount, TokenType};
 use tracing::{debug, info};
-
-use crate::liquidity_book::constants::addrs::{LB_CONTRACTS, LB_PAIR};
 
 #[component]
 pub fn PoolBrowser() -> impl IntoView {

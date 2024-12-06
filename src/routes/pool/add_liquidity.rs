@@ -21,7 +21,9 @@ use crate::{
     utils::{alert, latest_block},
 };
 use cosmwasm_std::{Addr, ContractInfo, Uint128, Uint64};
+use lb_interfaces::lb_factory::{LbPairInformationResponse, QueryMsg::GetLbPairInformation};
 use lb_libraries::math::liquidity_configurations::LiquidityConfigurations;
+use leptos::logging::*;
 use leptos::prelude::*;
 use leptos_router::{
     components::A,
@@ -36,10 +38,7 @@ use rsecret::{
 };
 use secretrs::AccountId;
 use send_wrapper::SendWrapper;
-use shade_protocol::{
-    liquidity_book::lb_factory::{LbPairInformationResponse, QueryMsg::GetLbPairInformation},
-    swap::core::TokenType,
-};
+use shade_protocol::swap::core::TokenType;
 use std::str::FromStr;
 use tonic_web_wasm_client::Client;
 use tracing::{debug, info, trace};

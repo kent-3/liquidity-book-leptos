@@ -7,7 +7,7 @@ use futures::executor::block_on;
 use leptos::{
     ev::MouseEvent,
     html::{Dialog, Input},
-    logging::log,
+    logging::*,
     prelude::*,
     task::spawn_local,
 };

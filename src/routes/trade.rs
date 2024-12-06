@@ -7,7 +7,7 @@ use crate::{
     state::*,
     LoadingModal,
 };
-use leptos::{html::Select, prelude::*};
+use leptos::{html::Select, logging::*, prelude::*};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use rsecret::{
     query::compute::ComputeQuerier, secret_client::CreateTxSenderOptions, tx::ComputeServiceClient,
