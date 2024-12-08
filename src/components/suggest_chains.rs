@@ -125,11 +125,15 @@ pub fn SuggestChains() -> impl IntoView {
 
     view! {
         <div class="suggest-chains space-y-2 w-full">
-        <div class="text-center text-sm font-bold">"Add Chains to Keplr"</div>
+            <div class="text-center text-sm font-bold">"Add Chains to Keplr"</div>
             <div class="flex gap-3">
-            <button class="w-full" on:click=suggest_testnet>"pulsar-3"</button>
-            <button class="w-full" on:click=suggest_devnet>"secretdev-1"</button>
-        </div>
+                <button class="w-full" on:click=suggest_testnet>
+                    "pulsar-3"
+                </button>
+                <button class="w-full" on:click=suggest_devnet>
+                    "secretdev-1"
+                </button>
+            </div>
         </div>
     }
 }

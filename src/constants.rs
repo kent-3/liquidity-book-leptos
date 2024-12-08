@@ -26,12 +26,12 @@ pub struct Token {
 pub static DEVNET_IO_PUBKEY: [u8; 32] =
     hex!("c74e52edac6cdffb50f876927140766fb81b1aa7ae89804a1666df84d9cf9e73");
 
-pub static CHAIN_ID: &str = "secretdev-1";
-pub static GRPC_URL: &str = "http://localhost:1317";
+// pub static CHAIN_ID: &str = "secretdev-1";
+// pub static GRPC_URL: &str = "http://localhost:1317";
 
-// pub static CHAIN_ID: &str = "pulsar-3";
+pub static CHAIN_ID: &str = "pulsar-3";
 // pub static GRPC_URL: &str = "https://api.pulsar.scrttestnet.com";
-// pub static GRPC_URL: &str = "https://lcd.testnet.secretsaturn.net";
+pub static GRPC_URL: &str = "https://grpc.testnet.secretsaturn.net";
 
 // pub static CHAIN_ID: &str = "secret-4";
 // pub static LCD_URL: &str = "https://lcd.mainnet.secretsaturn.net";

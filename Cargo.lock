@@ -2113,17 +2113,31 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 [[package]]
 name = "lb-interfaces"
 version = "0.0.1"
-source = "git+https://github.com/kent-3/liquidity-book.git#1848b2144da43de7c8a57a7bf45323a65054f7dd"
 dependencies = [
  "cosmwasm-schema 1.5.8",
  "ethnum",
- "lb-libraries 0.1.0 (git+https://github.com/kent-3/liquidity-book.git)",
+ "lb-libraries 0.1.0",
  "schemars",
  "secret-cosmwasm-std",
  "secret-toolkit",
  "serde",
  "shade-protocol",
  "snip1155",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "lb-libraries"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm-schema 1.5.8",
+ "ethnum",
+ "primitive-types",
+ "schemars",
+ "secret-cosmwasm-std",
+ "secret-storage-plus",
+ "secret-toolkit",
+ "serde",
  "thiserror 1.0.69",
 ]
 
@@ -2137,22 +2151,6 @@ dependencies = [
  "primitive-types",
  "schemars",
  "secret-cosmwasm-std",
- "secret-toolkit",
- "serde",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "lb-libraries"
-version = "0.1.0"
-source = "git+https://github.com/kent-3/liquidity-book.git#1848b2144da43de7c8a57a7bf45323a65054f7dd"
-dependencies = [
- "cosmwasm-schema 1.5.8",
- "ethnum",
- "primitive-types",
- "schemars",
- "secret-cosmwasm-std",
- "secret-storage-plus",
  "secret-toolkit",
  "serde",
  "thiserror 1.0.69",
@@ -3851,7 +3849,6 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 [[package]]
 name = "snip1155"
 version = "0.0.1"
-source = "git+https://github.com/kent-3/liquidity-book.git#1848b2144da43de7c8a57a7bf45323a65054f7dd"
 dependencies = [
  "cosmwasm-schema 1.5.8",
  "secret-cosmwasm-std",
@@ -4483,7 +4480,7 @@ dependencies = [
  "hex-literal",
  "keplr-sys",
  "lb-interfaces",
- "lb-libraries 0.1.0 (git+https://github.com/kent-3/liquidity-book.git)",
+ "lb-libraries 0.1.0",
  "leptos",
  "leptos_meta",
  "leptos_router",

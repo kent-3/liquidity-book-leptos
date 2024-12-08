@@ -101,7 +101,11 @@ secretrs = { git = "https://github.com/kent-3/secret-rust", branch = "sdk-upgrad
 #
 # [patch."https://github.com/kent-3/secret-clients.git"]
 # rsecret = { path = "../secret-clients/rsecret" }
-#
+
+[patch."https://github.com/kent-3/liquidity-book.git"]
+lb-interfaces = { path = "../liquidity-book/packages/lb_interfaces" }
+lb-libraries = { path = "../liquidity-book/packages/lb_libraries" }
+
 # [patch.crates-io]
 # keplr-sys = { path = "../keplr/keplr-sys" }
 # secretrs = { path = "../secret-rust/secretrs" }

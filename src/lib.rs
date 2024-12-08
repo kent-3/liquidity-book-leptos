@@ -22,6 +22,7 @@ use tonic_web_wasm_client::Client;
 use tracing::{debug, error, info, trace};
 use web_sys::{js_sys, wasm_bindgen::JsValue};
 
+mod batch_query;
 mod components;
 mod constants;
 mod error;
@@ -300,7 +301,7 @@ pub fn OptionsMenu(
                 <button on:click=toggle_menu class="self-stretch">
                     "Close Menu"
                 </button>
-                <SuggestChains/>
+                <SuggestChains />
                 <div>"Node Configuration"</div>
                 <form class="flex flex-col gap-4" on:submit=on_submit>
                     <input type="text" value=GRPC_URL node_ref=url_input class="w-64" />
