@@ -1,4 +1,10 @@
+use std::ops::Add;
+
 use crate::{
+    batch_query::{
+        msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
+        BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
+    },
     components::SecretQuery,
     constants::{CHAIN_ID, GRPC_URL, TOKEN_MAP},
     error::Error,
@@ -28,6 +34,7 @@ use leptos_router::{
 use rsecret::query::compute::ComputeQuerier;
 use secretrs::utils::EnigmaUtils;
 use send_wrapper::SendWrapper;
+use serde::Serialize;
 use shade_protocol::swap::core::TokenType;
 use tonic_web_wasm_client::Client as WebWasmClient;
 use tracing::{debug, info, trace};
@@ -102,12 +109,12 @@ pub fn PoolManager() -> impl IntoView {
         pub reserve_y: String,
     }
 
-    #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
-    pub struct BinResponse {
-        pub bin_id: u32,
-        pub bin_reserve_x: String,
-        pub bin_reserve_y: String,
-    }
+    // #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
+    // pub struct BinResponse {
+    //     pub bin_id: u32,
+    //     pub bin_reserve_x: String,
+    //     pub bin_reserve_y: String,
+    // }
 
     async fn addr_2_contract(contract_address: impl AsRef<str>) -> Result<ContractInfo, Error> {
         let client = WebWasmClient::new(GRPC_URL.to_string());
@@ -169,7 +176,7 @@ pub fn PoolManager() -> impl IntoView {
         lb_pair_contract: &ContractInfo,
         id: u32,
     ) -> Result<BinResponse, Error> {
-        QueryMsg::GetBinReserves { id }
+        QueryMsg::GetBin { id }
             .do_query(lb_pair_contract)
             .await
             .inspect(|response| trace!("{:?}", response))
@@ -200,6 +207,41 @@ pub fn PoolManager() -> impl IntoView {
             .inspect(|response| trace!("{:?}", response))
             .and_then(|response| Ok(serde_json::from_str::<TotalSupplyResponse>(&response)?))
             .map(|x| x.total_supply.to_string())
+    }
+
+    async fn query_nearby_liquidity<T: Serialize>(
+        queries: Vec<BatchQueryParams<T>>,
+    ) -> Result<Vec<BinResponse>, Error> {
+        msg_batch_query(queries)
+            .do_query(&BATCH_QUERY_ROUTER)
+            .await
+            .inspect(|response| trace!("{:?}", response))
+            .and_then(|response| Ok(serde_json::from_str::<BatchQueryResponse>(&response)?))
+            .and_then(|response| {
+                Ok(extract_bins_from_batch_response(parse_batch_query(
+                    response,
+                )))
+            })
+        // .and_then(|responses| {
+        //     Ok(responses
+        //         .into_iter()
+        //         .map(|response| format!("{:?}", response))
+        //         .collect())
+        // })
+    }
+
+    fn extract_bins_from_batch_response(
+        batch_response: BatchQueryParsedResponse,
+    ) -> Vec<BinResponse> {
+        batch_response
+            .items
+            .into_iter()
+            .filter(|item| item.status == BatchItemResponseStatus::SUCCESS) // Process only successful items
+            .map(|item| {
+                serde_json::from_str::<BinResponse>(&item.response)
+                    .expect("Invalid BinResponse JSON")
+            })
+            .collect()
     }
 
     let lb_pair_information: Resource<LbPairInformation> = Resource::new(
@@ -301,6 +343,35 @@ pub fn PoolManager() -> impl IntoView {
         },
     );
 
+    let nearby_liquidity = Resource::new(
+        move || (lb_pair_information.track(), active_id.track()),
+        move |_| {
+            SendWrapper::new(async move {
+                let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
+                let id = active_id.await?;
+                let mut batch = Vec::new();
+
+                let radius = 10;
+
+                for i in 0..(radius * 2 + 1) {
+                    let offset_id = if i < radius {
+                        id - (radius - i) as u32 // Subtract for the first half
+                    } else {
+                        id + (i - radius) as u32 // Add for the second half
+                    };
+
+                    batch.push(BatchQueryParams {
+                        id: offset_id.to_string(),
+                        contract: lb_pair_contract.clone(),
+                        query_msg: QueryMsg::GetBin { id: offset_id },
+                    });
+                }
+
+                query_nearby_liquidity(batch).await
+            })
+        },
+    );
+
     view! {
         <a
             href="/trader-crow-leptos/pool"
@@ -367,10 +438,10 @@ pub fn PoolManager() -> impl IntoView {
                             let reserves = bin_reserves.await.unwrap();
                             view! {
                                 <li class="pl-4 list-none">
-                                    "bin_reserve_x: "{reserves.bin_reserve_x}
+                                    "bin_reserve_x: "{reserves.bin_reserve_x.to_string()}
                                 </li>
                                 <li class="pl-4 list-none">
-                                    "bin_reserve_y: "{reserves.bin_reserve_y}
+                                    "bin_reserve_y: "{reserves.bin_reserve_y.to_string()}
                                 </li>
                             }
                         })}
@@ -382,7 +453,31 @@ pub fn PoolManager() -> impl IntoView {
                         {move || Suspend::new(async move { next_non_empty_bin.await })}
                     </li>
                 </Suspense>
-                <SecretQuery query=bin_total_supply />
+                // a bit crazy innit. but it works.
+                <Suspense fallback=|| view! { <div>"Loading Batch Query..."</div> }>
+                    <li>
+                        "Batch Query: "
+                        {move || Suspend::new(async move {
+                            nearby_liquidity
+                                .await
+                                .and_then(|bins| {
+                                    Ok(
+                                        bins
+                                            .into_iter()
+                                            .map(|bin| {
+                                                view! {
+                                                    <li class="pl-4 list-none">
+                                                        {bin.bin_id} " " {bin.bin_reserve_x.to_string()} " " {bin.bin_reserve_y.to_string()}
+                                                    </li>
+                                                }
+                                            })
+                                            .collect::<Vec<_>>(),
+                                    )
+                                })
+                        })}
+                    </li>
+                </Suspense>
+                // <SecretQuery query=bin_total_supply />
             </ul>
         </details>
 
