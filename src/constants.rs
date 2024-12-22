@@ -24,14 +24,14 @@ pub struct Token {
 // WARN: This key is randomly generated when localsecret is started for the first time.
 // Reuse containers to avoid needing changing this every time.
 pub static DEVNET_IO_PUBKEY: [u8; 32] =
-    hex!("c74e52edac6cdffb50f876927140766fb81b1aa7ae89804a1666df84d9cf9e73");
+    hex!("c8a3ef51d2d4a285ce2a97ccf60a7372fb978e41768556ba4450ecc26247ac4b");
 
-// pub static CHAIN_ID: &str = "secretdev-1";
-// pub static GRPC_URL: &str = "http://localhost:1317";
+pub static CHAIN_ID: &str = "secretdev-1";
+pub static GRPC_URL: &str = "http://localhost:1317";
 
-pub static CHAIN_ID: &str = "pulsar-3";
+// pub static CHAIN_ID: &str = "pulsar-3";
 // pub static GRPC_URL: &str = "https://api.pulsar.scrttestnet.com";
-pub static GRPC_URL: &str = "https://grpc.testnet.secretsaturn.net";
+// pub static GRPC_URL: &str = "https://grpc.testnet.secretsaturn.net";
 
 // pub static CHAIN_ID: &str = "secret-4";
 // pub static LCD_URL: &str = "https://lcd.mainnet.secretsaturn.net";

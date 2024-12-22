@@ -51,6 +51,7 @@ leptos_meta = { version = "0.7.0" }
 
 # gRPC
 tonic = { version = "0.12.2", default-features = false }
+prost = { version = "0.13.4" }
 
 # Web support
 console_error_panic_hook = "0.1.7"
@@ -98,9 +99,9 @@ secretrs = { git = "https://github.com/kent-3/secret-rust", branch = "sdk-upgrad
 
 # [patch."https://github.com/securesecrets/shade.git"]
 # shade-protocol = { path = "../shade/packages/shade_protocol" }
-#
-# [patch."https://github.com/kent-3/secret-clients.git"]
-# rsecret = { path = "../secret-clients/rsecret" }
+
+[patch."https://github.com/kent-3/secret-clients.git"]
+rsecret = { path = "../secret-clients/rsecret" }
 
 [patch."https://github.com/kent-3/liquidity-book.git"]
 lb-interfaces = { path = "../liquidity-book/packages/lb_interfaces" }

@@ -13,22 +13,16 @@ use std::rc::Rc;
 use tracing::{debug, trace};
 use web_sys::js_sys;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct KeplrOfflineSigner {
-    inner: keplr_sys::KeplrOfflineSigner,
-}
-
-impl Clone for KeplrOfflineSigner {
-    fn clone(&self) -> Self {
-        KeplrOfflineSigner {
-            inner: self.inner.clone().into(),
-        }
-    }
+    inner: SendWrapper<Rc<keplr_sys::KeplrOfflineSigner>>,
 }
 
 impl From<keplr_sys::KeplrOfflineSigner> for KeplrOfflineSigner {
     fn from(value: keplr_sys::KeplrOfflineSigner) -> Self {
-        Self { inner: value }
+        Self {
+            inner: SendWrapper::new(Rc::new(value)),
+        }
     }
 }
 

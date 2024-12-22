@@ -13,8 +13,8 @@ use crate::{
         contract_interfaces::{
             lb_factory,
             lb_pair::{
-                ActiveIdResponse, BinResponse, LbPairInformation, NextNonEmptyBinResponse,
-                QueryMsg, TotalSupplyResponse,
+                ActiveIdResponse, BinResponse, LbPairInformation, LbTokenSupplyResponse,
+                NextNonEmptyBinResponse, QueryMsg,
             },
         },
         Querier,
@@ -201,11 +201,11 @@ pub fn PoolManager() -> impl IntoView {
     // TODO: Figure out why this number is so huge, for example:
     //       12243017097593870802128434755484640756287535340
     async fn query_total_supply(lb_pair_contract: &ContractInfo, id: u32) -> Result<String, Error> {
-        QueryMsg::TotalSupply { id }
+        QueryMsg::GetLbTokenSupply { id }
             .do_query(lb_pair_contract)
             .await
             .inspect(|response| trace!("{:?}", response))
-            .and_then(|response| Ok(serde_json::from_str::<TotalSupplyResponse>(&response)?))
+            .and_then(|response| Ok(serde_json::from_str::<LbTokenSupplyResponse>(&response)?))
             .map(|x| x.total_supply.to_string())
     }
 

@@ -22,7 +22,7 @@ pub struct DeployedContracts {
     pub lb_pair: DeployedContractInfo,
     pub lb_token: DeployedContractInfo,
     pub lb_router: DeployedContractInfo,
-    pub lb_staking: DeployedContractInfo,
+    pub lb_quoter: DeployedContractInfo,
 }
 
 // TODO: don't rely on this. this module should not depend on the main crate.
@@ -65,11 +65,18 @@ pub static LB_PAIR: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
     .into()
 });
 
-// NOTE: This should not be a static value, but it is here for dev purposes.
-pub static LB_STAKING: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
+pub static LB_ROUTER: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
     ContractInfo {
-        address: LB_CONTRACTS.lb_staking.address.clone(),
-        code_hash: LB_CONTRACTS.lb_staking.code_hash.clone(),
+        address: LB_CONTRACTS.lb_router.address.clone(),
+        code_hash: LB_CONTRACTS.lb_router.code_hash.clone(),
+    }
+    .into()
+});
+
+pub static LB_QUOTER: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
+    ContractInfo {
+        address: LB_CONTRACTS.lb_quoter.address.clone(),
+        code_hash: LB_CONTRACTS.lb_quoter.code_hash.clone(),
     }
     .into()
 });

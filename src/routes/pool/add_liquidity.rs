@@ -3,15 +3,15 @@ use crate::{
     keplr::Keplr,
     liquidity_book::{
         constants::{
-            addrs::{LB_CONTRACTS, LB_FACTORY, LB_PAIR},
+            addrs::{LB_CONTRACTS, LB_FACTORY, LB_PAIR, LB_ROUTER},
             liquidity_config::{
                 LiquidityConfiguration, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
             },
         },
         contract_interfaces::{
             lb_factory,
-            // TODO: rename all LB* to Lb*
             lb_pair::{self, LbPair, LbPairInformation, LiquidityParameters},
+            lb_router,
         },
         utils::{get_id_from_price, get_price_from_id},
         Querier,
@@ -21,8 +21,11 @@ use crate::{
     utils::{alert, latest_block},
 };
 use cosmwasm_std::{Addr, ContractInfo, Uint128, Uint64};
-use lb_interfaces::lb_factory::{LbPairInformationResponse, QueryMsg::GetLbPairInformation};
-use lb_libraries::math::liquidity_configurations::LiquidityConfigurations;
+use lb_interfaces::lb_router::CreateLbPairResponse;
+use lb_interfaces::{
+    lb_factory::{LbPairInformationResponse, QueryMsg::GetLbPairInformation},
+    lb_router::AddLiquidityResponse,
+};
 use leptos::logging::*;
 use leptos::prelude::*;
 use leptos_router::{
@@ -30,12 +33,16 @@ use leptos_router::{
     hooks::{query_signal_with_options, use_params, use_params_map, use_query_map},
     NavigateOptions,
 };
+use prost::Message;
 use rsecret::{
     query::tendermint::TendermintQuerier,
     secret_client::CreateTxSenderOptions,
+    secret_client::TxResponse,
     tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
     TxOptions,
 };
+use secretrs::compute::MsgExecuteContractResponse;
+use secretrs::tx::Msg;
 use secretrs::AccountId;
 use send_wrapper::SendWrapper;
 use shade_protocol::swap::core::TokenType;
@@ -158,9 +165,9 @@ pub fn AddLiquidity() -> impl IntoView {
         let lb_pair_information = lb_pair_information
             .get()
             .expect("Unverified LB Pair information");
-        // FIXME: The tokens are backwards!
-        let token_x = lb_pair_information.lb_pair.token_y;
-        let token_y = lb_pair_information.lb_pair.token_x;
+        // FIXME: The tokens are not always in the expected order!
+        let token_x = lb_pair_information.lb_pair.token_x;
+        let token_y = lb_pair_information.lb_pair.token_y;
         let bin_step = lb_pair_information.bin_step;
 
         let amount_x = token_x_amount.get();
@@ -203,7 +210,6 @@ pub fn AddLiquidity() -> impl IntoView {
             token_x,
             token_y,
             bin_step,
-            // This Uint128 buisiness seems unneccesary
             amount_x: Uint128::from_str(&amount_x).unwrap(),
             amount_y: Uint128::from_str(&amount_y).unwrap(),
             amount_x_min: Uint128::from(amount_x_min),
@@ -214,6 +220,8 @@ pub fn AddLiquidity() -> impl IntoView {
             delta_ids,
             distribution_x,
             distribution_y,
+            to: "todo".to_string(),
+            refund_to: "todo".to_string(),
             deadline,
         };
 
@@ -237,7 +245,8 @@ pub fn AddLiquidity() -> impl IntoView {
 
             let key = Keplr::get_key(&chain_id).await?;
             keplr.enabled.set(true);
-            let wallet = Keplr::get_offline_signer_only_amino(&chain_id);
+            // let wallet = Keplr::get_offline_signer_only_amino(&chain_id);
+            let wallet = Keplr::get_offline_signer(&chain_id);
             let enigma_utils = Keplr::get_enigma_utils(&chain_id).into();
 
             // TODO: I guess I need to make this type use Strings instead of &'static str, because the
@@ -259,21 +268,23 @@ pub fn AddLiquidity() -> impl IntoView {
                 .await
                 .map(|block| block.header.time.unix_timestamp() as u64)
                 .map_err(Error::from)?;
-            liquidity_parameters.deadline = (latest_block_time + 100).into();
 
-            let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
+            liquidity_parameters.deadline = (latest_block_time + 100).into();
+            liquidity_parameters.to = key.bech32_address.clone().into();
+            liquidity_parameters.refund_to = key.bech32_address.clone().into();
+
+            let lb_router_contract = &LB_ROUTER;
 
             let msg = MsgExecuteContractRaw {
                 // sender: AccountId::new("secret", &key.address)?,
                 sender: AccountId::from_str(key.bech32_address.as_ref())?,
-                contract: AccountId::from_str(lb_pair_contract.address.as_ref())?,
-                msg: lb_pair::ExecuteMsg::AddLiquidity {
+                contract: AccountId::from_str(lb_router_contract.address.as_ref())?,
+                msg: lb_router::ExecuteMsg::AddLiquidity {
                     liquidity_parameters,
                 },
                 sent_funds: vec![],
             };
 
-            debug!("{:#?}", lb_pair_information.get());
             debug!("{:#?}", msg);
 
             let tx_options = TxOptions {
@@ -282,7 +293,7 @@ pub fn AddLiquidity() -> impl IntoView {
             };
 
             let tx = compute_service_client
-                .execute_contract(msg, lb_pair_contract.code_hash, tx_options)
+                .execute_contract(msg, lb_router_contract.code_hash.clone(), tx_options)
                 .await
                 .map_err(Error::from)
                 .inspect(|tx_response| info!("{tx_response:?}"))
@@ -291,6 +302,17 @@ pub fn AddLiquidity() -> impl IntoView {
             if tx.code != 0 {
                 error!("{}", tx.raw_log);
             }
+
+            debug!("hello");
+            let data = MsgExecuteContractResponse::from_any(&tx.data[0])
+                .inspect_err(|e| error! {"{e}"})?
+                .data;
+            debug!("hello");
+            let add_liquidity_response = serde_json::from_slice::<AddLiquidityResponse>(&data)?;
+            debug!("hello");
+
+            debug!("X: {}", add_liquidity_response.amount_x_added);
+            debug!("Y: {}", add_liquidity_response.amount_y_added);
 
             Ok(())
         })
