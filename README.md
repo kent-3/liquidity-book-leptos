@@ -1,4 +1,4 @@
-# trader-crow-leptos
+# liquidity-book-leptos
 
 This is a Client-Side-Rendered App showing how it's possible to interact with
 [Keplr](https://github.com/chainapsis/keplr-wallet) and Secret from WebAssembly,
