@@ -1,7 +1,7 @@
 # liquidity-book-leptos
 
-This is a Client-Side-Rendered App showing how it's possible to interact with
-[Keplr](https://github.com/chainapsis/keplr-wallet) and Secret from WebAssembly,
+This is a Client-Side-Rendered App demonstrating how to interact with the
+[liquidity-book](https://github.com/kent-3/liquidity-book) contracts,
 using the [Leptos](https://leptos.dev/) framework.
 
 ## Getting Started
@@ -50,7 +50,7 @@ trunk serve --open
 To create a production version of your app:
 
 ```bash
-trunk build --release --public-url "https://kent-3.github.io/trader-crow-leptos/"
+trunk build --release --public-url "https://kent-3.github.io/liquidity-book-leptos/"
 ```
 
 `trunk build` will create a number of build artifacts in a `dist/` directory.
