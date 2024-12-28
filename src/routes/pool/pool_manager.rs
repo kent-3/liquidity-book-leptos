@@ -374,7 +374,7 @@ pub fn PoolManager() -> impl IntoView {
 
     view! {
         <a
-            href="/trader-crow-leptos/pool"
+            href="/liquidity-book-leptos/pool"
             class="block text-neutral-200/50 text-sm font-bold cursor-pointer no-underline"
         >
             "🡨 Back to pools list"
@@ -490,6 +490,7 @@ pub fn PoolManager() -> impl IntoView {
                 navigate(&new_route, Default::default())
             }>"Add Liquidity"</button>
 
+                // FIXME: this doesn't work if the user is already on the add liquidity page
             <A href="remove">
                 <button>"Remove Liquidity"</button>
             </A>

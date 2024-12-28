@@ -191,17 +191,17 @@ pub fn App() -> impl IntoView {
                 </div>
                 <hr />
                 <nav>
-                    <A href="/trader-crow-leptos/">"Home"</A>
-                    <A href="/trader-crow-leptos/pool">"Pool"</A>
-                    <A href="/trader-crow-leptos/trade">"Trade"</A>
-                    <A href="/trader-crow-leptos/analytics">"Analytics"</A>
+                    <A href="/liquidity-book-leptos/">"Home"</A>
+                    <A href="/liquidity-book-leptos/pool">"Pool"</A>
+                    <A href="/liquidity-book-leptos/trade">"Trade"</A>
+                    <A href="/liquidity-book-leptos/analytics">"Analytics"</A>
                 </nav>
                 <hr />
             </header>
             <main class="overflow-x-auto">
                 <Routes fallback=|| "This page could not be found.">
-                    <Route path=path!("/trader-crow-leptos/") view=Home />
-                    <ParentRoute path=path!("/trader-crow-leptos/pool") view=Pool>
+                    <Route path=path!("/liquidity-book-leptos/") view=Home />
+                    <ParentRoute path=path!("/liquidity-book-leptos/pool") view=Pool>
                         <Route path=path!("/") view=PoolBrowser />
                         <Route path=path!("/create") view=PoolCreator />
                         <ParentRoute path=path!("/:token_a/:token_b/:bps") view=PoolManager>
@@ -210,7 +210,7 @@ pub fn App() -> impl IntoView {
                             <Route path=path!("/remove") view=RemoveLiquidity />
                         </ParentRoute>
                     </ParentRoute>
-                    <Route path=path!("/trader-crow-leptos/trade") view=Trade />
+                    <Route path=path!("/liquidity-book-leptos/trade") view=Trade />
                 </Routes>
             </main>
             <LoadingModal when=enable_keplr_action.pending() message="Requesting Connection" />

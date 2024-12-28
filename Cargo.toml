@@ -89,7 +89,7 @@ lb-libraries = { git = "https://github.com/kent-3/liquidity-book.git" }
 [dependencies.shade-protocol]
 git = "https://github.com/securesecrets/shade"
 branch = "orderbook/library"
-features = ["swap", "snip20", "utils"]
+features = ["swap", "liquidity-book", "snip20", "utils"]
 
 [patch.crates-io]
 secret-sdk-proto = { git = "https://github.com/kent-3/secret-rust", branch = "sdk-upgrade" }
