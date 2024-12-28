@@ -164,10 +164,10 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Router>
-            <div class="background-image"></div>
+            // <div class="background-image"></div>
             <header>
                 <div class="flex justify-between items-center">
-                    <div class="my-3 font-bold text-3xl line-clamp-1">"Trader Crow 2"</div>
+                    <div class="my-3 font-bold text-3xl line-clamp-1">"Liquidity Book"</div>
                     <Show when=move || keplr.key.get().and_then(|key| key.ok()).is_some()>
                         <p class="hidden sm:block text-sm outline outline-2 outline-offset-8 outline-neutral-500">
                             "Connected as "<strong>{key_name}</strong>
