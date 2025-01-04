@@ -1,12 +1,17 @@
-use crate::liquidity_book::{
-    constants::addrs::{LB_CONTRACTS, LB_PAIR},
-    contract_interfaces::lb_pair::LbPair,
+use crate::{
+    constants::Querier,
+    liquidity_book::{
+        constants::addrs::{LB_CONTRACTS, LB_PAIR},
+        contract_interfaces::{lb_factory, lb_pair::LbPair},
+    },
+    routes::pool::LB_FACTORY,
 };
-use cosmwasm_std::{Addr, ContractInfo, Uint128, Uint256};
+use cosmwasm_std::ContractInfo;
 use leptos::prelude::*;
 use leptos_router::components::A;
-use shade_protocol::swap::core::{TokenAmount, TokenType};
-use tracing::{debug, info};
+use send_wrapper::SendWrapper;
+use shade_protocol::swap::core::TokenType;
+use tracing::{debug, info, trace};
 
 #[component]
 pub fn PoolBrowser() -> impl IntoView {
@@ -32,61 +37,94 @@ pub fn PoolBrowser() -> impl IntoView {
         },
     };
 
-    let pair_2 = LbPair {
-        token_x: TokenType::CustomToken {
-            contract_addr: Addr::unchecked("foo"),
-            token_code_hash: "code_hash".to_string(),
-        },
-        token_y: TokenType::CustomToken {
-            contract_addr: Addr::unchecked("bar"),
-            token_code_hash: "code_hash".to_string(),
-        },
-        bin_step: 100,
-        contract: ContractInfo {
-            address: Addr::unchecked("a second LB Pair"),
-            code_hash: "tbd".to_string(),
-        },
-    };
-
     // TODO: query for the pools
-    let pools = vec![pair_1, pair_2];
+    let pools = vec![pair_1];
 
-    // let resource = use_context::<LocalResource<String>>().expect("Context missing!");
+    let number_of_lb_pairs: Resource<u32> = Resource::new(
+        move || (),
+        move |_| {
+            SendWrapper::new(async move {
+                lb_factory::QueryMsg::GetNumberOfLbPairs {}
+                    .do_query(&LB_FACTORY)
+                    .await
+                    .inspect(|response| debug!("{:?}", response))
+                    .and_then(|response| {
+                        Ok(serde_json::from_str::<lb_factory::NumberOfLbPairsResponse>(
+                            &response,
+                        )?)
+                    })
+                    .map(|x| x.lb_pair_number)
+                    .unwrap()
+            })
+        },
+    );
+
+    // TODO: this is super inefficient. but I don't see a better way...
+    let all_lb_pairs: Resource<Vec<LbPair>> = Resource::new(
+        move || (),
+        move |_| {
+            SendWrapper::new(async move {
+                let i = number_of_lb_pairs.await;
+                let mut pairs: Vec<LbPair> = Vec::with_capacity(i as usize);
+
+                for index in 0..i {
+                    pairs.push(
+                        lb_factory::QueryMsg::GetLbPairAtIndex { index }
+                            .do_query(&LB_FACTORY)
+                            .await
+                            .inspect(|response| debug!("{:?}", response))
+                            .and_then(|response| {
+                                Ok(serde_json::from_str::<lb_factory::LbPairAtIndexResponse>(
+                                    &response,
+                                )?)
+                            })
+                            .map(|x| x.lb_pair)
+                            .unwrap(),
+                    )
+                }
+
+                pairs
+            })
+        },
+    );
 
     view! {
         <div class="text-3xl font-bold">"Pool"</div>
         <div class="text-sm text-neutral-400">"Provide liquidity and earn fees."</div>
 
-        <h3 class="mb-1">"Existing Pools"</h3>
-        <ul>
-            {pools
-                .into_iter()
-                .map(|n| {
-                    view! {
-                        <li>
-                            <a href=format!(
-                                "/liquidity-book-leptos/pool/{}/{}/{}",
-                                match n.token_x {
-                                    TokenType::CustomToken { contract_addr, .. } => {
-                                        contract_addr.to_string()
-                                    }
-                                    TokenType::NativeToken { denom } => denom,
-                                },
-                                match n.token_y {
-                                    TokenType::CustomToken { contract_addr, .. } => {
-                                        contract_addr.to_string()
-                                    }
-                                    TokenType::NativeToken { denom } => denom,
-                                },
-                                n.bin_step,
-                            )>{n.contract.address.to_string()}</a>
-                        </li>
-                    }
-                })
-                .collect_view()}
-        </ul>
-
-        // <h3>{move || resource.get()}</h3>
+        <h3 class="mb-1">"Existing Pools - " {number_of_lb_pairs}</h3>
+        <Suspense fallback=|| view! { <div>"Loading..."</div> }>
+            <ul>
+                {move || Suspend::new(async move {
+                    all_lb_pairs
+                        .await
+                        .into_iter()
+                        .map(|n| {
+                            view! {
+                                <li>
+                                    <a href=format!(
+                                        "/liquidity-book-leptos/pool/{}/{}/{}",
+                                        match n.token_x {
+                                            TokenType::CustomToken { contract_addr, .. } => {
+                                                contract_addr.to_string()
+                                            }
+                                            TokenType::NativeToken { denom } => denom,
+                                        },
+                                        match n.token_y {
+                                            TokenType::CustomToken { contract_addr, .. } => {
+                                                contract_addr.to_string()
+                                            }
+                                            TokenType::NativeToken { denom } => denom,
+                                        },
+                                        n.bin_step,
+                                    )>{n.contract.address.to_string()}</a>
+                                </li>
+                            }
+                        })
+                        .collect_view()
+                })}
+            </ul>
+        </Suspense>
 
         <div class="mt-4">
             <A href="/liquidity-book-leptos/pool/create">

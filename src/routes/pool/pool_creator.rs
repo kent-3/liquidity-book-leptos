@@ -1,5 +1,24 @@
+use crate::{
+    error::Error,
+    liquidity_book::{
+        constants::addrs::LB_ROUTER,
+        contract_interfaces::lb_router::{self, CreateLbPairResponse},
+        utils::get_id_from_price,
+    },
+    ChainId, Endpoint, Keplr, KeplrSignals, CHAIN_ID, GRPC_URL,
+};
+use cosmwasm_std::Addr;
 use leptos::prelude::*;
-use tracing::{debug, info};
+use rsecret::{
+    secret_client::CreateTxSenderOptions,
+    tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
+    TxOptions,
+};
+use secretrs::{compute::MsgExecuteContractResponse, tx::Msg, AccountId};
+use send_wrapper::SendWrapper;
+use shade_protocol::swap::core::TokenType;
+use std::str::FromStr;
+use tracing::{debug, error, info};
 
 #[component]
 pub fn PoolCreator() -> impl IntoView {
@@ -8,6 +27,10 @@ pub fn PoolCreator() -> impl IntoView {
     on_cleanup(move || {
         info!("cleaning up <PoolCreator/>");
     });
+
+    let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
+    let chain_id = use_context::<ChainId>().expect("chain_id context missing!");
+    let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
 
     let (token_x, set_token_x) = signal("TOKENX".to_string());
     let (token_y, set_token_y) = signal("TOKENY".to_string());
@@ -29,6 +52,100 @@ pub fn PoolCreator() -> impl IntoView {
 
         // ...
     };
+
+    let create_lb_pair = Action::new(move |_: &()| {
+        let url = GRPC_URL;
+        let chain_id = CHAIN_ID;
+
+        let token_x = token_x.get();
+        let token_y = token_y.get();
+        let bin_step = bin_step
+            .get()
+            .parse::<u16>()
+            .expect("Invalid bin step format");
+        let price = active_price
+            .get()
+            .parse::<f64>()
+            .expect("Invalid price format");
+        let active_id = get_id_from_price(price, bin_step);
+
+        SendWrapper::new(async move {
+            if false {
+                return Err(Error::generic(
+                    "this helps the compiler infer the Error type",
+                ));
+            }
+
+            let key = Keplr::get_key(&chain_id).await?;
+            keplr.enabled.set(true);
+            // let wallet = Keplr::get_offline_signer_only_amino(&chain_id);
+            let wallet = Keplr::get_offline_signer(&chain_id);
+            let enigma_utils = Keplr::get_enigma_utils(&chain_id).into();
+
+            // TODO: I guess I need to make this type use Strings instead of &'static str, because the
+            // values are not static in this application (user is able to set them to anything).
+            let options = CreateTxSenderOptions {
+                url,
+                chain_id,
+                wallet: wallet.into(),
+                wallet_address: key.bech32_address.clone().into(),
+                enigma_utils,
+            };
+            let wasm_web_client = tonic_web_wasm_client::Client::new(url.to_string());
+            let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
+
+            let lb_router_contract = &LB_ROUTER;
+
+            let msg = MsgExecuteContractRaw {
+                sender: AccountId::from_str(key.bech32_address.as_ref())?,
+                contract: AccountId::from_str(lb_router_contract.address.as_ref())?,
+                // TODO: get contract hashes for each token and make them into TokenType
+                msg: lb_router::ExecuteMsg::CreateLbPair {
+                    token_x: TokenType::CustomToken {
+                        contract_addr: Addr::unchecked(&token_x),
+                        token_code_hash: todo!(),
+                    },
+                    token_y: TokenType::CustomToken {
+                        contract_addr: Addr::unchecked(&token_y),
+                        token_code_hash: todo!(),
+                    },
+                    active_id,
+                    bin_step,
+                },
+                sent_funds: vec![],
+            };
+
+            debug!("{:#?}", msg);
+
+            let tx_options = TxOptions {
+                gas_limit: 1_000_000,
+                ..Default::default()
+            };
+
+            let tx = compute_service_client
+                .execute_contract(msg, lb_router_contract.code_hash.clone(), tx_options)
+                .await
+                .map_err(Error::from)
+                .inspect(|tx_response| info!("{tx_response:?}"))
+                .inspect_err(|error| error!("{error}"))?;
+
+            if tx.code != 0 {
+                error!("{}", tx.raw_log);
+            }
+
+            debug!("hello");
+            let data = MsgExecuteContractResponse::from_any(&tx.data[0])
+                .inspect_err(|e| error! {"{e}"})?
+                .data;
+            debug!("hello");
+            let create_lb_pair_response = serde_json::from_slice::<CreateLbPairResponse>(&data)?;
+            debug!("hello");
+
+            debug!("LbPair: {:?}", create_lb_pair_response.lb_pair);
+
+            Ok(())
+        })
+    });
 
     view! {
         <a

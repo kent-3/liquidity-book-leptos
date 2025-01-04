@@ -1,1 +1,1 @@
-pub use lb_interfaces::*;
+pub use liquidity_book::interfaces::*;

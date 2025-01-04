@@ -1,4 +1,4 @@
-use crate::keplr::tokens::ContractInfo;
+use crate::{error::Error, keplr::tokens::ContractInfo};
 use cosmwasm_std::Addr;
 use hex_literal::hex;
 use rsecret::query::compute::ComputeQuerier;
@@ -86,3 +86,44 @@ pub fn compute_querier(
             .into(),
     )
 }
+
+// TODO: kinda awkward. it would be cooler to use those ILb* types but they take deps.querier. I
+// bet we could make a compatible QuerierWrapper, but that sounds advanced.
+// TODO: I really need to find a better location for this...
+
+pub trait Querier {
+    async fn do_query(&self, contract: &cosmwasm_std::ContractInfo) -> Result<String, Error>;
+}
+
+impl<T: Serialize + Send + Sync> Querier for T {
+    async fn do_query(&self, contract: &cosmwasm_std::ContractInfo) -> Result<String, Error> {
+        let contract_address = &contract.address;
+        let code_hash = &contract.code_hash;
+        let query = self;
+
+        COMPUTE_QUERIER
+            .query_secret_contract(contract_address, code_hash, query)
+            .await
+            .map_err(Into::into)
+    }
+}
+
+// TODO: Querying of io key is problematic due to async. Explore further.
+//
+// pub static DEVNET_IO_PUBKEY: OnceLock<[u8; 32]> = OnceLock::new();
+// pub async fn get_io_key(channel: tonic_web_wasm_client::Client) -> [u8; 32] {
+//     let mut secret_registration = RegistrationQueryClient::new(channel.clone());
+//     let enclave_key_bytes = secret_registration
+//         .tx_key(())
+//         .await
+//         .expect("could not obtain IO key")
+//         .into_inner()
+//         .key;
+//     // let enclave_key = hex::encode(&enclave_key_bytes);
+//     // info!("Enclave IO Public Key: {:>4}", enclave_key.bright_blue());
+//
+//     let mut enclave_key = [0u8; 32];
+//     enclave_key.copy_from_slice(&enclave_key_bytes[0..32]);
+//
+//     enclave_key
+// }

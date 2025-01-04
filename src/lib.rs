@@ -1,21 +1,19 @@
-#![allow(unused)]
+// #![allow(unused)]
 
 // use codee::string::FromToStringCodec;
 // use leptos_use::storage::use_local_storage;
 
-use futures::executor::block_on;
 use leptos::{
     ev::MouseEvent,
     html::{Dialog, Input},
     logging::*,
     prelude::*,
-    task::spawn_local,
 };
 use leptos_router::components::{ParentRoute, Route, Router, Routes, A};
 use leptos_router_macro::path;
 use prelude::SYMBOL_TO_ADDR;
 use rsecret::query::{bank::BankQuerier, compute::ComputeQuerier};
-use secret_toolkit_snip20::{QueryMsg, TokenInfoResponse};
+use secret_toolkit_snip20::QueryMsg;
 use secretrs::utils::EnigmaUtils;
 use send_wrapper::SendWrapper;
 use tonic_web_wasm_client::Client;

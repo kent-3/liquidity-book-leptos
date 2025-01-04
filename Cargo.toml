@@ -25,15 +25,15 @@ serde_json = "1.0"
 
 [dependencies]
 # Leptos official
-leptos = { version = "0.7.0", features = [
+leptos = { version = "0.7.3", features = [
   "csr",
   # "nightly"
 ] }
-leptos_router = { version = "0.7.0", features = [
+leptos_router = { version = "0.7.3", features = [
   # "nightly"
 ] }
-leptos_router_macro = { version = "0.7.0" }
-leptos_meta = { version = "0.7.0" }
+leptos_router_macro = { version = "0.7.3" }
+leptos_meta = { version = "0.7.3" }
 
 # Leptos extensions and related
 # leptos-use = { git = "https://github.com/Synphonyte/leptos-use.git", branch = "leptos-0.7" }
@@ -55,36 +55,35 @@ prost = { version = "0.13.4" }
 
 # Web support
 console_error_panic_hook = "0.1.7"
-web-sys = "0.3"
-wasm-bindgen-futures = "0.4"
+web-sys = "0.3.76"
+wasm-bindgen-futures = "0.4.49"
 send_wrapper = { version = "0.6.0", features = ["futures"] }
-serde-wasm-bindgen = "0.6"
+serde-wasm-bindgen = "0.6.5"
 tonic-web-wasm-client = "0.6.0"
 # gloo-net = "0.6"
 # gloo-storage = "0.3"
 
 # Classic
-serde = { version = "1.0.208", features = ["derive"] }
-serde_json = "1.0.125"
+serde = { version = "1.0.217", features = ["derive"] }
+serde_json = "1.0.134"
 base64 = "0.22.1"
-futures = "0.3.20"
-async-trait = "0.1.81"
-thiserror = "1.0.63"
-hex-literal = "0.4"
+futures = "0.3.31"
+async-trait = "0.1.84"
+thiserror = "2.0.9"
+hex-literal = "0.4.1"
 
 # Logging
-tracing = "0.1.40"
-tracing-subscriber = "0.3.18"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
 tracing-subscriber-wasm = "0.1.0"
 
 # Secret
 keplr-sys = "0.0.3"
 cosmwasm-std = { package = "secret-cosmwasm-std", version = "1.1.11" }
-secret-toolkit-snip20 = { version = "0.10.1" }
+secret-toolkit-snip20 = { version = "0.10.2" }
 secretrs = { version = "0.1.3", default-features = false }
 rsecret = { git = "https://github.com/kent-3/secret-clients", branch = "0.50-update" }
-lb-interfaces = { git = "https://github.com/kent-3/liquidity-book.git" }
-lb-libraries = { git = "https://github.com/kent-3/liquidity-book.git" }
+liquidity-book = { git = "https://github.com/kent-3/liquidity-book.git" }
 
 [dependencies.shade-protocol]
 git = "https://github.com/securesecrets/shade"
@@ -104,8 +103,7 @@ secretrs = { git = "https://github.com/kent-3/secret-rust", branch = "sdk-upgrad
 rsecret = { path = "../secret-clients/rsecret" }
 
 [patch."https://github.com/kent-3/liquidity-book.git"]
-lb-interfaces = { path = "../liquidity-book/packages/lb_interfaces" }
-lb-libraries = { path = "../liquidity-book/packages/lb_libraries" }
+liquidity-book = { path = "../liquidity-book/packages/liquidity-book" }
 
 # [patch.crates-io]
 # keplr-sys = { path = "../keplr/keplr-sys" }

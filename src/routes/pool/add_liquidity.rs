@@ -1,51 +1,38 @@
 use crate::{
+    constants::Querier,
     error::Error,
     keplr::Keplr,
     liquidity_book::{
         constants::{
-            addrs::{LB_CONTRACTS, LB_FACTORY, LB_PAIR, LB_ROUTER},
+            addrs::{LB_CONTRACTS, LB_FACTORY, LB_ROUTER},
             liquidity_config::{
                 LiquidityConfiguration, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
             },
         },
         contract_interfaces::{
-            lb_factory,
-            lb_pair::{self, LbPair, LbPairInformation, LiquidityParameters},
-            lb_router,
+            lb_factory::{self, LbPairInformation},
+            lb_router::{self, AddLiquidityResponse, LiquidityParameters},
         },
         utils::{get_id_from_price, get_price_from_id},
-        Querier,
     },
     prelude::{CHAIN_ID, GRPC_URL},
     state::*,
     utils::{alert, latest_block},
 };
 use cosmwasm_std::{Addr, ContractInfo, Uint128, Uint64};
-use lb_interfaces::lb_router::CreateLbPairResponse;
-use lb_interfaces::{
-    lb_factory::{LbPairInformationResponse, QueryMsg::GetLbPairInformation},
-    lb_router::AddLiquidityResponse,
-};
-use leptos::logging::*;
-use leptos::prelude::*;
+use leptos::{logging::*, prelude::*};
 use leptos_router::{
-    components::A,
     hooks::{query_signal_with_options, use_params, use_params_map, use_query_map},
     NavigateOptions,
 };
-use prost::Message;
 use rsecret::{
     query::tendermint::TendermintQuerier,
     secret_client::CreateTxSenderOptions,
-    secret_client::TxResponse,
     tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
     TxOptions,
 };
-use secretrs::compute::MsgExecuteContractResponse;
-use secretrs::tx::Msg;
-use secretrs::AccountId;
+use secretrs::{compute::MsgExecuteContractResponse, tx::Msg, AccountId};
 use send_wrapper::SendWrapper;
-use shade_protocol::swap::core::TokenType;
 use std::str::FromStr;
 use tonic_web_wasm_client::Client;
 use tracing::{debug, info, trace};

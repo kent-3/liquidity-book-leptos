@@ -1,33 +1,31 @@
-use std::ops::Add;
-
 use crate::{
     batch_query::{
         msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
         BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
     },
-    components::SecretQuery,
-    constants::{CHAIN_ID, GRPC_URL, TOKEN_MAP},
+    constants::{Querier, CHAIN_ID, GRPC_URL, TOKEN_MAP},
     error::Error,
     liquidity_book::{
         constants::addrs::{LB_CONTRACTS, LB_FACTORY, LB_PAIR},
         contract_interfaces::{
-            lb_factory,
+            lb_factory::{self, LbPairInformation},
             lb_pair::{
-                ActiveIdResponse, BinResponse, LbPairInformation, LbTokenSupplyResponse,
-                NextNonEmptyBinResponse, QueryMsg,
+                ActiveIdResponse, BinResponse, LbTokenSupplyResponse, NextNonEmptyBinResponse,
+                QueryMsg,
             },
         },
-        Querier,
     },
     state::*,
     utils::shorten_address,
 };
 use cosmwasm_std::{Addr, ContractInfo};
 use leptos::prelude::*;
-use leptos_router::hooks::{query_signal_with_options, use_location, use_navigate};
 use leptos_router::{
     components::A,
-    hooks::{use_params, use_params_map, use_query_map},
+    hooks::{
+        query_signal_with_options, use_location, use_navigate, use_params, use_params_map,
+        use_query_map,
+    },
     nested_router::Outlet,
     NavigateOptions,
 };
@@ -35,7 +33,6 @@ use rsecret::query::compute::ComputeQuerier;
 use secretrs::utils::EnigmaUtils;
 use send_wrapper::SendWrapper;
 use serde::Serialize;
-use shade_protocol::swap::core::TokenType;
 use tonic_web_wasm_client::Client as WebWasmClient;
 use tracing::{debug, info, trace};
 
@@ -188,7 +185,7 @@ pub fn PoolManager() -> impl IntoView {
         id: u32,
     ) -> Result<u32, Error> {
         QueryMsg::GetNextNonEmptyBin {
-            swap_for_y: true,
+            swap_for_y: false,
             id,
         }
         .do_query(lb_pair_contract)
@@ -467,7 +464,8 @@ pub fn PoolManager() -> impl IntoView {
                                             .map(|bin| {
                                                 view! {
                                                     <li class="pl-4 list-none">
-                                                        {bin.bin_id} " " {bin.bin_reserve_x.to_string()} " " {bin.bin_reserve_y.to_string()}
+                                                        {bin.bin_id} " " {bin.bin_reserve_x.to_string()} " "
+                                                        {bin.bin_reserve_y.to_string()}
                                                     </li>
                                                 }
                                             })
@@ -477,7 +475,7 @@ pub fn PoolManager() -> impl IntoView {
                         })}
                     </li>
                 </Suspense>
-                // <SecretQuery query=bin_total_supply />
+            // <SecretQuery query=bin_total_supply />
             </ul>
         </details>
 
@@ -490,7 +488,7 @@ pub fn PoolManager() -> impl IntoView {
                 navigate(&new_route, Default::default())
             }>"Add Liquidity"</button>
 
-                // FIXME: this doesn't work if the user is already on the add liquidity page
+            // FIXME: this doesn't work if the user is already on the add liquidity page
             <A href="remove">
                 <button>"Remove Liquidity"</button>
             </A>
