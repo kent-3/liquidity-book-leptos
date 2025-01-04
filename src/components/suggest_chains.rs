@@ -1,9 +1,6 @@
-use crate::keplr::experimental::*;
-use crate::{error::Error, keplr::Keplr};
-use leptos::logging::*;
-use leptos::prelude::*;
-use serde::{Deserialize, Serialize};
-use std::sync::{Arc, LazyLock};
+use keplr::{experimental::*, Keplr};
+use leptos::{logging::*, prelude::*};
+use std::sync::LazyLock;
 use tracing::{debug, trace};
 use web_sys::{js_sys, wasm_bindgen::JsValue, MouseEvent};
 

@@ -1,7 +1,6 @@
 use crate::{
     constants::Querier,
     error::Error,
-    keplr::Keplr,
     liquidity_book::{
         constants::{
             addrs::{LB_CONTRACTS, LB_FACTORY, LB_ROUTER},
@@ -20,6 +19,7 @@ use crate::{
     utils::{alert, latest_block},
 };
 use cosmwasm_std::{Addr, ContractInfo, Uint128, Uint64};
+use keplr::Keplr;
 use leptos::{logging::*, prelude::*};
 use leptos_router::{
     hooks::{query_signal_with_options, use_params, use_params_map, use_query_map},

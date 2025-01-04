@@ -1,8 +1,9 @@
 use crate::{
     constants::*,
     error::Error,
-    keplr::{tokens::ContractInfo, Keplr, Key},
+    // keplr::{tokens::ContractInfo, Keplr, Key},
 };
+use keplr::{tokens::ContractInfo, Keplr, Key};
 use leptos::prelude::*;
 use std::{collections::HashMap, ops::Deref};
 use tracing::{debug, trace};

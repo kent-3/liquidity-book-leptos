@@ -1,12 +1,12 @@
 use crate::{
     components::Secret20Balance,
     constants::{GRPC_URL, TOKEN_MAP},
-    keplr::Keplr,
     liquidity_book::contract_interfaces::*,
     prelude::CHAIN_ID,
     state::*,
     LoadingModal,
 };
+use keplr::Keplr;
 use leptos::{html::Select, logging::*, prelude::*};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use rsecret::{

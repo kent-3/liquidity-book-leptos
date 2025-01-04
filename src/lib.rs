@@ -3,6 +3,7 @@
 // use codee::string::FromToStringCodec;
 // use leptos_use::storage::use_local_storage;
 
+use keplr::{Keplr, Key};
 use leptos::{
     ev::MouseEvent,
     html::{Dialog, Input},
@@ -24,7 +25,6 @@ mod batch_query;
 mod components;
 mod constants;
 mod error;
-mod keplr;
 mod liquidity_book;
 mod prelude;
 mod routes;
@@ -35,7 +35,6 @@ mod utils;
 use components::{Spinner2, SuggestChains};
 use constants::{CHAIN_ID, GRPC_URL, TOKEN_MAP};
 use error::Error;
-use keplr::{Keplr, Key};
 use routes::{pool::*, trade::*};
 use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
 use types::Coin;

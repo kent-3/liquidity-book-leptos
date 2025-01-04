@@ -1,0 +1,19 @@
+[package]
+name = "keplr"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+keplr-sys = "0.0.3"
+async-trait = "0.1.84"
+base64 = "0.22.1"
+serde = { version = "1.0.217", features = ["derive"] }
+serde_json = "1.0.134"
+thiserror = "2.0.9"
+tracing = "0.1.41"
+send_wrapper = { version = "0.6.0", features = ["futures"] }
+serde-wasm-bindgen = "0.6.5"
+web-sys = "0.3.76"
+cosmwasm-std = { package = "secret-cosmwasm-std", version = "1.1.11" }
+secretrs = { git = "https://github.com/kent-3/secret-rust", branch = "sdk-upgrade" }
+rsecret = { git = "https://github.com/kent-3/secret-clients", branch = "0.50-update" }

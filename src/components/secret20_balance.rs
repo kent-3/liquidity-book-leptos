@@ -1,13 +1,10 @@
 use crate::{
     constants::{CHAIN_ID, GRPC_URL, TOKEN_MAP},
-    keplr::Keplr,
     state::{ChainId, Endpoint, KeplrSignals, TokenMap},
 };
-use cosmwasm_std::ContractInfo;
 use cosmwasm_std::Uint128;
-use leptos::either::Either;
-use leptos::logging::*;
-use leptos::prelude::*;
+use keplr::Keplr;
+use leptos::{either::Either, logging::*, prelude::*};
 use rsecret::query::compute::ComputeQuerier;
 use send_wrapper::SendWrapper;
 use serde::{Deserialize, Serialize};
@@ -100,7 +97,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
 }
 
 pub async fn query_snip20_balance(
-    key: crate::keplr::Key,
+    key: keplr::Key,
     token: crate::constants::Token,
     viewing_key: String,
     endpoint: String,

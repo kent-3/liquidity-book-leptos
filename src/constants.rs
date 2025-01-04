@@ -1,6 +1,7 @@
-use crate::{error::Error, keplr::tokens::ContractInfo};
+use crate::error::Error;
 use cosmwasm_std::Addr;
 use hex_literal::hex;
+use keplr::tokens::ContractInfo;
 use rsecret::query::compute::ComputeQuerier;
 use secretrs::utils::EnigmaUtils;
 use serde::{Deserialize, Serialize};

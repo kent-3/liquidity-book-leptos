@@ -1,10 +1,9 @@
 use crate::{
     constants::{CHAIN_ID, GRPC_URL, TOKEN_MAP},
     error::Error,
-    keplr::Keplr,
     state::{ChainId, Endpoint, KeplrSignals, TokenMap},
 };
-use cosmwasm_std::Uint128;
+use keplr::Keplr;
 use leptos::either::Either;
 use leptos::prelude::*;
 use rsecret::query::compute::ComputeQuerier;

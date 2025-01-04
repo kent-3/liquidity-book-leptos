@@ -3,6 +3,13 @@ name = "trader-leptos"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = ["crates/batch_query", "crates/keplr"]
+resolver = "2"
+
+[workspace.lints.clippy]
+too_many_arguments = "allow"
+
 [profile.dev]
 # Potential to opt-in on higher optimization for our code. This may increase incremental compilation times, but will reduce binary size.
 opt-level = 0
@@ -24,6 +31,11 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 [dependencies]
+
+# workspace crates
+keplr = { path = "./crates/keplr" }
+secret-batch-query = { path = "./crates/batch_query" }
+
 # Leptos official
 leptos = { version = "0.7.3", features = [
   "csr",

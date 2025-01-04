@@ -53,8 +53,8 @@ impl From<secretrs::ErrorReport> for Error {
     }
 }
 
-impl From<crate::keplr::Error> for Error {
-    fn from(error: crate::keplr::Error) -> Self {
+impl From<keplr::Error> for Error {
+    fn from(error: keplr::Error) -> Self {
         Error::Keplr(error.to_string())
     }
 }
