@@ -4,6 +4,12 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::sync::LazyLock;
 use tracing::{debug, info, trace};
 
+pub struct BatchQueryRouter {
+    pub localsecret: ContractInfo,
+    pub pulsar: ContractInfo,
+    pub mainnet: ContractInfo,
+}
+
 // pub static BATCH_QUERY_ROUTER: LazyLock<ContractInfo> = LazyLock::new(|| {
 //     if CHAIN_ID == "secretdev-1" {
 //         ContractInfo {
@@ -27,24 +33,23 @@ use tracing::{debug, info, trace};
 //     }
 // });
 
-// TODO: figure out how to make this dynamic, or at least specifiable
+// TODO: figure out how to make this better. it can't rely on a crate-wide static, now that
+// it's a separate crate.
 
-pub static BATCH_QUERY_ROUTER: LazyLock<ContractInfo> = LazyLock::new(|| {
-    let chain_id = std::env::var("CHAIN_ID").unwrap_or("secret-4".to_string());
-
-    match chain_id.as_str() {
-        "secretdev-1" => ContractInfo {
+pub static BATCH_QUERY_ROUTER: LazyLock<BatchQueryRouter> = LazyLock::new(|| {
+    BatchQueryRouter {
+        localsecret: ContractInfo {
             // FIXME: this address needs to be updated manually
-            address: Addr::unchecked("secret1rgqxfst0frq5mgmw3e5pzajpre4qwepc2uh22m"),
+            address: Addr::unchecked("secret15zvwtzf38yqhdzt2svdk7mnc5ha24493tqydn2"),
             code_hash: "1c7e86ba4fdb6760e70bf08a7df7f44b53eb0b23290e3e69ca96140810d4f432"
                 .to_string(),
         },
-        "pulsar-3" => ContractInfo {
+        pulsar: ContractInfo {
             address: Addr::unchecked("secret19a9emj5ym504a5824vc7g5awaj2z5nwsl8jpcz"),
             code_hash: "1c7e86ba4fdb6760e70bf08a7df7f44b53eb0b23290e3e69ca96140810d4f432"
                 .to_string(),
         },
-        _ => ContractInfo {
+        mainnet: ContractInfo {
             address: Addr::unchecked("secret15mkmad8ac036v4nrpcc7nk8wyr578egt077syt"),
             code_hash: "1c7e86ba4fdb6760e70bf08a7df7f44b53eb0b23290e3e69ca96140810d4f432"
                 .to_string(),

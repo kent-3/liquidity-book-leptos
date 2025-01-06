@@ -1,12 +1,19 @@
 use crate::{
     components::Secret20Balance,
     constants::{GRPC_URL, TOKEN_MAP},
-    liquidity_book::contract_interfaces::*,
-    prelude::CHAIN_ID,
+    error::Error,
+    liquidity_book::{
+        constants::addrs::{LB_AMBER, LB_PAIR, LB_QUOTER, LB_ROUTER, LB_SSCRT},
+        contract_interfaces::*,
+    },
+    prelude::{Querier, CHAIN_ID},
     state::*,
     LoadingModal,
 };
+use cosmwasm_std::{to_binary, Addr};
+use cosmwasm_std::{Uint128, Uint64};
 use keplr::Keplr;
+use lb_router::{Path, Version};
 use leptos::{html::Select, logging::*, prelude::*};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use rsecret::{
@@ -60,16 +67,76 @@ pub fn Trade() -> impl IntoView {
         }
     });
 
-    let swap = Action::new(move |_: &()| {
-        let url = endpoint.get();
-        SendWrapper::new(async move {
+    let amount_in = RwSignal::new(String::new());
+
+    let get_quote = Action::new_local(move |_: &()| {
+        async move {
+            use cosmwasm_std::Uint128;
+            use shade_protocol::swap::core::TokenType;
+
+            // TODO: token y is the quote asset, right?
+
+            let token_x = TokenType::CustomToken {
+                contract_addr: LB_AMBER.address.clone(),
+                token_code_hash: LB_AMBER.code_hash.clone(),
+            };
+
+            let token_y = TokenType::CustomToken {
+                contract_addr: LB_SSCRT.address.clone(),
+                token_code_hash: LB_SSCRT.code_hash.clone(),
+            };
+
+            let amount_in = amount_in.get();
+
+            // TODO: really want to write this differently, like
+            // let quote = ILbQuoter(LB_QUOTER.clone()).find_best_path_from_amount_in(tokens. amount_in)?;
+
+            let quote = lb_quoter::QueryMsg::FindBestPathFromAmountIn {
+                route: vec![token_x, token_y],
+                amount_in: Uint128::from_str(&amount_in).unwrap(),
+            }
+            .do_query(&LB_QUOTER)
+            .await
+            .inspect_err(|error| error!("{:?}", error))
+            .inspect(|response| debug!("{:?}", response))
+            .and_then(|response| Ok(serde_json::from_str::<lb_quoter::Quote>(&response)?));
+
+            debug!("{:#?}", quote);
+
+            quote
+        }
+    });
+
+    let path = move || {
+        if let Some(Ok(quote)) = get_quote.value().get() {
+            Some(Path {
+                pair_bin_steps: quote.bin_steps,
+                versions: quote.versions,
+                token_path: quote.route,
+            })
+        } else {
+            None
+        }
+    };
+
+    // TODO: input should be the quote!
+    let swap = Action::new_local(move |_: &()| {
+        // TODO: Use the dynamic versions instead.
+        // let url = endpoint.get();
+        // let chain_id = chain_id.get();
+        let url = GRPC_URL;
+        let chain_id = CHAIN_ID;
+        async move {
             use cosmwasm_std::Uint128;
             use rsecret::tx::compute::MsgExecuteContractRaw;
             use secretrs::proto::cosmos::tx::v1beta1::BroadcastMode;
             use shade_protocol::swap::core::{TokenAmount, TokenType};
 
+            let amount_in =
+                Uint128::from_str(amount_in.get().as_str()).expect("Uint128 parse from_str error");
+
             let Ok(key) = Keplr::get_key(CHAIN_ID).await else {
-                return error!("Could not get key from Keplr");
+                return Err(Error::generic("Could not get key from Keplr"));
             };
 
             // NOTE: For any method on Keplr that returns a promise (almost all of them), if it's Ok,
@@ -80,77 +147,80 @@ pub fn Trade() -> impl IntoView {
             // that's fine since it's trivial.
             keplr.enabled.set(true);
 
-            let wallet = Keplr::get_offline_signer_only_amino(CHAIN_ID);
-            let enigma_utils = Keplr::get_enigma_utils(CHAIN_ID).into();
+            // let wallet = Keplr::get_offline_signer_only_amino(CHAIN_ID);
+            let wallet = Keplr::get_offline_signer(chain_id);
+            let enigma_utils = Keplr::get_enigma_utils(chain_id).into();
 
             let options = CreateTxSenderOptions {
                 url: GRPC_URL,
                 chain_id: CHAIN_ID,
                 wallet: wallet.into(),
-                wallet_address: key.bech32_address.into(),
+                wallet_address: key.bech32_address.clone().into(),
                 enigma_utils,
             };
 
-            let wasm_web_client = tonic_web_wasm_client::Client::new(url);
+            // TODO: this isn't making sense... why am I providing a url both here and in the options?
+            let wasm_web_client = tonic_web_wasm_client::Client::new(url.to_string());
             let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
 
-            // TODO: decide on using return error vs expect
-            let Ok(sender) = AccountId::new("secret", &key.address) else {
-                return error!("Error creating sender AccountId");
+            let sender = AccountId::new("secret", &key.address)?;
+            let contract = AccountId::from_str(path().unwrap().token_path[0].address().as_str())?;
+
+            let swap_msg = lb_router::ExecuteMsg::SwapExactTokensForTokens {
+                amount_in,
+                amount_out_min: Uint128::from_str("1").expect("Uint128 parse from_str error"),
+                path: path().unwrap(),
+                to: key.bech32_address.clone(),
+                deadline: Uint64::from(2736132325u64),
             };
-            // let Ok(contract) = AccountId::from_str(LB_PAIR_CONTRACT.address.as_ref()) else {
-            //     return error!("Error creating contract AccountId");
-            // };
-            let contract = AccountId::from_str("secret1k0jntykt7e4g3y88ltc60czgjuqdy4c9e8fzek")
-                .expect("Error creating contract AccountId");
-            let msg = secret_toolkit_snip20::HandleMsg::Send {
-                recipient: "secret17m7gyp4h9df56a2fryt48zt37ksrsrvvqha8he".to_string(),
-                recipient_code_hash: None,
-                amount: Uint128::from(1u128),
-                msg: None,
+
+            debug!("{swap_msg:#?}");
+
+            let send_msg = secret_toolkit_snip20::HandleMsg::Send {
+                recipient: LB_ROUTER.address.to_string(),
+                recipient_code_hash: Some(LB_ROUTER.code_hash.clone()),
+                amount: amount_in,
+                msg: Some(to_binary(&swap_msg).unwrap()),
                 memo: None,
                 padding: None,
             };
-            // let msg = lb_pair::ExecuteMsg::SwapTokens {
-            //     offer: TokenAmount {
-            //         token: TokenType::CustomToken {
-            //             contract_addr: LB_PAIR_CONTRACT.address.clone(),
-            //             token_code_hash: LB_PAIR_CONTRACT.code_hash.clone(),
-            //         },
-            //         amount: Uint128::from_str("1000000").expect("Uint128 parse from_str error"),
-            //     },
-            //     expected_return: Some(
-            //         Uint128::from_str("995000").expect("Uint128 parse from_str error"),
-            //     ),
-            //     to: None,
-            //     padding: None,
-            // };
+
             let msg = MsgExecuteContractRaw {
                 sender,
                 contract,
-                msg,
+                msg: send_msg,
                 sent_funds: vec![],
             };
+
             let tx_options = TxOptions {
-                gas_limit: 50_000,
+                gas_limit: 500_000,
                 broadcast_mode: BroadcastMode::Sync,
                 wait_for_commit: true,
                 ..Default::default()
             };
 
-            let result = compute_service_client
+            let tx = compute_service_client
                 .execute_contract(
                     msg,
-                    "af74387e276be8874f07bec3a87023ee49b0e7ebe08178c49d0a49c3c98ed60e",
+                    // FIXME: get from the quote.route or path.token_path
+                    "9a00ca4ad505e9be7e6e6dddf8d939b7ec7e9ac8e109c8681f10db9cacb36d42",
                     tx_options,
                 )
-                .await;
+                .await
+                .inspect(|tx_response| info!("{tx_response:?}"))
+                .inspect_err(|error| error!("{error}"))?;
 
-            match result {
-                Ok(ok) => info!("{:?}", ok),
-                Err(error) => error!("{}", error),
+            if tx.code != 0 {
+                error!("{}", tx.raw_log);
             }
-        })
+
+            // match tx {
+            //     Ok(ok) => info!("{:?}", ok),
+            //     Err(error) => error!("{}", error),
+            // }
+
+            Ok(())
+        }
     });
 
     view! {
@@ -168,6 +238,7 @@ pub fn Trade() -> impl IntoView {
                             class="p-1 "
                             type="number"
                             placeholder="0.0"
+                            bind:value=amount_in
                             prop:value=move || amount_x.get()
                             on:change=move |ev| {
                                 let new_value = event_target_value(&ev);
@@ -258,17 +329,19 @@ pub fn Trade() -> impl IntoView {
                         </select>
                     </div>
                 </div>
-                <button title="todo!()" disabled class="p-1 block">
+                <button class="p-1 block" on:click=move |_|{_=get_quote.dispatch(())}>
                     "Estimate Swap"
                 </button>
+                                            // returns the final amount (the output token)
+        <p>{move || format!("{:?}", get_quote.value().get().and_then(|result| result.map(|mut quote| quote.amounts.pop()).ok()).unwrap_or_default()) } </p>
                 <button
                     class="p-1 block"
                     disabled=move || !keplr.enabled.get()
                     on:click=move |_| _ = swap.dispatch(())
                 >
-                    "Test Transaction!"
+                    "Swap"
                 </button>
-                <span class="text-xs">"(This will send 1 micro sSCRT to yourself)"</span>
+                // <span class="text-xs">"(This will send 1 micro sSCRT to yourself)"</span>
             </div>
         </div>
     }

@@ -53,7 +53,7 @@ pub fn PoolCreator() -> impl IntoView {
         // ...
     };
 
-    let create_lb_pair = Action::new(move |_: &()| {
+    let create_lb_pair = Action::new_local(move |_: &()| {
         let url = GRPC_URL;
         let chain_id = CHAIN_ID;
 
@@ -69,7 +69,7 @@ pub fn PoolCreator() -> impl IntoView {
             .expect("Invalid price format");
         let active_id = get_id_from_price(price, bin_step);
 
-        SendWrapper::new(async move {
+        async move {
             if false {
                 return Err(Error::generic(
                     "this helps the compiler infer the Error type",
@@ -144,7 +144,7 @@ pub fn PoolCreator() -> impl IntoView {
             debug!("LbPair: {:?}", create_lb_pair_response.lb_pair);
 
             Ok(())
-        })
+        }
     });
 
     view! {

@@ -25,7 +25,7 @@ pub struct Token {
 // WARN: This key is randomly generated when localsecret is started for the first time.
 // Reuse containers to avoid needing changing this every time.
 pub static DEVNET_IO_PUBKEY: [u8; 32] =
-    hex!("c8a3ef51d2d4a285ce2a97ccf60a7372fb978e41768556ba4450ecc26247ac4b");
+    hex!("80171b6f3b84eb5975b72ca51ee86b6ae113c22938e4866e5c2300077a06cd3e");
 
 // pub static CHAIN_ID: &str = "secretdev-1";
 // pub static GRPC_URL: &str = "http://localhost:1317";
@@ -108,6 +108,10 @@ impl<T: Serialize + Send + Sync> Querier for T {
             .map_err(Into::into)
     }
 }
+
+// TODO: can we implement this Querier trait for something that performs the queries from the frontend?
+// use cosmwasm_std::QuerierWrapper;
+// use cosmwasm_std::Querier;
 
 // TODO: Querying of io key is problematic due to async. Explore further.
 //

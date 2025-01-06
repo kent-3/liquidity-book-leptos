@@ -1,5 +1,6 @@
 use super::Error;
 use async_trait::async_trait;
+// TODO: any way to avoid depending on rsecret crate?
 use rsecret::wallet::{
     wallet_amino::{AccountData, AminoSignResponse, StdSignDoc},
     wallet_proto::{DirectSignResponse, SignDoc},
@@ -13,8 +14,13 @@ use std::rc::Rc;
 use tracing::{debug, trace};
 use web_sys::js_sys;
 
+// TODO: I think these things should belong in rsecret instead?
+
 #[derive(Debug, Clone)]
 pub struct KeplrOfflineSigner {
+    // NOTE: this inner SendWrapper is only necessary because the SecretNetworkClient (and its
+    // inner types) expect an Arc<V: Signer + Sync>. I wonder if this will cause problems down the
+    // road... I wouldn't think so because WASM is single threaded.
     inner: SendWrapper<Rc<keplr_sys::KeplrOfflineSigner>>,
 }
 

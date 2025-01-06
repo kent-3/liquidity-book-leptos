@@ -1,8 +1,8 @@
 use crate::{
-    batch_query::{
-        msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
-        BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
-    },
+    // batch_query::{
+    //     msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
+    //     BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
+    // },
     constants::{Querier, CHAIN_ID, GRPC_URL, TOKEN_MAP},
     error::Error,
     liquidity_book::{
@@ -17,6 +17,10 @@ use crate::{
     },
     state::*,
     utils::shorten_address,
+};
+use batch_query::{
+    msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
+    BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
 };
 use cosmwasm_std::{Addr, ContractInfo};
 use leptos::prelude::*;
@@ -195,8 +199,6 @@ pub fn PoolManager() -> impl IntoView {
         .map(|x| x.next_id)
     }
 
-    // TODO: Figure out why this number is so huge, for example:
-    //       12243017097593870802128434755484640756287535340
     async fn query_total_supply(lb_pair_contract: &ContractInfo, id: u32) -> Result<String, Error> {
         QueryMsg::GetLbTokenSupply { id }
             .do_query(lb_pair_contract)
@@ -210,7 +212,7 @@ pub fn PoolManager() -> impl IntoView {
         queries: Vec<BatchQueryParams<T>>,
     ) -> Result<Vec<BinResponse>, Error> {
         msg_batch_query(queries)
-            .do_query(&BATCH_QUERY_ROUTER)
+            .do_query(&BATCH_QUERY_ROUTER.pulsar)
             .await
             .inspect(|response| trace!("{:?}", response))
             .and_then(|response| Ok(serde_json::from_str::<BatchQueryResponse>(&response)?))

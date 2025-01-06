@@ -65,6 +65,21 @@ pub static LB_PAIR: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
     .into()
 });
 
+pub static LB_AMBER: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
+    ContractInfo {
+        address: LB_CONTRACTS.snip25.address.clone(),
+        code_hash: LB_CONTRACTS.snip25.code_hash.clone(),
+    }
+    .into()
+});
+pub static LB_SSCRT: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
+    ContractInfo {
+        address: LB_CONTRACTS.snip20.address.clone(),
+        code_hash: LB_CONTRACTS.snip20.code_hash.clone(),
+    }
+    .into()
+});
+
 pub static LB_ROUTER: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
     ContractInfo {
         address: LB_CONTRACTS.lb_router.address.clone(),

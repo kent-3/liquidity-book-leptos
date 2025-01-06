@@ -27,11 +27,15 @@ use leptos_router::{
 };
 use rsecret::{
     query::tendermint::TendermintQuerier,
-    secret_client::CreateTxSenderOptions,
+    secret_client::{CreateTxSenderOptions, TxDecrypter},
     tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
     TxOptions,
 };
-use secretrs::{compute::MsgExecuteContractResponse, tx::Msg, AccountId};
+use secretrs::{
+    compute::{MsgExecuteContract, MsgExecuteContractResponse},
+    tx::Msg,
+    AccountId,
+};
 use send_wrapper::SendWrapper;
 use std::str::FromStr;
 use tonic_web_wasm_client::Client;
@@ -127,7 +131,7 @@ pub fn AddLiquidity() -> impl IntoView {
     // TODO: account for decimals
     fn amount_min(input: &str) -> u32 {
         let number: f64 = input.parse().expect("Error parsing float");
-        let adjusted_value = number * 0.95 * number / 1_000_000.0;
+        let adjusted_value = number * 0.95;
         adjusted_value.round() as u32
     }
 
@@ -152,7 +156,6 @@ pub fn AddLiquidity() -> impl IntoView {
         let lb_pair_information = lb_pair_information
             .get()
             .expect("Unverified LB Pair information");
-        // FIXME: The tokens are not always in the expected order!
         let token_x = lb_pair_information.lb_pair.token_x;
         let token_y = lb_pair_information.lb_pair.token_y;
         let bin_step = lb_pair_information.bin_step;
@@ -217,93 +220,153 @@ pub fn AddLiquidity() -> impl IntoView {
         liquidity_parameters
     };
 
-    let add_liquidity_action = Action::new(move |liquidity_parameters: &LiquidityParameters| {
-        // TODO: Use the dynamic versions instead.
-        // let url = endpoint.get();
-        // let chain_id = chain_id.get();
-        let url = GRPC_URL;
-        let chain_id = CHAIN_ID;
-        let mut liquidity_parameters = liquidity_parameters.clone();
-        SendWrapper::new(async move {
-            if liquidity_parameters.amount_x.is_zero() && liquidity_parameters.amount_y.is_zero() {
-                alert("Amounts must not be 0!");
-                return Err(Error::generic("Amounts must not be 0!"));
+    let add_liquidity_action =
+        Action::new_local(move |liquidity_parameters: &LiquidityParameters| {
+            // TODO: Use the dynamic versions instead.
+            // let url = endpoint.get();
+            // let chain_id = chain_id.get();
+            let url = GRPC_URL;
+            let chain_id = CHAIN_ID;
+            let mut liquidity_parameters = liquidity_parameters.clone();
+
+            async move {
+                if liquidity_parameters.amount_x.is_zero()
+                    && liquidity_parameters.amount_y.is_zero()
+                {
+                    alert("Amounts must not be 0!");
+                    return Err(Error::generic("Amounts must not be 0!"));
+                }
+
+                let key = Keplr::get_key(&chain_id).await?;
+                keplr.enabled.set(true);
+                // let wallet = Keplr::get_offline_signer_only_amino(&chain_id);
+                let wallet = Keplr::get_offline_signer(&chain_id);
+                let enigma_utils = Keplr::get_enigma_utils(&chain_id).into();
+
+                // TODO: I need to make this type use Strings instead of &'static str, because the
+                // values are not static in this application (user is able to set them to anything).
+                let options = CreateTxSenderOptions {
+                    url,
+                    chain_id,
+                    wallet: wallet.into(),
+                    wallet_address: key.bech32_address.clone().into(),
+                    enigma_utils,
+                };
+                let wasm_web_client = tonic_web_wasm_client::Client::new(url.to_string());
+                let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
+
+                // Recheck the latest block height to update the deadline.
+                let tendermint = TendermintQuerier::new(Client::new(url.to_string()));
+                let latest_block_time = tendermint
+                    .get_latest_block()
+                    .await
+                    .map(|block| block.header.time.unix_timestamp() as u64)
+                    .map_err(Error::from)?;
+
+                liquidity_parameters.deadline = (latest_block_time + 100).into();
+                liquidity_parameters.to = key.bech32_address.clone();
+                liquidity_parameters.refund_to = key.bech32_address.clone();
+
+                let lb_router_contract = &LB_ROUTER;
+
+                // NOTE: here we are encrypting the messages manually so we can broadcast them all
+                // together. (The client doesn't have a way to handle this internally yet)
+
+                let increase_x_allowance_msg = MsgExecuteContract {
+                    sender: AccountId::from_str(key.bech32_address.as_ref())?,
+                    contract: AccountId::from_str(liquidity_parameters.token_x.address().as_str())?,
+                    msg: compute_service_client
+                        .encrypt(
+                            &liquidity_parameters.token_x.code_hash(),
+                            &secret_toolkit_snip20::HandleMsg::IncreaseAllowance {
+                                spender: lb_router_contract.address.to_string(),
+                                amount: liquidity_parameters.amount_x.clone(),
+                                expiration: None,
+                                padding: None,
+                            },
+                        )
+                        .await?
+                        .into_inner(),
+                    sent_funds: vec![],
+                };
+
+                let increase_y_allowance_msg = MsgExecuteContract {
+                    sender: AccountId::from_str(key.bech32_address.as_ref())?,
+                    contract: AccountId::from_str(liquidity_parameters.token_y.address().as_str())?,
+                    msg: compute_service_client
+                        .encrypt(
+                            &liquidity_parameters.token_y.code_hash(),
+                            &secret_toolkit_snip20::HandleMsg::IncreaseAllowance {
+                                spender: lb_router_contract.address.to_string(),
+                                amount: liquidity_parameters.amount_y.clone(),
+                                expiration: None,
+                                padding: None,
+                            },
+                        )
+                        .await?
+                        .into_inner(),
+                    sent_funds: vec![],
+                };
+
+                let add_liquidity_msg = MsgExecuteContract {
+                    sender: AccountId::from_str(key.bech32_address.as_ref())?,
+                    contract: AccountId::from_str(lb_router_contract.address.as_ref())?,
+                    msg: compute_service_client
+                        .encrypt(
+                            &lb_router_contract.code_hash,
+                            &lb_router::ExecuteMsg::AddLiquidity {
+                                liquidity_parameters,
+                            },
+                        )
+                        .await?
+                        .into_inner(),
+                    sent_funds: vec![],
+                };
+
+                let tx_options = TxOptions {
+                    gas_limit: 1_000_000,
+                    ..Default::default()
+                };
+
+                // let tx = compute_service_client
+                //     .execute_contract(msg, lb_router_contract.code_hash.clone(), tx_options)
+                //     .await
+                //     .map_err(Error::from)
+                //     .inspect(|tx_response| info!("{tx_response:?}"))
+                //     .inspect_err(|error| error!("{error}"))?;
+
+                let tx = compute_service_client
+                    .broadcast(
+                        vec![
+                            increase_x_allowance_msg,
+                            increase_y_allowance_msg,
+                            add_liquidity_msg,
+                        ],
+                        tx_options,
+                    )
+                    .await
+                    .map_err(Error::from)
+                    .inspect(|tx_response| info!("{tx_response:?}"))
+                    .inspect_err(|error| error!("{error}"))?;
+
+                if tx.code != 0 {
+                    error!("{}", tx.raw_log);
+                }
+
+                debug!("hello");
+                let data = MsgExecuteContractResponse::from_any(&tx.data[0])
+                    .inspect_err(|e| error! {"{e}"})?
+                    .data;
+                debug!("hello");
+                let add_liquidity_response = serde_json::from_slice::<AddLiquidityResponse>(&data)?;
+                debug!("hello");
+
+                debug!("X: {}", add_liquidity_response.amount_x_added);
+                debug!("Y: {}", add_liquidity_response.amount_y_added);
+
+                Ok(())
             }
-
-            let key = Keplr::get_key(&chain_id).await?;
-            keplr.enabled.set(true);
-            // let wallet = Keplr::get_offline_signer_only_amino(&chain_id);
-            let wallet = Keplr::get_offline_signer(&chain_id);
-            let enigma_utils = Keplr::get_enigma_utils(&chain_id).into();
-
-            // TODO: I guess I need to make this type use Strings instead of &'static str, because the
-            // values are not static in this application (user is able to set them to anything).
-            let options = CreateTxSenderOptions {
-                url,
-                chain_id,
-                wallet: wallet.into(),
-                wallet_address: key.bech32_address.clone().into(),
-                enigma_utils,
-            };
-            let wasm_web_client = tonic_web_wasm_client::Client::new(url.to_string());
-            let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
-
-            // Recheck the latest block height to update the deadline.
-            let tendermint = TendermintQuerier::new(Client::new(url.to_string()));
-            let latest_block_time = tendermint
-                .get_latest_block()
-                .await
-                .map(|block| block.header.time.unix_timestamp() as u64)
-                .map_err(Error::from)?;
-
-            liquidity_parameters.deadline = (latest_block_time + 100).into();
-            liquidity_parameters.to = key.bech32_address.clone().into();
-            liquidity_parameters.refund_to = key.bech32_address.clone().into();
-
-            let lb_router_contract = &LB_ROUTER;
-
-            let msg = MsgExecuteContractRaw {
-                // sender: AccountId::new("secret", &key.address)?,
-                sender: AccountId::from_str(key.bech32_address.as_ref())?,
-                contract: AccountId::from_str(lb_router_contract.address.as_ref())?,
-                msg: lb_router::ExecuteMsg::AddLiquidity {
-                    liquidity_parameters,
-                },
-                sent_funds: vec![],
-            };
-
-            debug!("{:#?}", msg);
-
-            let tx_options = TxOptions {
-                gas_limit: 1_000_000,
-                ..Default::default()
-            };
-
-            let tx = compute_service_client
-                .execute_contract(msg, lb_router_contract.code_hash.clone(), tx_options)
-                .await
-                .map_err(Error::from)
-                .inspect(|tx_response| info!("{tx_response:?}"))
-                .inspect_err(|error| error!("{error}"))?;
-
-            if tx.code != 0 {
-                error!("{}", tx.raw_log);
-            }
-
-            debug!("hello");
-            let data = MsgExecuteContractResponse::from_any(&tx.data[0])
-                .inspect_err(|e| error! {"{e}"})?
-                .data;
-            debug!("hello");
-            let add_liquidity_response = serde_json::from_slice::<AddLiquidityResponse>(&data)?;
-            debug!("hello");
-
-            debug!("X: {}", add_liquidity_response.amount_x_added);
-            debug!("Y: {}", add_liquidity_response.amount_y_added);
-
-            Ok(())
-        })
-    });
+        });
 
     let add_liquidity = move |_: MouseEvent| {
         let _ = add_liquidity_action.dispatch(liquidity_parameters());
