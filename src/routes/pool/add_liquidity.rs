@@ -5,26 +5,29 @@ use crate::{
         constants::{
             addrs::{LB_CONTRACTS, LB_FACTORY, LB_ROUTER},
             liquidity_config::{
-                LiquidityConfiguration, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
+                LiquidityConfigurations, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
             },
         },
         contract_interfaces::{
             lb_factory::{self, LbPairInformation},
             lb_router::{self, AddLiquidityResponse, LiquidityParameters},
         },
-        utils::{get_id_from_price, get_price_from_id},
+        curves::configure_liquidity_by_radius,
+        utils::*,
     },
     prelude::{CHAIN_ID, GRPC_URL},
     state::*,
     utils::{alert, latest_block},
 };
 use cosmwasm_std::{Addr, ContractInfo, Uint128, Uint64};
+use ethnum::U256;
 use keplr::Keplr;
 use leptos::{logging::*, prelude::*};
 use leptos_router::{
-    hooks::{query_signal_with_options, use_params, use_params_map, use_query_map},
+    hooks::{query_signal, query_signal_with_options, use_params, use_params_map, use_query_map},
     NavigateOptions,
 };
+use liquidity_book::libraries::{constants::PRECISION, PriceHelper, U128x128Math};
 use rsecret::{
     query::tendermint::TendermintQuerier,
     secret_client::{CreateTxSenderOptions, TxDecrypter},
@@ -54,21 +57,27 @@ pub fn AddLiquidity() -> impl IntoView {
     let params = use_params_map();
     let token_a = move || params.read().get("token_a").unwrap_or_default();
     let token_b = move || params.read().get("token_b").unwrap_or_default();
-    let basis_points = move || params.read().get("bps").unwrap_or_default();
+    let bin_step = move || {
+        params
+            .read()
+            .get("bps") // bps = basis points
+            .and_then(|string| string.parse::<u16>().ok())
+            .unwrap_or_default()
+    };
 
     // prevents scrolling to the top of the page each time a query param changes
     let nav_options = NavigateOptions {
         scroll: false,
         ..Default::default()
     };
-    let (active_id, _) = query_signal_with_options::<String>("active_id", nav_options.clone());
+    let (active_id, _) = query_signal::<u32>("active_id");
     let (price_by, set_price_by) =
         query_signal_with_options::<String>("price_by", nav_options.clone());
 
     // TODO: Figure out how to obtain the token code hashes efficiently.
-    let lb_pair_information: Resource<LbPairInformation> = Resource::new(
-        move || (token_a(), token_b(), basis_points()),
-        move |(token_a, token_b, basis_points)| {
+    let lb_pair_information = Resource::new(
+        move || (token_a(), token_b(), bin_step()),
+        move |(token_a, token_b, bin_step)| {
             SendWrapper::new(async move {
                 // Assume token_x has the code_hash from the current deployment.
                 let token_x = ContractInfo {
@@ -80,7 +89,6 @@ pub fn AddLiquidity() -> impl IntoView {
                     address: Addr::unchecked(token_b),
                     code_hash: LB_CONTRACTS.snip20.code_hash.clone(),
                 };
-                let bin_step = basis_points.parse::<u16>().unwrap();
 
                 lb_factory::QueryMsg::GetLbPairInformation {
                     token_x: token_x.into(),
@@ -94,45 +102,84 @@ pub fn AddLiquidity() -> impl IntoView {
                     Ok(serde_json::from_str::<lb_factory::LbPairInformationResponse>(&response)?)
                 })
                 .map(|x| x.lb_pair_information)
-                .unwrap()
+                .unwrap_or_default()
             })
         },
     );
 
-    let query = use_query_map();
     let price_by = move || price_by.get().unwrap_or("radius".to_string());
 
-    let (token_x_amount, set_token_x_amount) = signal("0".to_string());
-    let (token_y_amount, set_token_y_amount) = signal("0".to_string());
-    let (liquidity_shape, set_liquidity_shape) = signal("uniform".to_string());
-
-    // This is so I can change the default liquidity shape above and still load the correct preset
-    let liquidity_configuration_preset = match liquidity_shape.get_untracked().as_ref() {
-        "uniform" => SPOT_UNIFORM.clone(),
-        "curve" => CURVE.clone(),
-        "bid-ask" => BID_ASK.clone(),
-        "wide" => WIDE.clone(),
-        _ => panic!("invalid liquidity shape"),
-    };
-
-    let (liquidity_configuration, set_liquidity_configuration) =
-        signal(liquidity_configuration_preset);
+    let (token_x_amount, set_token_x_amount) = signal("0.0".to_string());
+    let (token_y_amount, set_token_y_amount) = signal("0.0".to_string());
+    let (liquidity_shape, set_liquidity_shape) = signal(LiquidityShape::SpotUniform);
+    let (liquidity_configuration, set_liquidity_configuration) = signal(SPOT_UNIFORM.clone());
 
     let (target_price, set_target_price) = signal("Loading...".to_string());
+
+    // TODO: I think we need to go straight to 128x128 fixed point number from the float input
+    let target_bin = move || {
+        let price = target_price.get();
+        let price = parse_to_decimal_price(&price);
+        let price = PriceHelper::convert_decimal_price_to128x128(price).unwrap_or_default();
+
+        let target_bin = PriceHelper::get_id_from_price(price, bin_step()).unwrap_or_default();
+
+        target_bin
+    };
+
     let (radius, set_radius) = signal("5".to_string());
 
+    let (amount_slippage, set_amount_slippage) = signal(0.01); // idk why this would be necessary
+
+    // TODO: wherever the input for this is, we need to convert it from percentage to basis points
+    let (price_slippage, set_price_slippage) = signal(200u32); // for if the active bin id moves
+
+    // id_slippage = price_slippage (in basis points) / bin_step (in basis points)
+    //
+    let id_slippage = move || price_slippage.get() / bin_step() as u32;
+
+    // old inefficient way to calculate bin id slippage, but might be useful for something else
+    // let id_slippage = move || {
+    // let target_price = parse_to_decimal_price(&target_price.get());
+    // let slippage = parse_to_decimal_price(&price_slippage.get());
+    //
+    // debug!("{target_price}");
+    // debug!("{slippage}");
+    //
+    // let slippage_price = (PRECISION - slippage) * target_price / PRECISION;
+    //
+    // debug!("{slippage_price}");
+    //
+    // let slippage_price =
+    //     PriceHelper::convert_decimal_price_to128x128(slippage_price).unwrap_or_default();
+    //
+    // let slippage_bin =
+    //     PriceHelper::get_id_from_price(slippage_price, bin_step()).unwrap_or_default();
+    //
+    // // TODO: is this too many levels of derived signals?
+    // target_bin().abs_diff(slippage_bin)
+    // };
+
+    // debug Effects
+    Effect::new(move || debug!("amount_slippage: {}", amount_slippage.get()));
+    Effect::new(move || debug!("price_slippage: {}", price_slippage.get()));
+    Effect::new(move || debug!("target_bin: {}", target_bin()));
+    Effect::new(move || debug!("id_slippage: {}", id_slippage()));
+    //
+
     Effect::new(move || {
-        if let Some(id) = active_id.get() {
-            let price: f64 = get_price_from_id(id, basis_points());
-            set_target_price.set(price.to_string());
-        }
+        active_id
+            .get()
+            .and_then(|id| PriceHelper::get_price_from_id(id, bin_step()).ok())
+            .and_then(|price| PriceHelper::convert128x128_price_to_decimal(price).ok())
+            .map(|price| u128_to_string_with_precision(price.as_u128()))
+            .map(|price| set_target_price.set(price));
     });
 
-    // TODO: account for decimals
-    fn amount_min(input: &str) -> u32 {
+    fn amount_min(input: &str, slippage: f64) -> u128 {
         let number: f64 = input.parse().expect("Error parsing float");
-        let adjusted_value = number * 0.95;
-        adjusted_value.round() as u32
+        let adjusted_value = number * (1.0 - slippage);
+        adjusted_value.round() as u128
     }
 
     // Might be useful to have this re-run regularly at the top-level and provide a context
@@ -151,50 +198,46 @@ pub fn AddLiquidity() -> impl IntoView {
     //     },
     // );
 
+    // even tho this is a derived signal, it's not run automatically whenever the signals it
+    // uses change (I think). It's only running when something calls it (in this case, on click)
     let liquidity_parameters = move || {
         // By using the information returned by query, we can be sure it is correct
-        let lb_pair_information = lb_pair_information
-            .get()
-            .expect("Unverified LB Pair information");
+        let Some(lb_pair_information) = lb_pair_information.get() else {
+            return Err(Error::generic("LB pair information missing"));
+        };
         let token_x = lb_pair_information.lb_pair.token_x;
         let token_y = lb_pair_information.lb_pair.token_y;
         let bin_step = lb_pair_information.bin_step;
 
+        // TODO: need a way to convert token amounts like 1.5 to 1_500_000
+        // need one map from token address to token info (the thing with the name, symbol, decimals)
+        // use a separate map for address -> code hash (can be used for any contract)
         let amount_x = token_x_amount.get();
         let amount_y = token_y_amount.get();
-        let shape = liquidity_shape.get();
         let target_price = target_price.get();
-        let radius = radius.get();
 
-        let amount_x_min = amount_min(&amount_x);
-        let amount_y_min = amount_min(&amount_y);
+        let shape = liquidity_shape.get();
+        let radius = radius.get().parse::<u32>().unwrap();
+        // let range = range.get();
+
+        let amount_slippage = amount_slippage.get();
+
+        let amount_x_min = amount_min(&amount_x, amount_slippage);
+        let amount_y_min = amount_min(&amount_y, amount_slippage);
 
         let target_price = target_price.parse::<f64>().expect("Invalid price format");
         let target_bin = get_id_from_price(target_price, bin_step);
 
-        // TODO: figure out how to transform inputs into a LiquidityConfig dynamically
-        fn configure_liquidity_by_range(
-            min_price: f64,
-            max_price: f64,
-            bin_step: u16,
-            shape: LiquidityShape,
-        ) -> LiquidityConfiguration {
-            let start_bin = get_id_from_price(min_price, bin_step);
-            todo!()
-        }
-        fn configure_liquidity_by_radius(
-            target_bin: u32,
-            radius: u32,
-            shape: LiquidityShape,
-        ) -> LiquidityConfiguration {
-            todo!()
-        }
+        let liq = match price_by().as_str() {
+            "radius" => LiquidityConfigurations::by_radius(target_bin, radius, shape),
+            "range" => todo!(),
+            _ => unimplemented!(),
+        };
 
-        let liquidity_configuration = liquidity_configuration.get();
-        let delta_ids = liquidity_configuration.delta_ids();
-        let distribution_x = liquidity_configuration.distribution_x(18);
-        let distribution_y = liquidity_configuration.distribution_y(18);
-        let deadline = Uint64::MIN;
+        // let liq = configure_liquidity_by_radius(target_bin, radius, shape);
+
+        // this gets it from the preset configurations
+        // let liq = liquidity_configuration.get();
 
         let liquidity_parameters = LiquidityParameters {
             token_x,
@@ -204,20 +247,17 @@ pub fn AddLiquidity() -> impl IntoView {
             amount_y: Uint128::from_str(&amount_y).unwrap(),
             amount_x_min: Uint128::from(amount_x_min),
             amount_y_min: Uint128::from(amount_y_min),
-            active_id_desired: get_id_from_price(target_price, bin_step),
-            // TODO: write a function to convert price slippage into id slippage
-            id_slippage: 10,
-            delta_ids,
-            distribution_x,
-            distribution_y,
-            to: "todo".to_string(),
-            refund_to: "todo".to_string(),
-            deadline,
+            active_id_desired: target_bin,
+            id_slippage: id_slippage(),
+            delta_ids: liq.delta_ids(),
+            distribution_x: liq.distribution_x(),
+            distribution_y: liq.distribution_y(),
+            to: String::new(),
+            refund_to: String::new(),
+            deadline: Uint64::MIN,
         };
 
-        debug!("{:#?}", liquidity_parameters);
-
-        liquidity_parameters
+        Ok(liquidity_parameters)
     };
 
     let add_liquidity_action =
@@ -266,6 +306,8 @@ pub fn AddLiquidity() -> impl IntoView {
                 liquidity_parameters.deadline = (latest_block_time + 100).into();
                 liquidity_parameters.to = key.bech32_address.clone();
                 liquidity_parameters.refund_to = key.bech32_address.clone();
+
+                debug!("{liquidity_parameters:#?}");
 
                 let lb_router_contract = &LB_ROUTER;
 
@@ -369,7 +411,8 @@ pub fn AddLiquidity() -> impl IntoView {
         });
 
     let add_liquidity = move |_: MouseEvent| {
-        let _ = add_liquidity_action.dispatch(liquidity_parameters());
+        let _ = add_liquidity_action
+            .dispatch(liquidity_parameters().expect("invalid liquidity_parameters"));
     };
 
     view! {
@@ -405,7 +448,7 @@ pub fn AddLiquidity() -> impl IntoView {
                         "bid-ask" => BID_ASK.clone(),
                         _ => panic!("Invalid liquidity shape"),
                     };
-                    set_liquidity_shape.set(shape);
+                    set_liquidity_shape.set(shape.into());
                     set_liquidity_configuration.set(preset);
                     set_radius.set("5".to_string());
                 }

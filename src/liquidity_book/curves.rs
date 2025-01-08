@@ -1,7 +1,36 @@
+use super::constants::liquidity_config::LiquidityConfigurations;
+use super::constants::liquidity_config::LiquidityShape;
+
 // TODO: decide on which curves to use
 
-fn uniform_radius_distribution(radius: i32) -> (Vec<i32>, Vec<f64>, Vec<f64>) {
-    let delta_ids: Vec<i32> = (-radius..=radius).collect();
+pub fn configure_liquidity_by_radius(
+    target_bin: u32,
+    radius: u32,
+    shape: LiquidityShape,
+) -> LiquidityConfigurations {
+    match shape {
+        LiquidityShape::SpotUniform => uniform_radius_distribution(radius),
+        LiquidityShape::Curve => curve_radius_distribution(radius),
+        LiquidityShape::BidAsk => todo!(),
+        LiquidityShape::Wide => todo!(),
+    }
+}
+
+fn configure_liquidity_by_range(
+    min_price: f64,
+    max_price: f64,
+    bin_step: u16,
+    shape: LiquidityShape,
+) -> LiquidityConfigurations {
+    // let start_bin = get_id_from_price(min_price, bin_step);
+    // let end_bin = get_id_from_price(max_price, bin_step);
+    todo!()
+}
+
+fn uniform_radius_distribution(radius: u32) -> LiquidityConfigurations {
+    let radius = radius as i64;
+
+    let delta_ids: Vec<i64> = (-radius..=radius).collect();
     let len = delta_ids.len();
 
     let weight = 1.0 / (radius as f64 + 0.5); // 0.5 for the delta_id == 0 case
@@ -25,7 +54,7 @@ fn uniform_radius_distribution(radius: i32) -> (Vec<i32>, Vec<f64>, Vec<f64>) {
         }
     }
 
-    (delta_ids, distribution_x, distribution_y)
+    LiquidityConfigurations::new(delta_ids, distribution_x, distribution_y)
 }
 
 // Function to calculate the y-values using the exponential function directly on the index
@@ -62,9 +91,9 @@ fn logistic_derivative(x: f64, k: f64) -> f64 {
     exp_kx / ((1.0 + exp_kx).powi(2))
 }
 
-fn curve_radius_distribution(radius: usize) -> (Vec<i32>, Vec<f64>, Vec<f64>) {
-    let radius = radius as i32;
-    let delta_ids: Vec<i32> = (-radius..=radius).collect();
+fn curve_radius_distribution(radius: u32) -> LiquidityConfigurations {
+    let radius = radius as i64;
+    let delta_ids: Vec<i64> = (-radius..=radius).collect();
     let len = delta_ids.len();
 
     // Initialize the distributions
@@ -125,7 +154,7 @@ fn curve_radius_distribution(radius: usize) -> (Vec<i32>, Vec<f64>, Vec<f64>) {
         .iter_mut()
         .for_each(|y| *y = (*y * 1_000_000.0).trunc() / 1_000_000.0);
 
-    (delta_ids, distribution_x, distribution_y)
+    LiquidityConfigurations::new(delta_ids, distribution_x, distribution_y)
 }
 
 // fn main() {
@@ -191,6 +220,6 @@ fn main() {
     let distribution = simple_symmetric_curve(radius);
     println!("simple_symmetric_curve: {:?}", distribution);
 
-    let distribution = curve_radius_distribution(radius);
+    let distribution = curve_radius_distribution(radius as u32);
     println!("curve_radius_distribution: {:?}", distribution);
 }
