@@ -3,7 +3,7 @@ use crate::{
     error::Error,
     // keplr::{tokens::ContractInfo, Keplr, Key},
 };
-use keplr::{tokens::ContractInfo, Keplr, Key};
+use keplr::{tokens::KeplrToken, Keplr, Key};
 use leptos::prelude::*;
 use std::{collections::HashMap, ops::Deref};
 use tracing::{debug, trace};
@@ -95,27 +95,29 @@ impl AsRef<RwSignal<String>> for ChainId {
 
 // TODO: decide between this and the LazyLock approach.
 // It's not a signal, and should rarely be updated.
+// UPDATE: We can do both. Have a static compiled one to use as a base, and one that can be added
+// to at runtime.
 #[derive(Clone, Debug)]
-pub struct TokenMap(pub HashMap<String, ContractInfo>);
+pub struct TokenMap(pub HashMap<String, Token>);
 
 impl TokenMap {
     pub fn new() -> Self {
-        let token_map: HashMap<String, ContractInfo> = HashMap::new();
+        let token_map: HashMap<String, Token> = TOKEN_MAP.clone();
 
         Self(token_map)
     }
 }
 
 impl std::ops::Deref for TokenMap {
-    type Target = HashMap<String, ContractInfo>;
+    type Target = HashMap<String, Token>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl AsRef<HashMap<String, ContractInfo>> for TokenMap {
-    fn as_ref(&self) -> &HashMap<String, ContractInfo> {
+impl AsRef<HashMap<String, Token>> for TokenMap {
+    fn as_ref(&self) -> &HashMap<String, Token> {
         &self.0
     }
 }

@@ -1,7 +1,7 @@
 use crate::error::Error;
 use cosmwasm_std::Addr;
 use hex_literal::hex;
-use keplr::tokens::ContractInfo;
+use keplr::tokens::KeplrToken;
 use rsecret::query::compute::ComputeQuerier;
 use secretrs::utils::EnigmaUtils;
 use serde::{Deserialize, Serialize};
@@ -39,6 +39,37 @@ pub static GRPC_URL: &str = "https://grpc.testnet.secretsaturn.net";
 // pub static LCD_URL: &str = "https://lcd.mainnet.secretsaturn.net";
 // pub static GRPC_URL: &str = "https://grpc.mainnet.secretsaturn.net";
 
+pub mod contracts {
+    use super::CHAIN_ID;
+    use ammber_sdk::get_deployed_contracts;
+    use cosmwasm_std::ContractInfo;
+    use std::sync::{Arc, LazyLock};
+
+    // TODO: I only need the LazyLock due to Addr::unchecked not being const... realistically we
+    // shouldn't use the Addr type outside of contracts, but it's kinda pervasive.
+
+    // Extract ContractInfo statics
+    macro_rules! define_contract_static {
+        ($name:ident, $field:ident) => {
+            pub static $name: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
+                let contracts = get_deployed_contracts(CHAIN_ID);
+                Arc::new(ContractInfo {
+                    address: contracts.$field.address.clone(),
+                    code_hash: contracts.$field.code_hash.clone(),
+                })
+            });
+        };
+    }
+
+    // Define statics for specific contracts
+    define_contract_static!(LB_FACTORY, lb_factory);
+    define_contract_static!(LB_PAIR, lb_pair);
+    define_contract_static!(LB_AMBER, snip25);
+    define_contract_static!(LB_SSCRT, snip20);
+    define_contract_static!(LB_ROUTER, lb_router);
+    define_contract_static!(LB_QUOTER, lb_quoter);
+}
+
 // TODO:
 // need one map from token address to token info (the thing with the name, symbol, decimals)
 // use a separate map for address -> code hash (can be used for any contract)
@@ -55,9 +86,7 @@ pub static GRPC_URL: &str = "https://grpc.testnet.secretsaturn.net";
 //   }
 // },
 
-/// Mapping from token address to
-// FIXME: ContractInfo needs a new name
-pub static KEPLR_TOKEN_MAP: LazyLock<HashMap<String, ContractInfo>> = LazyLock::new(|| {
+pub static KEPLR_TOKEN_MAP: LazyLock<HashMap<String, KeplrToken>> = LazyLock::new(|| {
     let json = include_str!(concat!(env!("OUT_DIR"), "/keplr_token_map.json"));
     serde_json::from_str(json).expect("Failed to deserialize token_map")
 });

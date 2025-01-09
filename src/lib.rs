@@ -53,18 +53,18 @@ pub fn App() -> impl IntoView {
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
-    debug!("{} Keplr tokens", token_map.len());
+    // debug!("{} Keplr tokens", token_map.len());
+    // debug!(
+    //     "{:#?}",
+    //     token_map
+    //         .iter()
+    //         .map(|(_, token)| token.metadata.symbol.clone())
+    //         .collect::<Vec<String>>()
+    // );
+    debug!("{} SecretFoundation tokens", token_map.len());
     debug!(
         "{:#?}",
         token_map
-            .iter()
-            .map(|(_, token)| token.metadata.symbol.clone())
-            .collect::<Vec<String>>()
-    );
-    debug!("{} SecretFoundation tokens", TOKEN_MAP.len());
-    debug!(
-        "{:#?}",
-        TOKEN_MAP
             .iter()
             .map(|(_, token)| token.symbol.clone())
             .collect::<Vec<String>>()
@@ -336,11 +336,7 @@ fn Home() -> impl IntoView {
                                 .await;
 
                         if let Ok(key) = key_result {
-                            keys.push((
-                                token.metadata.name.clone(),
-                                token.contract_address.clone(),
-                                key,
-                            ));
+                            keys.push((token.name.clone(), token.contract_address.clone(), key));
                         }
                     }
                     debug!("Found {} viewing keys.", keys.len());

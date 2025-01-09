@@ -1,4 +1,5 @@
 use crate::{
+    constants::contracts::*,
     constants::Querier,
     error::Error,
     prelude::{Token, CHAIN_ID, GRPC_URL, TOKEN_MAP},
@@ -7,11 +8,8 @@ use crate::{
 };
 // TODO: move away from the static LB_* approach (those are hardcoded to pulsar)
 use ammber_sdk::{
-    constants::{
-        addrs::{LB_AMBER, LB_FACTORY, LB_ROUTER, LB_SSCRT},
-        liquidity_config::{
-            LiquidityConfigurations, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
-        },
+    constants::liquidity_config::{
+        LiquidityConfigurations, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
     },
     contract_interfaces::{
         lb_factory::{self, LbPairInformation},

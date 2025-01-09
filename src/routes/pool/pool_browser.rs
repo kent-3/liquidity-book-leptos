@@ -1,8 +1,6 @@
+use crate::constants::contracts::*;
 use crate::constants::Querier;
-use ammber_sdk::{
-    constants::addrs::{LB_AMBER, LB_FACTORY, LB_PAIR, LB_SSCRT},
-    contract_interfaces::{lb_factory, lb_pair::LbPair},
-};
+use ammber_sdk::contract_interfaces::{lb_factory, lb_pair::LbPair};
 use cosmwasm_std::ContractInfo;
 use leptos::prelude::*;
 use leptos_router::components::A;

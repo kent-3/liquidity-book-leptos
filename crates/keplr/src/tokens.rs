@@ -12,7 +12,7 @@ pub struct Metadata {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ContractInfo {
+pub struct KeplrToken {
     pub contract_address: String,
     pub image_url: String,
     pub metadata: Metadata,

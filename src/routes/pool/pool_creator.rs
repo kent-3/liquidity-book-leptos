@@ -1,6 +1,7 @@
-use crate::{error::Error, ChainId, Endpoint, KeplrSignals, CHAIN_ID, GRPC_URL};
+use crate::{
+    constants::contracts::*, error::Error, ChainId, Endpoint, KeplrSignals, CHAIN_ID, GRPC_URL,
+};
 use ammber_sdk::{
-    constants::addrs::LB_ROUTER,
     contract_interfaces::lb_router::{self, CreateLbPairResponse},
     utils::get_id_from_price,
 };

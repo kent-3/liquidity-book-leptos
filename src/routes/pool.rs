@@ -10,8 +10,8 @@ pub use pool_creator::PoolCreator;
 pub use pool_manager::PoolManager;
 pub use remove_liquidity::RemoveLiquidity;
 
-use crate::constants::Querier;
-use ammber_sdk::{constants::addrs::LB_FACTORY, contract_interfaces::lb_factory::QueryMsg};
+use crate::constants::{contracts::*, Querier};
+use ammber_sdk::contract_interfaces::lb_factory::QueryMsg;
 use leptos::prelude::*;
 use leptos_router::nested_router::Outlet;
 use tracing::{debug, info};

@@ -59,27 +59,3 @@ pub fn get_deployed_contracts(chain_id: &str) -> Arc<DeployedContracts> {
         _ => panic!("invalid chain id!"),
     }
 }
-
-// TODO: I only need the LazyLock due to Addr::unchecked not being const... realistically we
-// shouldn't use the Addr type outside of contracts, but it's kinda pervasive.
-
-// Extract ContractInfo statics
-macro_rules! define_contract_static {
-    ($name:ident, $field:ident) => {
-        pub static $name: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
-            let contracts = get_deployed_contracts("pulsar-3"); // Default to pulsar-3 or dynamically fetch
-            Arc::new(ContractInfo {
-                address: contracts.$field.address.clone(),
-                code_hash: contracts.$field.code_hash.clone(),
-            })
-        });
-    };
-}
-
-// Define statics for specific contracts
-define_contract_static!(LB_FACTORY, lb_factory);
-define_contract_static!(LB_PAIR, lb_pair);
-define_contract_static!(LB_AMBER, snip25);
-define_contract_static!(LB_SSCRT, snip20);
-define_contract_static!(LB_ROUTER, lb_router);
-define_contract_static!(LB_QUOTER, lb_quoter);

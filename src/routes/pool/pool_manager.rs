@@ -1,17 +1,14 @@
 use crate::{
-    constants::{Querier, CHAIN_ID, GRPC_URL, TOKEN_MAP},
+    constants::{contracts::*, Querier, CHAIN_ID, GRPC_URL},
     error::Error,
     state::*,
     utils::shorten_address,
 };
-use ammber_sdk::{
-    constants::addrs::{LB_AMBER, LB_FACTORY, LB_SSCRT},
-    contract_interfaces::{
-        lb_factory::{self, LbPairInformation},
-        lb_pair::{
-            ActiveIdResponse, BinResponse, LbTokenSupplyResponse, NextNonEmptyBinResponse,
-            QueryMsg, ReservesResponse,
-        },
+use ammber_sdk::contract_interfaces::{
+    lb_factory::{self, LbPairInformation},
+    lb_pair::{
+        ActiveIdResponse, BinResponse, LbTokenSupplyResponse, NextNonEmptyBinResponse, QueryMsg,
+        ReservesResponse,
     },
 };
 use batch_query::{

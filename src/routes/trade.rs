@@ -1,17 +1,15 @@
 use crate::{
     components::Secret20Balance,
+    constants::contracts::*,
     constants::{GRPC_URL, TOKEN_MAP},
     error::Error,
     prelude::{Querier, CHAIN_ID},
     state::*,
     LoadingModal,
 };
-use ammber_sdk::{
-    constants::addrs::{LB_AMBER, LB_PAIR, LB_QUOTER, LB_ROUTER, LB_SSCRT},
-    contract_interfaces::{
-        lb_router::{Path, Version},
-        *,
-    },
+use ammber_sdk::contract_interfaces::{
+    lb_router::{Path, Version},
+    *,
 };
 use cosmwasm_std::{to_binary, Addr, Uint128, Uint64};
 use keplr::Keplr;
