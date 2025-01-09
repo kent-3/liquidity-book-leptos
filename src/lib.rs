@@ -61,7 +61,15 @@ pub fn App() -> impl IntoView {
     //         .map(|(_, token)| token.metadata.symbol.clone())
     //         .collect::<Vec<String>>()
     // );
-    debug!("{} SecretFoundation tokens", token_map.len());
+    // debug!("{} SecretFoundation tokens", token_map.len());
+    // debug!(
+    //     "{:#?}",
+    //     token_map
+    //         .iter()
+    //         .map(|(_, token)| token.symbol.clone())
+    //         .collect::<Vec<String>>()
+    // );
+    debug!("{} Test tokens", token_map.len());
     debug!(
         "{:#?}",
         token_map
@@ -70,8 +78,8 @@ pub fn App() -> impl IntoView {
             .collect::<Vec<String>>()
     );
 
-    let sscrt_address = SYMBOL_TO_ADDR.get("sSCRT");
-    debug!("{sscrt_address:?}");
+    let sscrt_address = SYMBOL_TO_ADDR.get("SSCRT").expect("sSCRT is missing!");
+    debug!("sSCRT address: {sscrt_address}");
 
     Effect::new(move |_| {
         let enabled = keplr.enabled.get();
@@ -391,23 +399,24 @@ fn Home() -> impl IntoView {
     // TODO: move all static resources like this (query response is always the same) to a separate
     // module. Implement caching with local storage. They can all use a random account for the
     // EncryptionUtils, since they don't depend on user address.
-    let contract_address = "secret1s09x2xvfd2lp2skgzm29w2xtena7s8fq98v852";
-    let code_hash = "9a00ca4ad505e9be7e6e6dddf8d939b7ec7e9ac8e109c8681f10db9cacb36d42";
-    let token_info = Resource::new(
-        || (),
-        move |_| {
-            debug!("loading token_info resource");
-            let compute =
-                ComputeQuerier::new(Client::new(endpoint.get()), enigma_utils.clone().into());
-            SendWrapper::new(async move {
-                let query = QueryMsg::TokenInfo {};
-                compute
-                    .query_secret_contract(contract_address, code_hash, query)
-                    .await
-                    .map_err(Error::generic)
-            })
-        },
-    );
+
+    // let contract_address = "secret1s09x2xvfd2lp2skgzm29w2xtena7s8fq98v852";
+    // let code_hash = "9a00ca4ad505e9be7e6e6dddf8d939b7ec7e9ac8e109c8681f10db9cacb36d42";
+    // let token_info = Resource::new(
+    //     || (),
+    //     move |_| {
+    //         debug!("loading token_info resource");
+    //         let compute =
+    //             ComputeQuerier::new(Client::new(endpoint.get()), enigma_utils.clone().into());
+    //         SendWrapper::new(async move {
+    //             let query = QueryMsg::TokenInfo {};
+    //             compute
+    //                 .query_secret_contract(contract_address, code_hash, query)
+    //                 .await
+    //                 .map_err(Error::generic)
+    //         })
+    //     },
+    // );
 
     view! {
         <div class="max-w-lg">

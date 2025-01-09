@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, LazyLock};
 
-// TODO: Once more stable, these values could be hardcoded instead.
 pub static BATCH_QUERY_ROUTER: LazyLock<HashMap<ChainId, ContractInfo>> = LazyLock::new(|| {
     HashMap::from_iter([
         (
@@ -34,6 +33,8 @@ pub static BATCH_QUERY_ROUTER: LazyLock<HashMap<ChainId, ContractInfo>> = LazyLo
         ),
     ])
 });
+
+// TODO: Once more stable, these values should be hardcoded instead.
 
 pub static LB_QUOTER: LazyLock<HashMap<ChainId, ContractInfo>> = LazyLock::new(|| {
     HashMap::from_iter([
@@ -70,6 +71,7 @@ pub struct DeployedContracts {
 }
 
 // Embed and deserialize the JSON files at compile time
+
 static DEV_CONTRACTS: LazyLock<Arc<DeployedContracts>> = LazyLock::new(|| {
     let data = include_str!(concat!(
         env!("CARGO_MANIFEST_DIR"),

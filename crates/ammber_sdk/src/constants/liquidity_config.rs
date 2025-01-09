@@ -1,4 +1,7 @@
-/// Configurations for Adding Liquidity Presets
+//! Configurations for Adding Liquidity Presets
+
+// TODO: move the type definitions somewhere else
+
 use std::sync::LazyLock;
 
 use super::super::curves::*;

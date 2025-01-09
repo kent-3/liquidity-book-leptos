@@ -1,5 +1,5 @@
 use crate::error::Error;
-use cosmwasm_std::Addr;
+use cosmwasm_std::{Addr, ContractInfo};
 use hex_literal::hex;
 use keplr::tokens::KeplrToken;
 use rsecret::query::compute::ComputeQuerier;
@@ -24,12 +24,12 @@ pub struct Token {
 }
 
 // WARN: This key is randomly generated when localsecret is started for the first time.
-// Reuse containers to avoid needing changing this every time.
+// Reuse containers to avoid needing to change this every time.
 pub static DEVNET_IO_PUBKEY: [u8; 32] =
     hex!("80171b6f3b84eb5975b72ca51ee86b6ae113c22938e4866e5c2300077a06cd3e");
 
 // pub static CHAIN_ID: &str = "secretdev-1";
-// pub static GRPC_URL: &str = "http://localhost:1317";
+// pub static NODE: &str = "http://localhost:1317";
 
 pub static CHAIN_ID: &str = "pulsar-3";
 // pub static NODE: &str = "https://api.pulsar.scrttestnet.com";
@@ -41,39 +41,29 @@ pub static NODE: &str = "https://grpc.testnet.secretsaturn.net";
 
 pub mod contracts {
     use super::CHAIN_ID;
-    use ammber_sdk::constants::ChainId;
-    use ammber_sdk::get_deployed_contracts;
+    use ammber_sdk::constants::addrs::get_deployed_contracts;
     use cosmwasm_std::ContractInfo;
-    use std::sync::{Arc, LazyLock};
+    use std::sync::LazyLock;
 
-    // TODO: I only need the LazyLock due to Addr::unchecked not being const... realistically we
+    // NOTE: I only need the LazyLock due to Addr::unchecked not being const... realistically we
     // shouldn't use the Addr type outside of contracts, but it's kinda pervasive.
 
     // Extract ContractInfo statics
     macro_rules! define_contract_static {
         ($name:ident, $field:ident) => {
-            pub static $name: LazyLock<ContractInfo> = LazyLock::new(|| {
-                let chain_id: ChainId = CHAIN_ID.parse().expect("invalid chain id");
-                ammber_sdk::constants::addrs::$name
-                    .get(&chain_id)
-                    .unwrap()
-                    .clone()
-                // let contracts = get_deployed_contracts(chain_id);
-                // Arc::new(ContractInfo {
-                //     address: contracts.$field.address.clone(),
-                //     code_hash: contracts.$field.code_hash.clone(),
-                // })
-            });
+            pub static $name: LazyLock<ContractInfo> =
+                LazyLock::new(|| get_deployed_contracts(CHAIN_ID).$field.clone());
         };
     }
 
     // Define statics for specific contracts
-    define_contract_static!(LB_FACTORY, lb_factory);
-    // define_contract_static!(LB_PAIR, lb_pair);
-    // define_contract_static!(LB_AMBER, snip25);
-    // define_contract_static!(LB_SSCRT, snip20);
-    define_contract_static!(LB_ROUTER, lb_router);
     define_contract_static!(LB_QUOTER, lb_quoter);
+    define_contract_static!(LB_ROUTER, lb_router);
+    define_contract_static!(LB_FACTORY, lb_factory);
+    // TODO: these 3 should not be needed!
+    define_contract_static!(LB_PAIR, lb_pair);
+    define_contract_static!(LB_AMBER, snip25);
+    define_contract_static!(LB_SSCRT, snip20);
 }
 
 // TODO:
@@ -97,14 +87,38 @@ pub static KEPLR_TOKEN_MAP: LazyLock<HashMap<String, KeplrToken>> = LazyLock::ne
     serde_json::from_str(json).expect("Failed to deserialize token_map")
 });
 
+// TODO: produce json files for these
 pub static DEV_TOKEN_MAP: LazyLock<Arc<HashMap<String, Token>>> = LazyLock::new(|| {
-    let json = include_str!(concat!(env!("OUT_DIR"), "/sf_token_map.json"));
-    serde_json::from_str(json).expect("Failed to deserialize token_map")
+    let json = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/public/test_tokens_dev.json"
+    ));
+    let assets: Vec<Token> = serde_json::from_str(json).expect("Failed to deserialize token_map");
+
+    let mut token_map: HashMap<String, Token> = HashMap::new();
+
+    for asset in assets {
+        token_map.insert(asset.contract_address.clone(), asset);
+    }
+
+    Arc::new(token_map)
 });
 
+// TODO: produce json files for these
 pub static PULSAR_TOKEN_MAP: LazyLock<Arc<HashMap<String, Token>>> = LazyLock::new(|| {
-    let json = include_str!(concat!(env!("OUT_DIR"), "/sf_token_map.json"));
-    serde_json::from_str(json).expect("Failed to deserialize token_map")
+    let json = include_str!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/public/test_tokens_pulsar.json"
+    ));
+    let assets: Vec<Token> = serde_json::from_str(json).expect("Failed to deserialize token_map");
+
+    let mut token_map: HashMap<String, Token> = HashMap::new();
+
+    for asset in assets {
+        token_map.insert(asset.contract_address.clone(), asset);
+    }
+
+    Arc::new(token_map)
 });
 
 pub static MAINNET_TOKEN_MAP: LazyLock<Arc<HashMap<String, Token>>> = LazyLock::new(|| {
@@ -125,15 +139,10 @@ pub static TOKEN_MAP: LazyLock<Arc<HashMap<String, Token>>> =
     LazyLock::new(|| get_token_map(CHAIN_ID));
 
 // For each token we know about at compile time, map from symbol to address
-pub static SYMBOL_TO_ADDR: LazyLock<HashMap<String, Addr>> = LazyLock::new(|| {
+pub static SYMBOL_TO_ADDR: LazyLock<HashMap<String, String>> = LazyLock::new(|| {
     get_token_map(CHAIN_ID)
         .iter()
-        .map(|(contract_address, token)| {
-            (
-                token.symbol.clone(),
-                Addr::unchecked(contract_address.clone()),
-            )
-        })
+        .map(|(contract_address, token)| (token.symbol.clone(), contract_address.clone()))
         .collect()
 });
 
