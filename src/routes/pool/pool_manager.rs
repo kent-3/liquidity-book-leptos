@@ -1,5 +1,5 @@
 use crate::{
-    constants::{contracts::*, Querier, CHAIN_ID, GRPC_URL},
+    constants::{contracts::*, Querier, CHAIN_ID, NODE},
     error::Error,
     state::*,
     utils::shorten_address,
@@ -96,7 +96,7 @@ pub fn PoolManager() -> impl IntoView {
     });
 
     async fn addr_2_contract(contract_address: impl AsRef<str>) -> Result<ContractInfo, Error> {
-        let client = WebWasmClient::new(GRPC_URL.to_string());
+        let client = WebWasmClient::new(NODE.to_string());
         let encryption_utils = EnigmaUtils::new(None, CHAIN_ID).unwrap();
         let compute = ComputeQuerier::new(client, encryption_utils.into());
 

@@ -1,5 +1,4 @@
-use super::constants::liquidity_config::LiquidityConfigurations;
-use super::constants::liquidity_config::LiquidityShape;
+use crate::constants::liquidity_config::LiquidityConfigurations;
 
 // TODO: decide on which curves to use
 

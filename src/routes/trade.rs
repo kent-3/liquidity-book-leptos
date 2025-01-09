@@ -1,7 +1,7 @@
 use crate::{
     components::Secret20Balance,
     constants::contracts::*,
-    constants::{GRPC_URL, TOKEN_MAP},
+    constants::{NODE, TOKEN_MAP},
     error::Error,
     prelude::{Querier, CHAIN_ID},
     state::*,
@@ -122,7 +122,7 @@ pub fn Trade() -> impl IntoView {
         // TODO: Use the dynamic versions instead.
         // let url = endpoint.get();
         // let chain_id = chain_id.get();
-        let url = GRPC_URL;
+        let url = NODE;
         let chain_id = CHAIN_ID;
         async move {
             use cosmwasm_std::Uint128;
@@ -150,7 +150,7 @@ pub fn Trade() -> impl IntoView {
             let enigma_utils = Keplr::get_enigma_utils(chain_id).into();
 
             let options = CreateTxSenderOptions {
-                url: GRPC_URL,
+                url: NODE,
                 chain_id: CHAIN_ID,
                 wallet: wallet.into(),
                 wallet_address: key.bech32_address.clone().into(),

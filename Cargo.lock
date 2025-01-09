@@ -4530,6 +4530,7 @@ dependencies = [
  "leptos_router_macro",
  "liquidity-book",
  "prost",
+ "reactive_stores",
  "rsecret",
  "secret-batch-query",
  "secret-cosmwasm-std",

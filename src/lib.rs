@@ -31,7 +31,7 @@ mod types;
 mod utils;
 
 use components::{Spinner2, SuggestChains};
-use constants::{CHAIN_ID, GRPC_URL, TOKEN_MAP};
+use constants::{CHAIN_ID, NODE, TOKEN_MAP};
 use error::Error;
 use routes::{pool::*, trade::*};
 use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
@@ -43,10 +43,10 @@ pub fn App() -> impl IntoView {
 
     // Global Contexts
 
-    provide_context(Endpoint::default());
-    provide_context(ChainId::default());
+    provide_context(Endpoint::new(NODE));
+    provide_context(ChainId::new(CHAIN_ID));
     provide_context(KeplrSignals::new());
-    provide_context(TokenMap::new());
+    provide_context(TokenMap::new(TOKEN_MAP.clone()));
 
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let chain_id = use_context::<ChainId>().expect("chain id context missing!");
@@ -299,7 +299,7 @@ pub fn OptionsMenu(
                 <SuggestChains />
                 <div>"Node Configuration"</div>
                 <form class="flex flex-col gap-4" on:submit=on_submit>
-                    <input type="text" value=GRPC_URL node_ref=url_input class="w-64" />
+                    <input type="text" value=NODE node_ref=url_input class="w-64" />
                     <input type="text" value=CHAIN_ID node_ref=chain_id_input />
                     <input type="submit" value="Update" class="" />
                 </form>

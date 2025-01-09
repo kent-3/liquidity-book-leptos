@@ -1,5 +1,5 @@
 use crate::{
-    constants::contracts::*, error::Error, ChainId, Endpoint, KeplrSignals, CHAIN_ID, GRPC_URL,
+    constants::contracts::*, error::Error, ChainId, Endpoint, KeplrSignals, CHAIN_ID, NODE,
 };
 use ammber_sdk::{
     contract_interfaces::lb_router::{self, CreateLbPairResponse},
@@ -52,7 +52,7 @@ pub fn PoolCreator() -> impl IntoView {
     };
 
     let create_lb_pair = Action::new_local(move |_: &()| {
-        let url = GRPC_URL;
+        let url = NODE;
         let chain_id = CHAIN_ID;
 
         let token_x = token_x.get();

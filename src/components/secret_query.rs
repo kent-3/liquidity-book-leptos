@@ -1,5 +1,5 @@
 use crate::{
-    constants::{CHAIN_ID, GRPC_URL, TOKEN_MAP},
+    constants::{CHAIN_ID, NODE, TOKEN_MAP},
     error::Error,
     state::{ChainId, Endpoint, KeplrSignals, TokenMap},
 };

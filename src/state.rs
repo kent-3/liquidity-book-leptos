@@ -1,27 +1,25 @@
-use crate::{
-    constants::*,
-    error::Error,
-    // keplr::{tokens::ContractInfo, Keplr, Key},
-};
+use crate::{constants::*, error::Error};
 use keplr::{tokens::KeplrToken, Keplr, Key};
 use leptos::prelude::*;
+use reactive_stores::{Field, Store};
+use std::sync::Arc;
 use std::{collections::HashMap, ops::Deref};
 use tracing::{debug, trace};
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct ProviderConfig {
-    pub url: String,
-    pub chain_id: String,
-}
-
-impl ProviderConfig {
-    pub fn new(url: impl Into<String>, chain_id: impl Into<String>) -> Self {
-        Self {
-            url: url.into(),
-            chain_id: chain_id.into(),
-        }
-    }
-}
+// #[derive(Clone, Debug, PartialEq, Store)]
+// pub struct ProviderConfig {
+//     pub url: String,
+//     pub chain_id: String,
+// }
+//
+// impl ProviderConfig {
+//     pub fn new(url: impl Into<String>, chain_id: impl Into<String>) -> Self {
+//         Self {
+//             url: url.into(),
+//             chain_id: chain_id.into(),
+//         }
+//     }
+// }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Endpoint {
@@ -39,12 +37,12 @@ impl Endpoint {
 impl Default for Endpoint {
     fn default() -> Self {
         Self {
-            url: RwSignal::new(GRPC_URL.to_string()),
+            url: RwSignal::new(NODE.to_string()),
         }
     }
 }
 
-impl std::ops::Deref for Endpoint {
+impl Deref for Endpoint {
     type Target = RwSignal<String>;
 
     fn deref(&self) -> &Self::Target {
@@ -79,7 +77,7 @@ impl Default for ChainId {
     }
 }
 
-impl std::ops::Deref for ChainId {
+impl Deref for ChainId {
     type Target = RwSignal<String>;
 
     fn deref(&self) -> &Self::Target {
@@ -98,17 +96,15 @@ impl AsRef<RwSignal<String>> for ChainId {
 // UPDATE: We can do both. Have a static compiled one to use as a base, and one that can be added
 // to at runtime.
 #[derive(Clone, Debug)]
-pub struct TokenMap(pub HashMap<String, Token>);
+pub struct TokenMap(pub Arc<HashMap<String, Token>>);
 
 impl TokenMap {
-    pub fn new() -> Self {
-        let token_map: HashMap<String, Token> = TOKEN_MAP.clone();
-
+    pub fn new(token_map: Arc<HashMap<String, Token>>) -> Self {
         Self(token_map)
     }
 }
 
-impl std::ops::Deref for TokenMap {
+impl Deref for TokenMap {
     type Target = HashMap<String, Token>;
 
     fn deref(&self) -> &Self::Target {
@@ -129,6 +125,7 @@ pub struct KeplrSignals {
     // pub key: RwSignal<Option<Result<Key, Error>>>,
 }
 
+// TODO: use runtime chain_id instead of static
 impl KeplrSignals {
     pub fn new() -> Self {
         let enabled = RwSignal::new(false);

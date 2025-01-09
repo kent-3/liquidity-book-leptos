@@ -32,15 +32,16 @@ pub static DEVNET_IO_PUBKEY: [u8; 32] =
 // pub static GRPC_URL: &str = "http://localhost:1317";
 
 pub static CHAIN_ID: &str = "pulsar-3";
-// pub static GRPC_URL: &str = "https://api.pulsar.scrttestnet.com";
-pub static GRPC_URL: &str = "https://grpc.testnet.secretsaturn.net";
+// pub static NODE: &str = "https://api.pulsar.scrttestnet.com";
+pub static NODE: &str = "https://grpc.testnet.secretsaturn.net";
 
 // pub static CHAIN_ID: &str = "secret-4";
-// pub static LCD_URL: &str = "https://lcd.mainnet.secretsaturn.net";
-// pub static GRPC_URL: &str = "https://grpc.mainnet.secretsaturn.net";
+// pub static NODE: &str = "https://lcd.mainnet.secretsaturn.net";
+// pub static NODE: &str = "https://grpc.mainnet.secretsaturn.net";
 
 pub mod contracts {
     use super::CHAIN_ID;
+    use ammber_sdk::constants::ChainId;
     use ammber_sdk::get_deployed_contracts;
     use cosmwasm_std::ContractInfo;
     use std::sync::{Arc, LazyLock};
@@ -51,21 +52,26 @@ pub mod contracts {
     // Extract ContractInfo statics
     macro_rules! define_contract_static {
         ($name:ident, $field:ident) => {
-            pub static $name: LazyLock<Arc<ContractInfo>> = LazyLock::new(|| {
-                let contracts = get_deployed_contracts(CHAIN_ID);
-                Arc::new(ContractInfo {
-                    address: contracts.$field.address.clone(),
-                    code_hash: contracts.$field.code_hash.clone(),
-                })
+            pub static $name: LazyLock<ContractInfo> = LazyLock::new(|| {
+                let chain_id: ChainId = CHAIN_ID.parse().expect("invalid chain id");
+                ammber_sdk::constants::addrs::$name
+                    .get(&chain_id)
+                    .unwrap()
+                    .clone()
+                // let contracts = get_deployed_contracts(chain_id);
+                // Arc::new(ContractInfo {
+                //     address: contracts.$field.address.clone(),
+                //     code_hash: contracts.$field.code_hash.clone(),
+                // })
             });
         };
     }
 
     // Define statics for specific contracts
     define_contract_static!(LB_FACTORY, lb_factory);
-    define_contract_static!(LB_PAIR, lb_pair);
-    define_contract_static!(LB_AMBER, snip25);
-    define_contract_static!(LB_SSCRT, snip20);
+    // define_contract_static!(LB_PAIR, lb_pair);
+    // define_contract_static!(LB_AMBER, snip25);
+    // define_contract_static!(LB_SSCRT, snip20);
     define_contract_static!(LB_ROUTER, lb_router);
     define_contract_static!(LB_QUOTER, lb_quoter);
 }
@@ -91,19 +97,36 @@ pub static KEPLR_TOKEN_MAP: LazyLock<HashMap<String, KeplrToken>> = LazyLock::ne
     serde_json::from_str(json).expect("Failed to deserialize token_map")
 });
 
-// TODO: create a map like this I can use on testnet, with my test tokens
-pub static TOKEN_MAP: LazyLock<HashMap<String, Token>> = LazyLock::new(|| {
-    if CHAIN_ID == "secretdev-1" {
-        todo!()
-    } else {
-        let json = include_str!(concat!(env!("OUT_DIR"), "/sf_token_map.json"));
-        serde_json::from_str(json).expect("Failed to deserialize token_map")
-    }
+pub static DEV_TOKEN_MAP: LazyLock<Arc<HashMap<String, Token>>> = LazyLock::new(|| {
+    let json = include_str!(concat!(env!("OUT_DIR"), "/sf_token_map.json"));
+    serde_json::from_str(json).expect("Failed to deserialize token_map")
 });
+
+pub static PULSAR_TOKEN_MAP: LazyLock<Arc<HashMap<String, Token>>> = LazyLock::new(|| {
+    let json = include_str!(concat!(env!("OUT_DIR"), "/sf_token_map.json"));
+    serde_json::from_str(json).expect("Failed to deserialize token_map")
+});
+
+pub static MAINNET_TOKEN_MAP: LazyLock<Arc<HashMap<String, Token>>> = LazyLock::new(|| {
+    let json = include_str!(concat!(env!("OUT_DIR"), "/sf_token_map.json"));
+    serde_json::from_str(json).expect("Failed to deserialize token_map")
+});
+
+pub fn get_token_map(chain_id: &str) -> Arc<HashMap<String, Token>> {
+    match chain_id {
+        "secretdev-1" => Arc::clone(&DEV_TOKEN_MAP),
+        "pulsar-3" => Arc::clone(&PULSAR_TOKEN_MAP),
+        "secret-4" => Arc::clone(&MAINNET_TOKEN_MAP),
+        _ => panic!("invalid chain id!"),
+    }
+}
+
+pub static TOKEN_MAP: LazyLock<Arc<HashMap<String, Token>>> =
+    LazyLock::new(|| get_token_map(CHAIN_ID));
 
 // For each token we know about at compile time, map from symbol to address
 pub static SYMBOL_TO_ADDR: LazyLock<HashMap<String, Addr>> = LazyLock::new(|| {
-    TOKEN_MAP
+    get_token_map(CHAIN_ID)
         .iter()
         .map(|(contract_address, token)| {
             (
@@ -115,7 +138,7 @@ pub static SYMBOL_TO_ADDR: LazyLock<HashMap<String, Addr>> = LazyLock::new(|| {
 });
 
 pub static WEB_WASM_CLIENT: LazyLock<WebWasmClient> =
-    LazyLock::new(|| WebWasmClient::new(GRPC_URL.to_string()));
+    LazyLock::new(|| WebWasmClient::new(NODE.to_string()));
 
 // used for read-only client queries
 pub static ENIGMA_UTILS: LazyLock<Arc<EnigmaUtils>> = LazyLock::new(|| {

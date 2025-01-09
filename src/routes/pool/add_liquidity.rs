@@ -2,11 +2,10 @@ use crate::{
     constants::contracts::*,
     constants::Querier,
     error::Error,
-    prelude::{Token, CHAIN_ID, GRPC_URL, TOKEN_MAP},
+    prelude::{Token, CHAIN_ID, NODE, TOKEN_MAP},
     state::*,
     utils::{alert, display_token_amount, get_token_decimals, latest_block, parse_token_amount},
 };
-// TODO: move away from the static LB_* approach (those are hardcoded to pulsar)
 use ammber_sdk::{
     constants::liquidity_config::{
         LiquidityConfigurations, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
@@ -259,7 +258,7 @@ pub fn AddLiquidity() -> impl IntoView {
             // TODO: Use the dynamic versions instead.
             // let url = endpoint.get();
             // let chain_id = chain_id.get();
-            let url = GRPC_URL;
+            let url = NODE;
             let chain_id = CHAIN_ID;
             let mut liquidity_parameters = liquidity_parameters.clone();
 
