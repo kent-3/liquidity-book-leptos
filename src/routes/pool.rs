@@ -11,12 +11,9 @@ pub use pool_manager::PoolManager;
 pub use remove_liquidity::RemoveLiquidity;
 
 use crate::constants::Querier;
-use crate::liquidity_book::{
-    constants::addrs::LB_FACTORY, contract_interfaces::lb_factory::QueryMsg,
-};
+use ammber_sdk::{constants::addrs::LB_FACTORY, contract_interfaces::lb_factory::QueryMsg};
 use leptos::prelude::*;
 use leptos_router::nested_router::Outlet;
-use send_wrapper::SendWrapper;
 use tracing::{debug, info};
 
 #[component]

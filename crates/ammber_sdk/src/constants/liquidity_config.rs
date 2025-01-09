@@ -1,7 +1,7 @@
 /// Configurations for Adding Liquidity Presets
 use std::sync::LazyLock;
 
-use super::super::curves::configure_liquidity_by_radius;
+use super::super::curves::*;
 use cosmwasm_std::Uint64;
 use leptos::attr::IntoAttributeValue;
 use liquidity_book::libraries::math::liquidity_configurations::PRECISION;
@@ -57,6 +57,36 @@ impl LiquidityConfigurations {
     ) -> LiquidityConfigurations {
         configure_liquidity_by_radius(target_bin, radius, shape)
     }
+    pub fn by_range(
+        target_bin: u32,
+        range: (u32, u32),
+        shape: LiquidityShape,
+    ) -> LiquidityConfigurations {
+        configure_liquidity_by_range(target_bin, range, shape)
+    }
+}
+
+fn configure_liquidity_by_radius(
+    target_bin: u32,
+    radius: u32,
+    shape: LiquidityShape,
+) -> LiquidityConfigurations {
+    match shape {
+        LiquidityShape::SpotUniform => uniform_radius_distribution(radius),
+        LiquidityShape::Curve => curve_radius_distribution(radius),
+        LiquidityShape::BidAsk => todo!(),
+        LiquidityShape::Wide => todo!(),
+    }
+}
+
+fn configure_liquidity_by_range(
+    target_bin: u32,
+    range: (u32, u32),
+    shape: LiquidityShape,
+) -> LiquidityConfigurations {
+    // let start_bin = get_id_from_price(min_price, bin_step);
+    // let end_bin = get_id_from_price(max_price, bin_step);
+    todo!()
 }
 
 #[derive(Debug, PartialEq, Clone)]

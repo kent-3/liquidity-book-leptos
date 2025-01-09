@@ -3,31 +3,7 @@ use super::constants::liquidity_config::LiquidityShape;
 
 // TODO: decide on which curves to use
 
-pub fn configure_liquidity_by_radius(
-    target_bin: u32,
-    radius: u32,
-    shape: LiquidityShape,
-) -> LiquidityConfigurations {
-    match shape {
-        LiquidityShape::SpotUniform => uniform_radius_distribution(radius),
-        LiquidityShape::Curve => curve_radius_distribution(radius),
-        LiquidityShape::BidAsk => todo!(),
-        LiquidityShape::Wide => todo!(),
-    }
-}
-
-fn configure_liquidity_by_range(
-    min_price: f64,
-    max_price: f64,
-    bin_step: u16,
-    shape: LiquidityShape,
-) -> LiquidityConfigurations {
-    // let start_bin = get_id_from_price(min_price, bin_step);
-    // let end_bin = get_id_from_price(max_price, bin_step);
-    todo!()
-}
-
-fn uniform_radius_distribution(radius: u32) -> LiquidityConfigurations {
+pub fn uniform_radius_distribution(radius: u32) -> LiquidityConfigurations {
     let radius = radius as i64;
 
     let delta_ids: Vec<i64> = (-radius..=radius).collect();
@@ -91,7 +67,7 @@ fn logistic_derivative(x: f64, k: f64) -> f64 {
     exp_kx / ((1.0 + exp_kx).powi(2))
 }
 
-fn curve_radius_distribution(radius: u32) -> LiquidityConfigurations {
+pub fn curve_radius_distribution(radius: u32) -> LiquidityConfigurations {
     let radius = radius as i64;
     let delta_ids: Vec<i64> = (-radius..=radius).collect();
     let len = delta_ids.len();

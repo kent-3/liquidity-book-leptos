@@ -22,6 +22,7 @@ pub struct Token {
     pub denom: Option<String>,
     pub version: Option<String>,
 }
+
 // WARN: This key is randomly generated when localsecret is started for the first time.
 // Reuse containers to avoid needing changing this every time.
 pub static DEVNET_IO_PUBKEY: [u8; 32] =
@@ -38,16 +39,40 @@ pub static GRPC_URL: &str = "https://grpc.testnet.secretsaturn.net";
 // pub static LCD_URL: &str = "https://lcd.mainnet.secretsaturn.net";
 // pub static GRPC_URL: &str = "https://grpc.mainnet.secretsaturn.net";
 
+// TODO:
+// need one map from token address to token info (the thing with the name, symbol, decimals)
+// use a separate map for address -> code hash (can be used for any contract)
+// or else include code hash in the token info (like the sf_token_map does)
+
+// Example Keplr token mapping
+// "secret1dtghxvrx35nznt8es3fwxrv4qh56tvxv22z79d": {
+//   "contractAddress": "secret1dtghxvrx35nznt8es3fwxrv4qh56tvxv22z79d",
+//   "imageUrl": "https://raw.githubusercontent.com/chainapsis/keplr-contract-registry/main/images/secret/sgraviton.svg",
+//   "metadata": {
+//     "name": "Secret GRAVITON",
+//     "symbol": "SGRAVITON",
+//     "decimals": 6
+//   }
+// },
+
+/// Mapping from token address to
+// FIXME: ContractInfo needs a new name
 pub static KEPLR_TOKEN_MAP: LazyLock<HashMap<String, ContractInfo>> = LazyLock::new(|| {
     let json = include_str!(concat!(env!("OUT_DIR"), "/keplr_token_map.json"));
     serde_json::from_str(json).expect("Failed to deserialize token_map")
 });
 
+// TODO: create a map like this I can use on testnet, with my test tokens
 pub static TOKEN_MAP: LazyLock<HashMap<String, Token>> = LazyLock::new(|| {
-    let json = include_str!(concat!(env!("OUT_DIR"), "/sf_token_map.json"));
-    serde_json::from_str(json).expect("Failed to deserialize token_map")
+    if CHAIN_ID == "secretdev-1" {
+        todo!()
+    } else {
+        let json = include_str!(concat!(env!("OUT_DIR"), "/sf_token_map.json"));
+        serde_json::from_str(json).expect("Failed to deserialize token_map")
+    }
 });
 
+// For each token we know about at compile time, map from symbol to address
 pub static SYMBOL_TO_ADDR: LazyLock<HashMap<String, Addr>> = LazyLock::new(|| {
     TOKEN_MAP
         .iter()
@@ -63,6 +88,7 @@ pub static SYMBOL_TO_ADDR: LazyLock<HashMap<String, Addr>> = LazyLock::new(|| {
 pub static WEB_WASM_CLIENT: LazyLock<WebWasmClient> =
     LazyLock::new(|| WebWasmClient::new(GRPC_URL.to_string()));
 
+// used for read-only client queries
 pub static ENIGMA_UTILS: LazyLock<Arc<EnigmaUtils>> = LazyLock::new(|| {
     if CHAIN_ID == "secretdev-1" {
         EnigmaUtils::from_io_key(None, DEVNET_IO_PUBKEY).into()

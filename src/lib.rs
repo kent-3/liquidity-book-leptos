@@ -21,11 +21,9 @@ use tonic_web_wasm_client::Client;
 use tracing::{debug, error, info, trace};
 use web_sys::{js_sys, wasm_bindgen::JsValue};
 
-mod batch_query;
 mod components;
 mod constants;
 mod error;
-mod liquidity_book;
 mod prelude;
 mod routes;
 mod state;

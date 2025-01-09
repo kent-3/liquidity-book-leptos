@@ -1,22 +1,18 @@
 use crate::{
-    // batch_query::{
-    //     msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
-    //     BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
-    // },
     constants::{Querier, CHAIN_ID, GRPC_URL, TOKEN_MAP},
     error::Error,
-    liquidity_book::{
-        constants::addrs::{LB_CONTRACTS, LB_FACTORY, LB_PAIR},
-        contract_interfaces::{
-            lb_factory::{self, LbPairInformation},
-            lb_pair::{
-                ActiveIdResponse, BinResponse, LbTokenSupplyResponse, NextNonEmptyBinResponse,
-                QueryMsg,
-            },
-        },
-    },
     state::*,
     utils::shorten_address,
+};
+use ammber_sdk::{
+    constants::addrs::{LB_AMBER, LB_FACTORY, LB_SSCRT},
+    contract_interfaces::{
+        lb_factory::{self, LbPairInformation},
+        lb_pair::{
+            ActiveIdResponse, BinResponse, LbTokenSupplyResponse, NextNonEmptyBinResponse,
+            QueryMsg, ReservesResponse,
+        },
+    },
 };
 use batch_query::{
     msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
@@ -34,6 +30,7 @@ use leptos_router::{
     NavigateOptions,
 };
 use rsecret::query::compute::ComputeQuerier;
+use secret_toolkit_snip20::TokenInfoResponse;
 use secretrs::utils::EnigmaUtils;
 use send_wrapper::SendWrapper;
 use serde::Serialize;
@@ -52,6 +49,7 @@ pub fn PoolManager() -> impl IntoView {
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
     let params = use_params_map();
+    // TODO: decide on calling these a/b or x/y
     let token_a = move || {
         params
             .read()
@@ -66,19 +64,19 @@ pub fn PoolManager() -> impl IntoView {
     };
     let basis_points = move || params.read().get("bps").expect("Missing bps URL param");
 
+    // TODO: change this to try to use the TOKEN_MAP first before querying the code hash
     async fn token_symbol_convert(address: String) -> String {
+        // Assume token_x is AMBER
         let contract = ContractInfo {
             address: Addr::unchecked(address),
-            code_hash: LB_CONTRACTS.snip25.code_hash.clone(),
+            code_hash: LB_AMBER.code_hash.clone(),
         };
         secret_toolkit_snip20::QueryMsg::TokenInfo {}
             .do_query(&contract)
             .await
             .inspect(|response| trace!("{:?}", response))
-            .and_then(|response| Ok(serde_json::from_str::<serde_json::Value>(&response)?))
-            .map(|x| x.get("token_info").unwrap().to_owned())
-            .map(|x| serde_json::from_value::<secret_toolkit_snip20::TokenInfo>(x.clone()).unwrap())
-            .map(|x| x.symbol)
+            .and_then(|response| Ok(serde_json::from_str::<TokenInfoResponse>(&response)?))
+            .map(|x| x.token_info.symbol)
             .unwrap()
     }
 
@@ -89,33 +87,16 @@ pub fn PoolManager() -> impl IntoView {
         // Assume token_y is sSCRT
         let contract = ContractInfo {
             address: Addr::unchecked(token_b()),
-            code_hash: LB_CONTRACTS.snip20.code_hash.clone(),
+            code_hash: LB_SSCRT.code_hash.clone(),
         };
         secret_toolkit_snip20::QueryMsg::TokenInfo {}
             .do_query(&contract)
             .await
             .inspect(|response| trace!("{:?}", response))
-            .and_then(|response| Ok(serde_json::from_str::<serde_json::Value>(&response)?))
-            .map(|x| x.get("token_info").unwrap().to_owned())
-            .map(|x| serde_json::from_value::<secret_toolkit_snip20::TokenInfo>(x.clone()).unwrap())
-            .map(|x| x.symbol)
+            .and_then(|response| Ok(serde_json::from_str::<TokenInfoResponse>(&response)?))
+            .map(|x| x.token_info.symbol)
             .unwrap()
     });
-
-    // TODO: Change contract_interfaces to not use u128 in response types. Use Uint128 instead!
-
-    #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
-    pub struct ReservesResponse {
-        pub reserve_x: String,
-        pub reserve_y: String,
-    }
-
-    // #[derive(serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
-    // pub struct BinResponse {
-    //     pub bin_id: u32,
-    //     pub bin_reserve_x: String,
-    //     pub bin_reserve_y: String,
-    // }
 
     async fn addr_2_contract(contract_address: impl AsRef<str>) -> Result<ContractInfo, Error> {
         let client = WebWasmClient::new(GRPC_URL.to_string());
@@ -419,8 +400,8 @@ pub fn PoolManager() -> impl IntoView {
                         {move || Suspend::new(async move {
                             let reserves = total_reserves.await.unwrap();
                             view! {
-                                <li class="pl-4 list-none">"reserve_x: "{reserves.reserve_x}</li>
-                                <li class="pl-4 list-none">"reserve_y: "{reserves.reserve_y}</li>
+                                <li class="pl-4 list-none">"reserve_x: "{reserves.reserve_x.to_string()}</li>
+                                <li class="pl-4 list-none">"reserve_y: "{reserves.reserve_y.to_string()}</li>
                             }
                         })}
                     </li>

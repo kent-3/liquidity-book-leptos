@@ -2,3 +2,5 @@ pub mod constants;
 pub mod contract_interfaces;
 pub mod curves;
 pub mod utils;
+
+pub use constants::addrs::get_deployed_contracts;

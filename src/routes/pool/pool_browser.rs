@@ -1,10 +1,7 @@
-use crate::{
-    constants::Querier,
-    liquidity_book::{
-        constants::addrs::{LB_CONTRACTS, LB_PAIR},
-        contract_interfaces::{lb_factory, lb_pair::LbPair},
-    },
-    routes::pool::LB_FACTORY,
+use crate::constants::Querier;
+use ammber_sdk::{
+    constants::addrs::{LB_AMBER, LB_FACTORY, LB_PAIR, LB_SSCRT},
+    contract_interfaces::{lb_factory, lb_pair::LbPair},
 };
 use cosmwasm_std::ContractInfo;
 use leptos::prelude::*;
@@ -23,12 +20,12 @@ pub fn PoolBrowser() -> impl IntoView {
 
     let pair_1 = LbPair {
         token_x: TokenType::CustomToken {
-            contract_addr: LB_CONTRACTS.snip25.address.clone(),
-            token_code_hash: LB_CONTRACTS.snip25.code_hash.clone(),
+            contract_addr: LB_AMBER.address.clone(),
+            token_code_hash: LB_AMBER.code_hash.clone(),
         },
         token_y: TokenType::CustomToken {
-            contract_addr: LB_CONTRACTS.snip20.address.clone(),
-            token_code_hash: LB_CONTRACTS.snip20.code_hash.clone(),
+            contract_addr: LB_SSCRT.address.clone(),
+            token_code_hash: LB_SSCRT.code_hash.clone(),
         },
         bin_step: 100,
         contract: ContractInfo {

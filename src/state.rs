@@ -100,9 +100,7 @@ pub struct TokenMap(pub HashMap<String, ContractInfo>);
 
 impl TokenMap {
     pub fn new() -> Self {
-        let json = include_str!(concat!(env!("OUT_DIR"), "/keplr_token_map.json"));
-        let token_map: HashMap<String, ContractInfo> =
-            serde_json::from_str(json).expect("Failed to deserialize token_map");
+        let token_map: HashMap<String, ContractInfo> = HashMap::new();
 
         Self(token_map)
     }

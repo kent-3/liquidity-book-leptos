@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = ["crates/batch_query", "crates/keplr"]
+members = ["crates/ammber_sdk", "crates/batch_query", "crates/keplr"]
 resolver = "2"
 
 [workspace.lints.clippy]
@@ -26,24 +26,20 @@ strip = true
 codegen-units = 1
 
 [build-dependencies]
-git2 = "0.19"
+git2 = "0.20"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
 [dependencies]
 
 # workspace crates
-keplr = { path = "./crates/keplr" }
+ammber-sdk = { path = "./crates/ammber_sdk" }
 batch-query = { path = "./crates/batch_query", package = "secret-batch-query" }
+keplr = { path = "./crates/keplr" }
 
 # Leptos official
-leptos = { version = "0.7.3", features = [
-  "csr",
-  # "nightly"
-] }
-leptos_router = { version = "0.7.3", features = [
-  # "nightly"
-] }
+leptos = { version = "0.7.3", features = ["csr"] }
+leptos_router = { version = "0.7.3", features = [] }
 leptos_router_macro = { version = "0.7.3" }
 leptos_meta = { version = "0.7.3" }
 

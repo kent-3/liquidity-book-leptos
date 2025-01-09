@@ -2,16 +2,19 @@
 // transmitted to or from a server, which is necessary for them to function as Resources.
 #[derive(thiserror::Error, serde::Serialize, serde::Deserialize, Debug, Clone, PartialEq)]
 pub enum Error {
-    #[error("An error occurred: {0}")]
+    #[error("{0}")]
     Generic(String),
+
+    #[error("Token not found in the map!")]
+    UnknownToken,
 
     #[error("Serde Error: {0}")]
     Serde(String),
 
-    #[error("An error related to Secret occurred: {0}")]
+    #[error("Secret error: {0}")]
     Secret(String),
 
-    #[error("An error related to Keplr occurred: {0}")]
+    #[error("Keplr error: {0}")]
     Keplr(String),
 
     #[error("Keplr is not enabled!")]
