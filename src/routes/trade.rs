@@ -1,9 +1,8 @@
 use crate::{
     components::Secret20Balance,
-    constants::contracts::*,
-    constants::{NODE, TOKEN_MAP},
+    constants::{contracts::*, NODE, TOKEN_MAP},
     error::Error,
-    prelude::{Querier, CHAIN_ID},
+    prelude::{Querier, CHAIN_ID, SYMBOL_TO_ADDR},
     state::*,
     LoadingModal,
 };
@@ -13,7 +12,7 @@ use ammber_sdk::contract_interfaces::{
 };
 use cosmwasm_std::{to_binary, Addr, Uint128, Uint64};
 use keplr::Keplr;
-use leptos::{html::Select, logging::*, prelude::*};
+use leptos::{html::Select, logging::*, prelude::*, tachys::reactive_graph::bind::GetValue};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use rsecret::{
     query::compute::ComputeQuerier, secret_client::CreateTxSenderOptions, tx::ComputeServiceClient,
@@ -68,23 +67,44 @@ pub fn Trade() -> impl IntoView {
     let amount_in = RwSignal::new(String::new());
 
     let get_quote = Action::new_local(move |_: &()| {
+        let token_x = token_x.get();
+        let token_y = token_y.get();
+        let amount_in = amount_in.get();
+
         async move {
             use cosmwasm_std::Uint128;
             use shade_protocol::swap::core::TokenType;
 
             // TODO: token y is the quote asset, right?
 
+            let Some(token_x_address) = token_x else {
+                return Err(Error::generic("No token X selected!"));
+            };
+            let Some(token_y_address) = token_y else {
+                return Err(Error::generic("No token Y selected!"));
+            };
+
+            debug!("YO");
+
+            let token_x_code_hash = TOKEN_MAP
+                .get(&token_x_address)
+                .map(|t| t.code_hash.clone())
+                .ok_or(Error::UnknownToken)
+                .inspect_err(|error| error!("{:?}", error))?;
+            let token_y_code_hash = TOKEN_MAP
+                .get(&token_y_address)
+                .map(|t| t.code_hash.clone())
+                .ok_or(Error::UnknownToken)
+                .inspect_err(|error| error!("{:?}", error))?;
+
             let token_x = TokenType::CustomToken {
-                contract_addr: LB_AMBER.address.clone(),
-                token_code_hash: LB_AMBER.code_hash.clone(),
+                contract_addr: Addr::unchecked(token_x_address),
+                token_code_hash: token_x_code_hash,
             };
-
             let token_y = TokenType::CustomToken {
-                contract_addr: LB_SSCRT.address.clone(),
-                token_code_hash: LB_SSCRT.code_hash.clone(),
+                contract_addr: Addr::unchecked(token_y_address),
+                token_code_hash: token_y_code_hash,
             };
-
-            let amount_in = amount_in.get();
 
             // TODO: really want to write this differently, like
             // let quote = ILbQuoter(LB_QUOTER.clone()).find_best_path_from_amount_in(tokens. amount_in)?;
@@ -259,21 +279,10 @@ pub fn Trade() -> impl IntoView {
                             <option value="" disabled selected>
                                 "Select Token"
                             </option>
-                            <option value="secret1k0jntykt7e4g3y88ltc60czgjuqdy4c9e8fzek">
-                                sSCRT
-                            </option>
-                            <option value="secret1k6u0cy4feepm6pehnz804zmwakuwdapm69tuc4">
-                                "stkd-SCRT"
-                            </option>
-                            <option value="secret153wu605vvp934xhd4k9dtd640zsep5jkesstdm">
-                                SHD
-                            </option>
-                            <option value="secret1fl449muk5yq8dlad7a22nje4p5d2pnsgymhjfd">
-                                SILK
-                            </option>
-                            <option value="secret1s09x2xvfd2lp2skgzm29w2xtena7s8fq98v852">
-                                AMBER
-                            </option>
+                            <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
+                            <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
+                            <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
+                            <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
                         </select>
                     </div>
                 </div>
@@ -309,29 +318,29 @@ pub fn Trade() -> impl IntoView {
                             <option value="" disabled selected>
                                 "Select Token"
                             </option>
-                            <option value="secret1k0jntykt7e4g3y88ltc60czgjuqdy4c9e8fzek">
-                                sSCRT
-                            </option>
-                            <option value="secret1k6u0cy4feepm6pehnz804zmwakuwdapm69tuc4">
-                                "stkd-SCRT"
-                            </option>
-                            <option value="secret153wu605vvp934xhd4k9dtd640zsep5jkesstdm">
-                                SHD
-                            </option>
-                            <option value="secret1fl449muk5yq8dlad7a22nje4p5d2pnsgymhjfd">
-                                SILK
-                            </option>
-                            <option value="secret1s09x2xvfd2lp2skgzm29w2xtena7s8fq98v852">
-                                AMBER
-                            </option>
+                            <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
+                            <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
+                            <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
+                            <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
                         </select>
                     </div>
                 </div>
-                <button class="p-1 block" on:click=move |_|{_=get_quote.dispatch(())}>
+                <button class="p-1 block" on:click=move |_| { _ = get_quote.dispatch(()) }>
                     "Estimate Swap"
                 </button>
-                                            // returns the final amount (the output token)
-        <p>{move || format!("{:?}", get_quote.value().get().and_then(|result| result.map(|mut quote| quote.amounts.pop()).ok()).unwrap_or_default()) } </p>
+                // returns the final amount (the output token)
+                <p>
+                    {move || {
+                        format!(
+                            "{:?}",
+                            get_quote
+                                .value()
+                                .get()
+                                .and_then(|result| result.map(|mut quote| quote.amounts.pop()).ok())
+                                .unwrap_or_default(),
+                        )
+                    }}
+                </p>
                 <button
                     class="p-1 block"
                     disabled=move || !keplr.enabled.get()
@@ -339,7 +348,7 @@ pub fn Trade() -> impl IntoView {
                 >
                     "Swap"
                 </button>
-                // <span class="text-xs">"(This will send 1 micro sSCRT to yourself)"</span>
+            // <span class="text-xs">"(This will send 1 micro sSCRT to yourself)"</span>
             </div>
         </div>
     }

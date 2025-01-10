@@ -397,8 +397,12 @@ pub fn PoolManager() -> impl IntoView {
                         {move || Suspend::new(async move {
                             let reserves = total_reserves.await.unwrap();
                             view! {
-                                <li class="pl-4 list-none">"reserve_x: "{reserves.reserve_x.to_string()}</li>
-                                <li class="pl-4 list-none">"reserve_y: "{reserves.reserve_y.to_string()}</li>
+                                <li class="pl-4 list-none">
+                                    "reserve_x: "{reserves.reserve_x.to_string()}
+                                </li>
+                                <li class="pl-4 list-none">
+                                    "reserve_y: "{reserves.reserve_y.to_string()}
+                                </li>
                             }
                         })}
                     </li>

@@ -1,5 +1,6 @@
 use crate::{
-    constants::contracts::*, error::Error, ChainId, Endpoint, KeplrSignals, CHAIN_ID, NODE,
+    constants::contracts::*, constants::TOKEN_MAP, error::Error, prelude::SYMBOL_TO_ADDR, ChainId,
+    Endpoint, KeplrSignals, CHAIN_ID, NODE,
 };
 use ammber_sdk::{
     contract_interfaces::lb_router::{self, CreateLbPairResponse},
@@ -30,26 +31,10 @@ pub fn PoolCreator() -> impl IntoView {
     let chain_id = use_context::<ChainId>().expect("chain_id context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
 
-    let (token_x, set_token_x) = signal("TOKENX".to_string());
-    let (token_y, set_token_y) = signal("TOKENY".to_string());
-    let (bin_step, set_bin_step) = signal("100".to_string());
-    let (active_price, set_active_price) = signal("1".to_string());
-
-    // TODO:
-    let create_pool = move |ev: leptos::ev::SubmitEvent| {
-        ev.prevent_default();
-        let token_x = token_x.get();
-        let token_y = token_y.get();
-        let bin_step = bin_step.get();
-        let active_price = active_price.get();
-
-        debug!("{}", token_x);
-        debug!("{}", token_y);
-        debug!("{}", bin_step);
-        debug!("{}", active_price);
-
-        // ...
-    };
+    let (token_x, set_token_x) = signal("AMBER".to_string());
+    let (token_y, set_token_y) = signal("SSCRT".to_string());
+    let (bin_step, set_bin_step) = signal(100u16);
+    let (active_price, set_active_price) = signal("1.0".to_string());
 
     let create_lb_pair = Action::new_local(move |_: &()| {
         let url = NODE;
@@ -57,14 +42,24 @@ pub fn PoolCreator() -> impl IntoView {
 
         let token_x = token_x.get();
         let token_y = token_y.get();
-        let bin_step = bin_step
-            .get()
-            .parse::<u16>()
-            .expect("Invalid bin step format");
+        let bin_step = bin_step.get();
+        // TODO: avoid floating point
         let price = active_price
             .get()
             .parse::<f64>()
             .expect("Invalid price format");
+
+        let token_x = SYMBOL_TO_ADDR
+            .get(&token_x)
+            .and_then(|address| TOKEN_MAP.get(address))
+            .expect("token not found")
+            .clone();
+        let token_y = SYMBOL_TO_ADDR
+            .get(&token_y)
+            .and_then(|address| TOKEN_MAP.get(address))
+            .expect("token not found")
+            .clone();
+
         let active_id = get_id_from_price(price, bin_step);
 
         async move {
@@ -97,15 +92,14 @@ pub fn PoolCreator() -> impl IntoView {
             let msg = MsgExecuteContractRaw {
                 sender: AccountId::from_str(key.bech32_address.as_ref())?,
                 contract: AccountId::from_str(lb_router_contract.address.as_ref())?,
-                // TODO: get contract hashes for each token and make them into TokenType
                 msg: lb_router::ExecuteMsg::CreateLbPair {
                     token_x: TokenType::CustomToken {
-                        contract_addr: Addr::unchecked(&token_x),
-                        token_code_hash: todo!(),
+                        contract_addr: Addr::unchecked(token_x.contract_address),
+                        token_code_hash: token_x.code_hash,
                     },
                     token_y: TokenType::CustomToken {
-                        contract_addr: Addr::unchecked(&token_y),
-                        token_code_hash: todo!(),
+                        contract_addr: Addr::unchecked(token_y.contract_address),
+                        token_code_hash: token_y.code_hash,
                     },
                     active_id,
                     bin_step,
@@ -145,15 +139,43 @@ pub fn PoolCreator() -> impl IntoView {
         }
     });
 
+    // TODO:
+    let create_pair_handler = move |ev: leptos::ev::SubmitEvent| {
+        ev.prevent_default();
+        let token_x = token_x.get();
+        let token_y = token_y.get();
+        let bin_step = bin_step.get();
+        let active_price = active_price.get();
+
+        let token_x = SYMBOL_TO_ADDR
+            .get(&token_x)
+            .and_then(|address| TOKEN_MAP.get(address))
+            .expect("token not found");
+        let token_y = SYMBOL_TO_ADDR
+            .get(&token_y)
+            .and_then(|address| TOKEN_MAP.get(address))
+            .expect("token not found");
+
+        debug!("{}", token_x.contract_address);
+        debug!("{}", token_y.contract_address);
+        debug!("{}", bin_step);
+        debug!("{}", active_price);
+
+        create_lb_pair.dispatch(());
+    };
+
     view! {
         <a
-            href="/pool"
+            href="/liquidity-book-leptos/pool"
             class="block text-neutral-200/50 text-sm font-bold cursor-pointer no-underline"
         >
             "🡨 Back to pools list"
         </a>
         <div class="py-3 text-2xl font-bold text-center sm:text-left">"Create New Pool"</div>
-        <form class="container max-w-xs space-y-4 py-1 mx-auto sm:mx-0" on:submit=create_pool>
+        <form
+            class="container max-w-xs space-y-4 py-1 mx-auto sm:mx-0"
+            on:submit=create_pair_handler
+        >
             <label class="block">
                 "Select Token"
                 <select
@@ -162,11 +184,9 @@ pub fn PoolCreator() -> impl IntoView {
                     title="Select Token"
                     on:input=move |ev| set_token_x.set(event_target_value(&ev))
                 >
-                    <option value="TOKENX">"TOKEN X"</option>
-                    <option value="sSCRT">sSCRT</option>
-                    <option value="SHD">SHD</option>
-                    <option value="AMBER">AMBER</option>
-                    <option value="SILK">SILK</option>
+                    <option value="AMBER">"AMBER"</option>
+                    <option value="SHD">"SHD"</option>
+                    <option value="STKDSCRT">"stkd-SCRT"</option>
                 </select>
             </label>
             <label class="block">
@@ -177,10 +197,10 @@ pub fn PoolCreator() -> impl IntoView {
                     title="Select Quote Asset"
                     on:input=move |ev| set_token_y.set(event_target_value(&ev))
                 >
-                    <option value="TOKENY">"TOKEN Y"</option>
-                    <option value="sSCRT">sSCRT</option>
-                    <option value="stkd-SCRT">stkd-SCRT</option>
-                    <option value="SILK">SILK</option>
+                    <option value="SSCRT">"sSCRT"</option>
+                // <option value="sSCRT">sSCRT</option>
+                // <option value="stkd-SCRT">stkd-SCRT</option>
+                // <option value="SILK">SILK</option>
                 </select>
             </label>
             <label class="block">
@@ -191,8 +211,10 @@ pub fn PoolCreator() -> impl IntoView {
                             class=""
                             type="radio"
                             name="binStep"
-                            value="25"
-                            on:input=move |ev| set_bin_step.set(event_target_value(&ev))
+                            value=25
+                            on:input=move |ev| {
+                                set_bin_step.set(event_target_value(&ev).parse().unwrap())
+                            }
                         />
                         "0.25%"
                     </label>
@@ -201,8 +223,10 @@ pub fn PoolCreator() -> impl IntoView {
                             class=""
                             type="radio"
                             name="binStep"
-                            value="50"
-                            on:input=move |ev| set_bin_step.set(event_target_value(&ev))
+                            value=50
+                            on:input=move |ev| {
+                                set_bin_step.set(event_target_value(&ev).parse().unwrap())
+                            }
                         />
                         "0.5%"
                     </label>
@@ -211,8 +235,10 @@ pub fn PoolCreator() -> impl IntoView {
                             class=""
                             type="radio"
                             name="binStep"
-                            value="100"
-                            on:input=move |ev| set_bin_step.set(event_target_value(&ev))
+                            value=100
+                            on:input=move |ev| {
+                                set_bin_step.set(event_target_value(&ev).parse().unwrap())
+                            }
                         />
                         "1%"
                     </label>

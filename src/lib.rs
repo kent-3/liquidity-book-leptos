@@ -3,6 +3,13 @@
 // use codee::string::FromToStringCodec;
 // use leptos_use::storage::use_local_storage;
 
+use crate::constants::contracts::LB_FACTORY;
+use crate::constants::Querier;
+use crate::prelude::COMPUTE_QUERIER;
+use ammber_sdk::contract_interfaces::{
+    lb_factory::{self, LbPairAtIndexResponse, NumberOfLbPairsResponse},
+    lb_pair::LbPair,
+};
 use keplr::{Keplr, Key};
 use leptos::{
     ev::MouseEvent,
@@ -36,6 +43,57 @@ use error::Error;
 use routes::{pool::*, trade::*};
 use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
 use types::Coin;
+
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+
+// this works somehow
+pub fn chain_query<T>(
+    contract_address: String,
+    code_hash: String,
+    query: impl Serialize + Send + Sync + 'static,
+) -> impl std::future::Future<Output = Result<T, Error>> + Send
+where
+    T: Serialize + DeserializeOwned + 'static,
+{
+    SendWrapper::new(async move {
+        COMPUTE_QUERIER
+            .query_secret_contract(contract_address, code_hash, query)
+            .await
+            .inspect(|response| debug!("{response:?}"))
+            .inspect_err(|e| error!("{e}"))
+            .and_then(|response| Ok(serde_json::from_str::<T>(&response)?))
+            .map_err(Into::into)
+    })
+}
+
+use cosmwasm_std::{
+    Addr, ContractInfo, CosmosMsg, QuerierWrapper, StdError, StdResult, Uint128, WasmMsg,
+};
+
+/// A thin wrapper around `ContractInfo` that provides additional
+/// methods to interact with the LB Factory contract.
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ILbFactory(pub ContractInfo);
+
+impl std::ops::Deref for ILbFactory {
+    type Target = ContractInfo;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ILbFactory {
+    pub async fn get_number_of_lb_pairs(&self) -> Result<u32, Error> {
+        chain_query::<NumberOfLbPairsResponse>(
+            self.0.address.to_string(),
+            self.0.code_hash.clone(),
+            &lb_factory::QueryMsg::GetNumberOfLbPairs {},
+        )
+        .await
+        .map(|response| response.lb_pair_number)
+    }
+}
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -80,6 +138,63 @@ pub fn App() -> impl IntoView {
 
     let sscrt_address = SYMBOL_TO_ADDR.get("SSCRT").expect("sSCRT is missing!");
     debug!("sSCRT address: {sscrt_address}");
+
+    let number_of_lb_pairs: Resource<Result<u32, Error>> = Resource::new(
+        move || (),
+        move |_| async { LB_FACTORY.get_number_of_lb_pairs().await },
+    );
+
+    // chain_query::<NumberOfLbPairsResponse>(
+    //     LB_FACTORY.address.to_string(),
+    //     LB_FACTORY.code_hash.clone(),
+    //     lb_factory::QueryMsg::GetNumberOfLbPairs {},
+    // )
+    // .await
+    // .map(|resp| resp.lb_pair_number)
+
+    // lb_factory::QueryMsg::GetNumberOfLbPairs {}
+    //     .do_query(&LB_FACTORY)
+    //     .await
+    //     .inspect(|response| debug!("{:?}", response))
+    //     .and_then(|response| {
+    //         Ok(serde_json::from_str::<NumberOfLbPairsResponse>(&response)?)
+    //     })
+    //     .map_err(|e| error!("{e}"))
+    //     .map(|x| x.lb_pair_number)
+    //     .unwrap_or(0)
+
+    provide_context(number_of_lb_pairs);
+
+    // TODO: try to use a batch query, or think of a better way to get all the pools
+    let all_lb_pairs: Resource<Vec<LbPair>> = Resource::new(
+        move || (),
+        move |_| {
+            SendWrapper::new(async move {
+                let i = number_of_lb_pairs.await.unwrap_or_default();
+                let mut pairs: Vec<LbPair> = Vec::with_capacity(i as usize);
+
+                for index in 0..i {
+                    let pair = lb_factory::QueryMsg::GetLbPairAtIndex { index }
+                        .do_query(&LB_FACTORY)
+                        .await
+                        .inspect(|response| debug!("{:?}", response))
+                        .and_then(|response| {
+                            Ok(serde_json::from_str::<LbPairAtIndexResponse>(&response)?)
+                        })
+                        .map(|x| x.lb_pair)
+                        .map_err(|e| error!("{e}"));
+
+                    if let Ok(pair) = pair {
+                        pairs.push(pair)
+                    }
+                }
+
+                pairs
+            })
+        },
+    );
+
+    provide_context(all_lb_pairs);
 
     Effect::new(move |_| {
         let enabled = keplr.enabled.get();
@@ -394,12 +509,11 @@ fn Home() -> impl IntoView {
         },
     );
 
-    let enigma_utils = EnigmaUtils::new(None, "secret-4").unwrap();
-
     // TODO: move all static resources like this (query response is always the same) to a separate
     // module. Implement caching with local storage. They can all use a random account for the
     // EncryptionUtils, since they don't depend on user address.
 
+    // let enigma_utils = EnigmaUtils::new(None, "secret-4").unwrap();
     // let contract_address = "secret1s09x2xvfd2lp2skgzm29w2xtena7s8fq98v852";
     // let code_hash = "9a00ca4ad505e9be7e6e6dddf8d939b7ec7e9ac8e109c8681f10db9cacb36d42";
     // let token_info = Resource::new(

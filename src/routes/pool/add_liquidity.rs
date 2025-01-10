@@ -484,7 +484,10 @@ pub fn AddLiquidity() -> impl IntoView {
                         placeholder="Enter Bin Radius"
                         min="0"
                         prop:value=move || radius.get()
-                        on:change=move |ev| set_radius.set(event_target_value(&ev).parse::<u32>().unwrap_or_default())
+                        on:change=move |ev| {
+                            set_radius
+                                .set(event_target_value(&ev).parse::<u32>().unwrap_or_default())
+                        }
                     />
                 </div>
 

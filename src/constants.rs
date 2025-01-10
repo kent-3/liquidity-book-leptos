@@ -40,6 +40,8 @@ pub static NODE: &str = "https://grpc.testnet.secretsaturn.net";
 // pub static NODE: &str = "https://grpc.mainnet.secretsaturn.net";
 
 pub mod contracts {
+    use crate::ILbFactory;
+
     use super::CHAIN_ID;
     use ammber_sdk::constants::addrs::get_deployed_contracts;
     use cosmwasm_std::ContractInfo;
@@ -59,11 +61,14 @@ pub mod contracts {
     // Define statics for specific contracts
     define_contract_static!(LB_QUOTER, lb_quoter);
     define_contract_static!(LB_ROUTER, lb_router);
-    define_contract_static!(LB_FACTORY, lb_factory);
+    // define_contract_static!(LB_FACTORY, lb_factory);
     // TODO: these 3 should not be needed!
     define_contract_static!(LB_PAIR, lb_pair);
     define_contract_static!(LB_AMBER, snip25);
     define_contract_static!(LB_SSCRT, snip20);
+
+    pub static LB_FACTORY: LazyLock<ILbFactory> =
+        LazyLock::new(|| ILbFactory(get_deployed_contracts(CHAIN_ID).lb_factory.clone()));
 }
 
 // TODO:
