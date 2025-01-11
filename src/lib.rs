@@ -25,6 +25,7 @@ use leptos_router::components::{ParentRoute, Route, Router, Routes, A};
 use leptos_router_macro::path;
 use rsecret::query::{bank::BankQuerier, compute::ComputeQuerier};
 use send_wrapper::SendWrapper;
+use serde::{Deserialize, Serialize};
 use tonic_web_wasm_client::Client;
 use tracing::{debug, error, info, trace};
 use web_sys::{js_sys, wasm_bindgen::JsValue};
@@ -45,6 +46,12 @@ use error::Error;
 use routes::{pool::*, trade::*};
 use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
 use types::Coin;
+
+// TODO: If possible, use batch queries for resources. Combine the outputs in a struct
+// and use that as the return type of the Resource.
+
+#[derive(Clone)]
+pub struct NumberOfLbPairs(pub Resource<u32>);
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -72,15 +79,7 @@ pub fn App() -> impl IntoView {
     //         .map(|(_, token)| token.metadata.symbol.clone())
     //         .collect::<Vec<String>>()
     // );
-    // debug!("{} SecretFoundation tokens", token_map.len());
-    // debug!(
-    //     "{:#?}",
-    //     token_map
-    //         .iter()
-    //         .map(|(_, token)| token.symbol.clone())
-    //         .collect::<Vec<String>>()
-    // );
-    debug!("{} Test tokens", token_map.len());
+    debug!("{} known tokens", token_map.len());
     debug!(
         "{:#?}",
         token_map
@@ -92,20 +91,24 @@ pub fn App() -> impl IntoView {
     let sscrt_address = SYMBOL_TO_ADDR.get("SSCRT").expect("sSCRT is missing!");
     debug!("sSCRT address: {sscrt_address}");
 
-    let number_of_lb_pairs: Resource<Result<u32, Error>> = Resource::new(
+    // TODO: How can we get these lb_pair queries to only happen when navigating to the "pool" route,
+    // but not re-run every time that page loads? We need some kind of in-memory cache for this,
+    // because we do want it to re-run if the user refreshes the page (to load any new pairs).
+
+    let number_of_lb_pairs: Resource<u32> = Resource::new(
         move || (),
-        move |_| async { LB_FACTORY.get_number_of_lb_pairs().await },
+        move |_| async {
+            LB_FACTORY
+                .get_number_of_lb_pairs()
+                .await
+                .unwrap_or_default()
+        },
     );
 
-    provide_context(number_of_lb_pairs);
-
-    // TODO: try to use a batch query, or think of a better way to get all the pools
     let all_lb_pairs: Resource<Vec<LbPair>> = Resource::new(
         move || (),
         move |_| async move {
-            let i = number_of_lb_pairs.await.unwrap_or_default();
-            // let mut pairs: Vec<LbPair> = Vec::with_capacity(i as usize);
-
+            let i = number_of_lb_pairs.await;
             let mut queries = Vec::new();
 
             for index in 0..i {
@@ -114,14 +117,11 @@ pub fn App() -> impl IntoView {
                     contract: LB_FACTORY.0.clone(),
                     query_msg: lb_factory::QueryMsg::GetLbPairAtIndex { index },
                 });
-
-                // if let Ok(pair) = LB_FACTORY.get_lb_pair_at_index(index).await {
-                //     pairs.push(pair)
-                // }
             }
 
             let batch_query_message = msg_batch_query(queries);
 
+            // TODO: change BATCH_QUERY_ROUTER to automatically know the current chain_id
             chain_query::<BatchQueryResponse>(
                 BATCH_QUERY_ROUTER.pulsar.code_hash.clone(),
                 BATCH_QUERY_ROUTER.pulsar.address.to_string(),
@@ -147,6 +147,7 @@ pub fn App() -> impl IntoView {
             .collect()
     }
 
+    provide_context(NumberOfLbPairs(number_of_lb_pairs));
     provide_context(all_lb_pairs);
 
     Effect::new(move |_| {
@@ -270,7 +271,7 @@ pub fn App() -> impl IntoView {
                 <hr />
             </header>
             <main class="overflow-x-auto">
-                <Routes fallback=|| "This page could not be found.">
+                <Routes transition=true fallback=|| "This page could not be found.">
                     <Route path=path!("/liquidity-book-leptos/") view=Home />
                     <ParentRoute path=path!("/liquidity-book-leptos/pool") view=Pool>
                         <Route path=path!("/") view=PoolBrowser />

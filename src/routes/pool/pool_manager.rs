@@ -2,15 +2,9 @@ use crate::{
     error::Error,
     prelude::*,
     state::*,
-    support::{chain_query, Querier},
+    support::{chain_query, ILbPair, Querier, COMPUTE_QUERIER},
 };
-use ammber_sdk::contract_interfaces::{
-    lb_factory::{self, LbPairInformation},
-    lb_pair::{
-        ActiveIdResponse, BinResponse, LbTokenSupplyResponse, NextNonEmptyBinResponse, QueryMsg,
-        ReservesResponse,
-    },
-};
+use ammber_sdk::contract_interfaces::lb_pair::{self, BinResponse, LbPair};
 use batch_query::{
     msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
     BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
@@ -26,16 +20,16 @@ use leptos_router::{
     nested_router::Outlet,
     NavigateOptions,
 };
-use rsecret::query::compute::ComputeQuerier;
 use secret_toolkit_snip20::TokenInfoResponse;
-use secretrs::utils::EnigmaUtils;
 use send_wrapper::SendWrapper;
 use serde::Serialize;
-use tonic_web_wasm_client::Client as WebWasmClient;
 use tracing::{debug, info, trace};
 
-// TODO: If possible, use batch queries for resources. Combine the outputs in a struct
-// and use that as the return type of the Resource.
+mod add_liquidity;
+mod remove_liquidity;
+
+pub use add_liquidity::AddLiquidity;
+pub use remove_liquidity::RemoveLiquidity;
 
 #[component]
 pub fn PoolManager() -> impl IntoView {
@@ -81,11 +75,7 @@ pub fn PoolManager() -> impl IntoView {
                 code_hash: token.code_hash.clone(),
             })
         } else {
-            let client = WebWasmClient::new(NODE.to_string());
-            let encryption_utils = EnigmaUtils::new(None, CHAIN_ID).unwrap();
-            let compute = ComputeQuerier::new(client, encryption_utils.into());
-
-            compute
+            COMPUTE_QUERIER
                 .code_hash_by_contract_address(&contract_address)
                 .await
                 .map_err(Error::from)
@@ -118,83 +108,11 @@ pub fn PoolManager() -> impl IntoView {
     let token_b_symbol =
         AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_b()).await });
 
-    // TODO: Move these to a separate module. IDK if it's worth splitting up the query functions
-    // from the resources.
+    // TODO: how about instead, we have a contract query that can return the nearby liquidity, so
+    // we don't have to mess with the complicated batch query router? That might be the purpose of
+    // the LiquidityHelper contract (I haven't looked at it yet)
 
-    // TODO: Each response can be either the specific expected response struct, or any of the potential
-    // error types within the contract. Figure out how to handle this.
-
-    async fn query_lb_pair_information(
-        token_x: ContractInfo,
-        token_y: ContractInfo,
-        bin_step: u16,
-    ) -> Result<lb_factory::LbPairInformationResponse, Error> {
-        lb_factory::QueryMsg::GetLbPairInformation {
-            token_x: token_x.into(),
-            token_y: token_y.into(),
-            bin_step,
-        }
-        .do_query(&LB_FACTORY)
-        .await
-        .inspect(|response| trace!("{:?}", response))
-        .and_then(|response| {
-            Ok(serde_json::from_str::<lb_factory::LbPairInformationResponse>(&response)?)
-        })
-    }
-
-    async fn query_reserves(lb_pair_contract: &ContractInfo) -> Result<ReservesResponse, Error> {
-        QueryMsg::GetReserves {}
-            .do_query(lb_pair_contract)
-            .await
-            .inspect(|response| trace!("{:?}", response))
-            .and_then(|response| Ok(serde_json::from_str::<ReservesResponse>(&response)?))
-    }
-
-    async fn query_active_id(lb_pair_contract: &ContractInfo) -> Result<u32, Error> {
-        QueryMsg::GetActiveId {}
-            .do_query(lb_pair_contract)
-            .await
-            .inspect(|response| trace!("{:?}", response))
-            .and_then(|response| Ok(serde_json::from_str::<ActiveIdResponse>(&response)?))
-            .map(|x| x.active_id)
-    }
-
-    async fn query_bin_reserves(
-        lb_pair_contract: &ContractInfo,
-        id: u32,
-    ) -> Result<BinResponse, Error> {
-        QueryMsg::GetBin { id }
-            .do_query(lb_pair_contract)
-            .await
-            .inspect(|response| trace!("{:?}", response))
-            .and_then(|response| Ok(serde_json::from_str::<BinResponse>(&response)?))
-    }
-
-    async fn query_next_non_empty_bin(
-        lb_pair_contract: &ContractInfo,
-        id: u32,
-    ) -> Result<u32, Error> {
-        QueryMsg::GetNextNonEmptyBin {
-            swap_for_y: false,
-            id,
-        }
-        .do_query(lb_pair_contract)
-        .await
-        .inspect(|response| trace!("{:?}", response))
-        .and_then(|response| Ok(serde_json::from_str::<NextNonEmptyBinResponse>(&response)?))
-        .map(|x| x.next_id)
-    }
-
-    async fn query_total_supply(lb_pair_contract: &ContractInfo, id: u32) -> Result<String, Error> {
-        QueryMsg::GetLbTokenSupply { id }
-            .do_query(lb_pair_contract)
-            .await
-            .inspect(|response| trace!("{:?}", response))
-            .and_then(|response| Ok(serde_json::from_str::<LbTokenSupplyResponse>(&response)?))
-            .map(|x| x.total_supply.to_string())
-    }
-
-    async fn query_nearby_liquidity<T: Serialize>(
+    async fn query_nearby_bins<T: Serialize>(
         queries: Vec<BatchQueryParams<T>>,
     ) -> Result<Vec<BinResponse>, Error> {
         msg_batch_query(queries)
@@ -220,47 +138,20 @@ pub fn PoolManager() -> impl IntoView {
             .collect()
     }
 
-    // FIXME: what's up with the hardcoded code hashes? It still works for some reason...
-    let lb_pair_information: Resource<LbPairInformation> = Resource::new(
+    // SendWrapper required due to addr_2_contract function
+    let lb_pair: Resource<LbPair> = Resource::new(
         move || (token_a(), token_b(), basis_points()),
         move |(token_a, token_b, basis_points)| {
-            async move {
-                // let token_x = addr_2_contract(token_a).await.unwrap();
-                // let token_y = addr_2_contract(token_b).await.unwrap();
-                let token_x = ContractInfo {
-                    address: Addr::unchecked(token_a),
-                    code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
-                        .to_string(),
-                };
-                let token_y = ContractInfo {
-                    address: Addr::unchecked(token_b),
-                    code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
-                        .to_string(),
-                };
+            SendWrapper::new(async move {
+                let token_x = addr_2_contract(token_a).await.unwrap();
+                let token_y = addr_2_contract(token_b).await.unwrap();
                 let bin_step = basis_points;
-                // query_lb_pair_information(token_x, token_y, bin_step)
-                //     .await
-                //     .map(|x| x.lb_pair_information)
-                //     .unwrap()
+
                 LB_FACTORY
                     .get_lb_pair_information(token_x, token_y, bin_step)
                     .await
+                    .map(|lb_pair_information| lb_pair_information.lb_pair)
                     .unwrap()
-            }
-        },
-    );
-
-    // Potentially nicer, but not necessary.
-    // let lb_pair_contract = AsyncDerived::new(move || {
-    //     SendWrapper::new(async move { lb_pair_information.await.lb_pair.contract })
-    // });
-
-    let total_reserves = Resource::new(
-        move || lb_pair_information.track(),
-        move |_| {
-            SendWrapper::new(async move {
-                let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
-                query_reserves(&lb_pair_contract).await
             })
         },
     );
@@ -275,60 +166,41 @@ pub fn PoolManager() -> impl IntoView {
     let (_, set_active_id) = query_signal_with_options::<String>("active_id", nav_options.clone());
 
     let active_id = Resource::new(
-        move || lb_pair_information.track(),
+        move || lb_pair.track(),
         move |_| {
-            SendWrapper::new(async move {
-                let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
-                query_active_id(&lb_pair_contract)
+            async move {
+                ILbPair(lb_pair.await.contract)
+                    .get_active_id()
                     .await
                     // This will set a URL query param "active_id" for nested routes to use
                     .inspect(|id| set_active_id.set(Some(id.to_string())))
-            })
+            }
         },
     );
 
     // NOTE: We have a lot of Resources depending on other Resources.
     //       It works, but I wonder if there is a better way.
 
+    let total_reserves = Resource::new(
+        move || lb_pair.track(),
+        move |_| async move { ILbPair(lb_pair.await.contract).get_reserves().await },
+    );
+
     let bin_reserves = Resource::new(
-        move || (lb_pair_information.track(), active_id.track()),
-        move |_| {
-            SendWrapper::new(async move {
-                let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
-                let id = active_id.await?;
-                query_bin_reserves(&lb_pair_contract, id).await
-            })
+        move || (lb_pair.track(), active_id.track()),
+        move |_| async move {
+            let lb_pair = ILbPair(lb_pair.await.contract);
+            let id = active_id.await?;
+
+            lb_pair.get_bin(id).await
         },
     );
 
-    // let next_non_empty_bin = Resource::new(
-    //     move || (lb_pair_information.track(), active_id.track()),
-    //     move |_| {
-    //         SendWrapper::new(async move {
-    //             let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
-    //             let id = active_id.await?;
-    //             query_next_non_empty_bin(&lb_pair_contract, id).await
-    //         })
-    //     },
-    // );
-    // let bin_total_supply = Resource::new(
-    //     move || (lb_pair_information.track(), active_id.track()),
-    //     move |_| {
-    //         SendWrapper::new(async move {
-    //             let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
-    //             let id = active_id.await?;
-    //             query_total_supply(&lb_pair_contract, id)
-    //                 .await
-    //                 .map(|x| format!("{x:?}"))
-    //         })
-    //     },
-    // );
-
-    let nearby_liquidity = Resource::new(
-        move || (lb_pair_information.track(), active_id.track()),
+    let nearby_bins = Resource::new(
+        move || (lb_pair.track(), active_id.track()),
         move |_| {
             SendWrapper::new(async move {
-                let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
+                let lb_pair_contract = lb_pair.await.contract;
                 let id = active_id.await?;
                 let mut batch = Vec::new();
 
@@ -344,11 +216,11 @@ pub fn PoolManager() -> impl IntoView {
                     batch.push(BatchQueryParams {
                         id: offset_id.to_string(),
                         contract: lb_pair_contract.clone(),
-                        query_msg: QueryMsg::GetBin { id: offset_id },
+                        query_msg: lb_pair::QueryMsg::GetBin { id: offset_id },
                     });
                 }
 
-                query_nearby_liquidity(batch).await
+                query_nearby_bins(batch).await
             })
         },
     );
@@ -377,11 +249,8 @@ pub fn PoolManager() -> impl IntoView {
                 </div>
                 <a href="about:blank" target="_blank" rel="noopener">
                     <div class="text-md font-bold p-1 outline outline-1 outline-offset-2 outline-neutral-500/50">
-                        {move || {
-                            lb_pair_information
-                                .get()
-                                .map(|x| shorten_address(x.lb_pair.contract.address))
-                        }}" ↗"
+                        {move || { lb_pair.get().map(|x| shorten_address(x.contract.address)) }}
+                        " ↗"
                     </div>
                 </a>
             </div>
@@ -432,18 +301,12 @@ pub fn PoolManager() -> impl IntoView {
                         })}
                     </li>
                 </Suspense>
-                // <Suspense fallback=|| view! { <div>"Loading Next Non-Empty Bin..."</div> }>
-                //     <li>
-                //         "Next Non-Empty Bin ID: "
-                //         {move || Suspend::new(async move { next_non_empty_bin.await })}
-                //     </li>
-                // </Suspense>
                 // a bit crazy innit. but it works.
-                <Suspense fallback=|| view! { <div>"Loading Batch Query..."</div> }>
+                <Suspense fallback=|| view! { <div>"Loading Nearby Bins..."</div> }>
                     <li>
-                        "Nearby Bin Reserves: "
+                        "Nearby Bins: "
                         {move || Suspend::new(async move {
-                            nearby_liquidity
+                            nearby_bins
                                 .await
                                 .and_then(|bins| {
                                     Ok(
@@ -469,21 +332,66 @@ pub fn PoolManager() -> impl IntoView {
 
         <div class="flex gap-4 py-2">
             // This preserves the query params when navigating to nested routes.
-            <button on:click=move |_| {
-                let pathname = location.pathname.get();
-                let query_params = location.search.get();
-                let new_route = format!("{pathname}/add/?{query_params}");
-                navigate(&new_route, Default::default())
+            // TODO: this is terribly complicated. it works, but there must be a simpler way
+            <button on:click={
+                let navigate_ = navigate.clone();
+                move |_| {
+                    let mut pathname = location.pathname.get();
+                    let query_params = location.search.get();
+                    if pathname.ends_with('/') {
+                        pathname.pop();
+                    }
+                    if pathname.ends_with("/add") || pathname.ends_with("/remove") {
+                        pathname = pathname
+                            .rsplit_once('/')
+                            .map(|(base, _)| base)
+                            .unwrap_or(&pathname)
+                            .to_string();
+                    }
+                    let new_route = format!("{pathname}/add/?{query_params}");
+                    navigate_(&new_route, Default::default());
+                }
             }>"Add Liquidity"</button>
 
-            // FIXME: this doesn't work if the user is already on the add liquidity page
-            <A href="remove">
-                <button>"Remove Liquidity"</button>
-            </A>
+            <button on:click={
+                let navigate_ = navigate.clone();
+                move |_| {
+                    let mut pathname = location.pathname.get();
+                    let query_params = location.search.get();
+                    if pathname.ends_with('/') {
+                        pathname.pop();
+                    }
+                    if pathname.ends_with("/add") || pathname.ends_with("/remove") {
+                        pathname = pathname
+                            .rsplit_once('/')
+                            .map(|(base, _)| base)
+                            .unwrap_or(&pathname)
+                            .to_string();
+                    }
+                    let new_route = format!("{pathname}/remove/?{query_params}");
+                    navigate_(&new_route, Default::default());
+                }
+            }>"Remove Liquidity"</button>
 
-            <A href="">
-                <button>Nevermind</button>
-            </A>
+            <button on:click={
+                let navigate_ = navigate.clone();
+                move |_| {
+                    let mut pathname = location.pathname.get();
+                    let query_params = location.search.get();
+                    if pathname.ends_with('/') {
+                        pathname.pop();
+                    }
+                    if pathname.ends_with("/add") || pathname.ends_with("/remove") {
+                        pathname = pathname
+                            .rsplit_once('/')
+                            .map(|(base, _)| base)
+                            .unwrap_or(&pathname)
+                            .to_string();
+                    }
+                    let new_route = format!("{pathname}/?{query_params}");
+                    navigate_(&new_route, Default::default());
+                }
+            }>"Nevermind"</button>
         </div>
 
         <Outlet />

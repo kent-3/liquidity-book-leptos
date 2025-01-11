@@ -69,6 +69,9 @@ impl<T: Serialize + Send + Sync> Querier for T {
     }
 }
 
+// TODO: Each response can be either the specific expected response struct, or any of the potential
+// error types within the contract. Figure out how to handle this.
+
 // this works somehow
 pub fn chain_query<T>(
     code_hash: String,
@@ -180,7 +183,31 @@ impl ILbPair {
         .await
         .map(|response| response.active_id)
     }
-    // TODO: IDK if we actually need the other queries like bin reserves
+    pub async fn get_reserves(&self) -> Result<ReservesResponse, Error> {
+        chain_query::<ReservesResponse>(
+            self.0.code_hash.clone(),
+            self.0.address.to_string(),
+            lb_pair::QueryMsg::GetReserves {},
+        )
+        .await
+    }
+    pub async fn get_bin(&self, id: u32) -> Result<BinResponse, Error> {
+        chain_query::<BinResponse>(
+            self.0.code_hash.clone(),
+            self.0.address.to_string(),
+            lb_pair::QueryMsg::GetBin { id },
+        )
+        .await
+    }
+    pub async fn get_next_non_empty_bin(&self, swap_for_y: bool, id: u32) -> Result<u32, Error> {
+        chain_query::<NextNonEmptyBinResponse>(
+            self.0.code_hash.clone(),
+            self.0.address.to_string(),
+            lb_pair::QueryMsg::GetNextNonEmptyBin { swap_for_y, id },
+        )
+        .await
+        .map(|response| response.next_id)
+    }
 }
 
 /// A thin wrapper around `ContractInfo` that provides additional

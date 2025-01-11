@@ -85,11 +85,9 @@ nav a:hover {
     width: 100%;
     height: 100%;
     background:
-      linear-gradient(
-        rgba(255, 255, 255, 1) 0%,
+      linear-gradient(rgba(255, 255, 255, 1) 0%,
         rgba(255, 255, 255, 0.8) 60%,
-        rgba(255, 255, 255, 0) 100%
-      ),
+        rgba(255, 255, 255, 0) 100%),
       url("images/mountains4.webp") center / cover no-repeat fixed;
     z-index: -1;
     translate: 0 10px;
@@ -292,7 +290,7 @@ ul {
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translate(100px, 0px);
+    transform: translate(25vw, 0px);
   }
 
   to {
@@ -324,7 +322,7 @@ ul {
 @keyframes slideInBack {
   from {
     opacity: 0;
-    transform: translate(-100px, 0);
+    transform: translate(-25vw, 0);
   }
 
   to {
@@ -342,5 +340,53 @@ ul {
   to {
     opacity: 0;
     transform: translate(25vw, 0);
+  }
+}
+
+.router-outlet-0 main {
+  view-transition-name: main;
+}
+
+.router-back main {
+  view-transition-name: main-back;
+}
+
+.router-outlet-1 .contact-list {
+  view-transition-name: contact;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(contact) {
+    animation: 150ms fadeOut cubic-bezier(0.3, 0.1, 1, 1);
+    /* Hold final state of animation */
+    animation-fill-mode: forwards;
+  }
+
+  ::view-transition-new(contact) {
+    animation: 300ms fadeIn cubic-bezier(0.2, 0, 0, 1);
+    /* Hold final state of animation */
+    animation-fill-mode: forwards;
+  }
+
+  ::view-transition-old(main) {
+    animation: 200ms slideOut cubic-bezier(0.2, 0, 0, 1);
+    animation-fill-mode: forwards;
+  }
+
+  ::view-transition-new(main) {
+    animation: 450ms slideIn cubic-bezier(0.2, 0, 0, 1);
+    animation-fill-mode: forwards;
+  }
+
+  ::view-transition-old(main-back) {
+    color: red;
+    animation: 200ms slideOutBack cubic-bezier(0.2, 0, 0, 1);
+    animation-fill-mode: forwards;
+  }
+
+  ::view-transition-new(main-back) {
+    color: blue;
+    animation: 450ms slideInBack cubic-bezier(0.2, 0, 0, 1);
+    animation-fill-mode: forwards;
   }
 }

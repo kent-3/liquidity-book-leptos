@@ -1,27 +1,14 @@
-mod add_liquidity;
 mod pool_browser;
 mod pool_creator;
 mod pool_manager;
-mod remove_liquidity;
 
-pub use add_liquidity::AddLiquidity;
 pub use pool_browser::PoolBrowser;
 pub use pool_creator::PoolCreator;
-pub use pool_manager::PoolManager;
-pub use remove_liquidity::RemoveLiquidity;
+pub use pool_manager::{AddLiquidity, PoolManager, RemoveLiquidity};
 
-use crate::constants::contracts::*;
-use crate::support::Querier;
-use ammber_sdk::contract_interfaces::{
-    lb_factory::{self, LbPairAtIndexResponse, NumberOfLbPairsResponse},
-    lb_pair::LbPair,
-};
-use cosmwasm_std::ContractInfo;
 use leptos::prelude::*;
-use leptos_router::components::A;
 use leptos_router::nested_router::Outlet;
-use send_wrapper::SendWrapper;
-use tracing::{debug, info};
+use tracing::info;
 
 #[component]
 pub fn Pool() -> impl IntoView {
