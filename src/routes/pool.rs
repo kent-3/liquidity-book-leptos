@@ -10,7 +10,8 @@ pub use pool_creator::PoolCreator;
 pub use pool_manager::PoolManager;
 pub use remove_liquidity::RemoveLiquidity;
 
-use crate::constants::{contracts::*, Querier};
+use crate::constants::contracts::*;
+use crate::support::Querier;
 use ammber_sdk::contract_interfaces::{
     lb_factory::{self, LbPairAtIndexResponse, NumberOfLbPairsResponse},
     lb_pair::LbPair,

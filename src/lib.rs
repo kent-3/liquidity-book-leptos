@@ -3,12 +3,15 @@
 // use codee::string::FromToStringCodec;
 // use leptos_use::storage::use_local_storage;
 
-use crate::constants::contracts::LB_FACTORY;
-use crate::constants::Querier;
-use crate::prelude::COMPUTE_QUERIER;
+use crate::prelude::*;
+use crate::support::chain_query;
 use ammber_sdk::contract_interfaces::{
-    lb_factory::{self, LbPairAtIndexResponse, NumberOfLbPairsResponse},
+    lb_factory::{self, LbPairAtIndexResponse},
     lb_pair::LbPair,
+};
+use batch_query::{
+    msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
+    BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
 };
 use keplr::{Keplr, Key};
 use leptos::{
@@ -17,12 +20,10 @@ use leptos::{
     logging::*,
     prelude::*,
 };
+use leptos_meta::*;
 use leptos_router::components::{ParentRoute, Route, Router, Routes, A};
 use leptos_router_macro::path;
-use prelude::SYMBOL_TO_ADDR;
 use rsecret::query::{bank::BankQuerier, compute::ComputeQuerier};
-use secret_toolkit_snip20::QueryMsg;
-use secretrs::utils::EnigmaUtils;
 use send_wrapper::SendWrapper;
 use tonic_web_wasm_client::Client;
 use tracing::{debug, error, info, trace};
@@ -34,6 +35,7 @@ mod error;
 mod prelude;
 mod routes;
 mod state;
+mod support;
 mod types;
 mod utils;
 
@@ -44,60 +46,11 @@ use routes::{pool::*, trade::*};
 use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
 use types::Coin;
 
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
-
-// this works somehow
-pub fn chain_query<T>(
-    contract_address: String,
-    code_hash: String,
-    query: impl Serialize + Send + Sync + 'static,
-) -> impl std::future::Future<Output = Result<T, Error>> + Send
-where
-    T: Serialize + DeserializeOwned + 'static,
-{
-    SendWrapper::new(async move {
-        COMPUTE_QUERIER
-            .query_secret_contract(contract_address, code_hash, query)
-            .await
-            .inspect(|response| debug!("{response:?}"))
-            .inspect_err(|e| error!("{e}"))
-            .and_then(|response| Ok(serde_json::from_str::<T>(&response)?))
-            .map_err(Into::into)
-    })
-}
-
-use cosmwasm_std::{
-    Addr, ContractInfo, CosmosMsg, QuerierWrapper, StdError, StdResult, Uint128, WasmMsg,
-};
-
-/// A thin wrapper around `ContractInfo` that provides additional
-/// methods to interact with the LB Factory contract.
-#[derive(Serialize, Deserialize, Clone)]
-pub struct ILbFactory(pub ContractInfo);
-
-impl std::ops::Deref for ILbFactory {
-    type Target = ContractInfo;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl ILbFactory {
-    pub async fn get_number_of_lb_pairs(&self) -> Result<u32, Error> {
-        chain_query::<NumberOfLbPairsResponse>(
-            self.0.address.to_string(),
-            self.0.code_hash.clone(),
-            &lb_factory::QueryMsg::GetNumberOfLbPairs {},
-        )
-        .await
-        .map(|response| response.lb_pair_number)
-    }
-}
-
 #[component]
 pub fn App() -> impl IntoView {
     info!("rendering <App/>");
+
+    provide_meta_context();
 
     // Global Contexts
 
@@ -144,55 +97,55 @@ pub fn App() -> impl IntoView {
         move |_| async { LB_FACTORY.get_number_of_lb_pairs().await },
     );
 
-    // chain_query::<NumberOfLbPairsResponse>(
-    //     LB_FACTORY.address.to_string(),
-    //     LB_FACTORY.code_hash.clone(),
-    //     lb_factory::QueryMsg::GetNumberOfLbPairs {},
-    // )
-    // .await
-    // .map(|resp| resp.lb_pair_number)
-
-    // lb_factory::QueryMsg::GetNumberOfLbPairs {}
-    //     .do_query(&LB_FACTORY)
-    //     .await
-    //     .inspect(|response| debug!("{:?}", response))
-    //     .and_then(|response| {
-    //         Ok(serde_json::from_str::<NumberOfLbPairsResponse>(&response)?)
-    //     })
-    //     .map_err(|e| error!("{e}"))
-    //     .map(|x| x.lb_pair_number)
-    //     .unwrap_or(0)
-
     provide_context(number_of_lb_pairs);
 
     // TODO: try to use a batch query, or think of a better way to get all the pools
     let all_lb_pairs: Resource<Vec<LbPair>> = Resource::new(
         move || (),
-        move |_| {
-            SendWrapper::new(async move {
-                let i = number_of_lb_pairs.await.unwrap_or_default();
-                let mut pairs: Vec<LbPair> = Vec::with_capacity(i as usize);
+        move |_| async move {
+            let i = number_of_lb_pairs.await.unwrap_or_default();
+            // let mut pairs: Vec<LbPair> = Vec::with_capacity(i as usize);
 
-                for index in 0..i {
-                    let pair = lb_factory::QueryMsg::GetLbPairAtIndex { index }
-                        .do_query(&LB_FACTORY)
-                        .await
-                        .inspect(|response| debug!("{:?}", response))
-                        .and_then(|response| {
-                            Ok(serde_json::from_str::<LbPairAtIndexResponse>(&response)?)
-                        })
-                        .map(|x| x.lb_pair)
-                        .map_err(|e| error!("{e}"));
+            let mut queries = Vec::new();
 
-                    if let Ok(pair) = pair {
-                        pairs.push(pair)
-                    }
-                }
+            for index in 0..i {
+                queries.push(BatchQueryParams {
+                    id: index.to_string(),
+                    contract: LB_FACTORY.0.clone(),
+                    query_msg: lb_factory::QueryMsg::GetLbPairAtIndex { index },
+                });
 
-                pairs
-            })
+                // if let Ok(pair) = LB_FACTORY.get_lb_pair_at_index(index).await {
+                //     pairs.push(pair)
+                // }
+            }
+
+            let batch_query_message = msg_batch_query(queries);
+
+            chain_query::<BatchQueryResponse>(
+                BATCH_QUERY_ROUTER.pulsar.code_hash.clone(),
+                BATCH_QUERY_ROUTER.pulsar.address.to_string(),
+                batch_query_message,
+            )
+            .await
+            .map(parse_batch_query)
+            .map(extract_pairs_from_batch)
+            .unwrap()
         },
     );
+
+    fn extract_pairs_from_batch(batch_response: BatchQueryParsedResponse) -> Vec<LbPair> {
+        batch_response
+            .items
+            .into_iter()
+            .filter(|item| item.status == BatchItemResponseStatus::SUCCESS) // Process only successful items
+            .map(|item| {
+                serde_json::from_str::<LbPairAtIndexResponse>(&item.response)
+                    .expect("Invalid LbPairAtIndexResponse JSON")
+            })
+            .map(|item| item.lb_pair)
+            .collect()
+    }
 
     provide_context(all_lb_pairs);
 

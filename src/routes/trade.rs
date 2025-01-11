@@ -1,8 +1,7 @@
 use crate::{
     components::Secret20Balance,
-    constants::{contracts::*, NODE, TOKEN_MAP},
+    constants::{contracts::*, CHAIN_ID, NODE, SYMBOL_TO_ADDR, TOKEN_MAP},
     error::Error,
-    prelude::{Querier, CHAIN_ID, SYMBOL_TO_ADDR},
     state::*,
     LoadingModal,
 };
@@ -12,13 +11,13 @@ use ammber_sdk::contract_interfaces::{
 };
 use cosmwasm_std::{to_binary, Addr, Uint128, Uint64};
 use keplr::Keplr;
-use leptos::{html::Select, logging::*, prelude::*, tachys::reactive_graph::bind::GetValue};
+use leptos::{html::Select, logging::*, prelude::*};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
-use rsecret::{
-    query::compute::ComputeQuerier, secret_client::CreateTxSenderOptions, tx::ComputeServiceClient,
-    TxOptions,
-};
+use rsecret::tx::compute::MsgExecuteContractRaw;
+use rsecret::{secret_client::CreateTxSenderOptions, tx::ComputeServiceClient, TxOptions};
+use secretrs::proto::cosmos::tx::v1beta1::BroadcastMode;
 use secretrs::AccountId;
+use shade_protocol::swap::core::{TokenAmount, TokenType};
 use std::str::FromStr;
 use tracing::{debug, info};
 
@@ -66,15 +65,12 @@ pub fn Trade() -> impl IntoView {
 
     let amount_in = RwSignal::new(String::new());
 
-    let get_quote = Action::new_local(move |_: &()| {
+    let get_quote = Action::new(move |_: &()| {
         let token_x = token_x.get();
         let token_y = token_y.get();
         let amount_in = amount_in.get();
 
         async move {
-            use cosmwasm_std::Uint128;
-            use shade_protocol::swap::core::TokenType;
-
             // TODO: token y is the quote asset, right?
 
             let Some(token_x_address) = token_x else {
@@ -106,22 +102,12 @@ pub fn Trade() -> impl IntoView {
                 token_code_hash: token_y_code_hash,
             };
 
-            // TODO: really want to write this differently, like
-            // let quote = ILbQuoter(LB_QUOTER.clone()).find_best_path_from_amount_in(tokens. amount_in)?;
+            let route = vec![token_x, token_y];
+            let amount_in = Uint128::from_str(&amount_in).unwrap();
 
-            let quote = lb_quoter::QueryMsg::FindBestPathFromAmountIn {
-                route: vec![token_x, token_y],
-                amount_in: Uint128::from_str(&amount_in).unwrap(),
-            }
-            .do_query(&LB_QUOTER)
-            .await
-            .inspect_err(|error| error!("{:?}", error))
-            .inspect(|response| debug!("{:?}", response))
-            .and_then(|response| Ok(serde_json::from_str::<lb_quoter::Quote>(&response)?));
-
-            debug!("{:#?}", quote);
-
-            quote
+            LB_QUOTER
+                .find_best_path_from_amount_in(route, amount_in)
+                .await
         }
     });
 
@@ -144,12 +130,8 @@ pub fn Trade() -> impl IntoView {
         // let chain_id = chain_id.get();
         let url = NODE;
         let chain_id = CHAIN_ID;
-        async move {
-            use cosmwasm_std::Uint128;
-            use rsecret::tx::compute::MsgExecuteContractRaw;
-            use secretrs::proto::cosmos::tx::v1beta1::BroadcastMode;
-            use shade_protocol::swap::core::{TokenAmount, TokenType};
 
+        async move {
             let amount_in =
                 Uint128::from_str(amount_in.get().as_str()).expect("Uint128 parse from_str error");
 

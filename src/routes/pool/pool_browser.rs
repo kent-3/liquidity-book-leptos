@@ -1,13 +1,11 @@
-use crate::constants::contracts::*;
-use crate::constants::Querier;
+use crate::prelude::*;
 use crate::Error;
-use ammber_sdk::contract_interfaces::{lb_factory::NumberOfLbPairsResponse, lb_pair::LbPair};
+use ammber_sdk::contract_interfaces::lb_pair::LbPair;
 use cosmwasm_std::ContractInfo;
 use leptos::prelude::*;
 use leptos_router::components::A;
-use send_wrapper::SendWrapper;
 use shade_protocol::swap::core::TokenType;
-use tracing::{debug, info, trace};
+use tracing::{debug, info};
 
 #[component]
 pub fn PoolBrowser() -> impl IntoView {
@@ -38,57 +36,6 @@ pub fn PoolBrowser() -> impl IntoView {
     let all_lb_pairs =
         use_context::<Resource<Vec<LbPair>>>().expect("missing the Vec<LbPair> resource context");
 
-    // FIXME: this and the next query are running every time the page loads...
-
-    // let number_of_lb_pairs: Resource<u32> = Resource::new(
-    //     move || (),
-    //     move |_| {
-    //         SendWrapper::new(async move {
-    //             lb_factory::QueryMsg::GetNumberOfLbPairs {}
-    //                 .do_query(&LB_FACTORY)
-    //                 .await
-    //                 .inspect(|response| debug!("{:?}", response))
-    //                 .and_then(|response| {
-    //                     Ok(serde_json::from_str::<lb_factory::NumberOfLbPairsResponse>(
-    //                         &response,
-    //                     )?)
-    //                 })
-    //                 .map(|x| x.lb_pair_number)
-    //                 .unwrap()
-    //         })
-    //     },
-    // );
-    //
-    // // TODO: this is super inefficient. but I don't see a better way... I suppose I could use a
-    // // batch query.
-    // let all_lb_pairs: Resource<Vec<LbPair>> = Resource::new(
-    //     move || (),
-    //     move |_| {
-    //         SendWrapper::new(async move {
-    //             let i = number_of_lb_pairs.await;
-    //             let mut pairs: Vec<LbPair> = Vec::with_capacity(i as usize);
-    //
-    //             for index in 0..i {
-    //                 pairs.push(
-    //                     lb_factory::QueryMsg::GetLbPairAtIndex { index }
-    //                         .do_query(&LB_FACTORY)
-    //                         .await
-    //                         .inspect(|response| debug!("{:?}", response))
-    //                         .and_then(|response| {
-    //                             Ok(serde_json::from_str::<lb_factory::LbPairAtIndexResponse>(
-    //                                 &response,
-    //                             )?)
-    //                         })
-    //                         .map(|x| x.lb_pair)
-    //                         .unwrap(),
-    //                 )
-    //             }
-    //
-    //             pairs
-    //         })
-    //     },
-    // );
-
     view! {
         <div class="text-3xl font-bold">"Pool"</div>
         <div class="text-sm text-neutral-400">"Provide liquidity and earn fees."</div>
@@ -101,10 +48,6 @@ pub fn PoolBrowser() -> impl IntoView {
         <Suspense fallback=|| view! { <div>"Loading..."</div> }>
             <ul>
                 {move || Suspend::new(async move {
-                    // if false {
-                    //     return Err(Error::generic("this helps the compiler infer the Error type"));
-                    // }
-                    // Ok(
                         all_lb_pairs
                             .await
                             .into_iter()
@@ -114,19 +57,20 @@ pub fn PoolBrowser() -> impl IntoView {
                                         <a href=format!(
                                             "/liquidity-book-leptos/pool/{}/{}/{}",
                                             match n.token_x {
-                                                TokenType::CustomToken { contract_addr, .. } => {
+                                                TokenType::CustomToken { ref contract_addr, .. } => {
                                                     contract_addr.to_string()
                                                 }
-                                                TokenType::NativeToken { denom } => denom,
+                                                TokenType::NativeToken { ref denom } => denom.to_string(),
                                             },
                                             match n.token_y {
-                                                TokenType::CustomToken { contract_addr, .. } => {
+                                                TokenType::CustomToken { ref contract_addr, .. } => {
                                                     contract_addr.to_string()
                                                 }
-                                                TokenType::NativeToken { denom } => denom,
+                                                TokenType::NativeToken { ref denom } => denom.to_string(),
                                             },
                                             n.bin_step,
                                         )>{n.contract.address.to_string()}</a>
+                                        " - " {format!("[{}, {}, {} bps]", TOKEN_MAP.get(&n.token_x.unique_key()).unwrap().symbol, TOKEN_MAP.get(&n.token_y.unique_key()).unwrap().symbol, n.bin_step)}
                                     </li>
                                 }
                             })

@@ -40,7 +40,7 @@ pub static NODE: &str = "https://grpc.testnet.secretsaturn.net";
 // pub static NODE: &str = "https://grpc.mainnet.secretsaturn.net";
 
 pub mod contracts {
-    use crate::ILbFactory;
+    use crate::support::{ILbFactory, ILbQuoter};
 
     use super::CHAIN_ID;
     use ammber_sdk::constants::addrs::get_deployed_contracts;
@@ -59,13 +59,16 @@ pub mod contracts {
     }
 
     // Define statics for specific contracts
-    define_contract_static!(LB_QUOTER, lb_quoter);
+    // define_contract_static!(LB_QUOTER, lb_quoter);
     define_contract_static!(LB_ROUTER, lb_router);
     // define_contract_static!(LB_FACTORY, lb_factory);
     // TODO: these 3 should not be needed!
     define_contract_static!(LB_PAIR, lb_pair);
     define_contract_static!(LB_AMBER, snip25);
     define_contract_static!(LB_SSCRT, snip20);
+
+    pub static LB_QUOTER: LazyLock<ILbQuoter> =
+        LazyLock::new(|| ILbQuoter(get_deployed_contracts(CHAIN_ID).lb_quoter.clone()));
 
     pub static LB_FACTORY: LazyLock<ILbFactory> =
         LazyLock::new(|| ILbFactory(get_deployed_contracts(CHAIN_ID).lb_factory.clone()));
@@ -150,60 +153,6 @@ pub static SYMBOL_TO_ADDR: LazyLock<HashMap<String, String>> = LazyLock::new(|| 
         .map(|(contract_address, token)| (token.symbol.clone(), contract_address.clone()))
         .collect()
 });
-
-pub static WEB_WASM_CLIENT: LazyLock<WebWasmClient> =
-    LazyLock::new(|| WebWasmClient::new(NODE.to_string()));
-
-// used for read-only client queries
-pub static ENIGMA_UTILS: LazyLock<Arc<EnigmaUtils>> = LazyLock::new(|| {
-    if CHAIN_ID == "secretdev-1" {
-        EnigmaUtils::from_io_key(None, DEVNET_IO_PUBKEY).into()
-    } else {
-        EnigmaUtils::new(None, CHAIN_ID)
-            .expect("Failed to create EnigmaUtils")
-            .into()
-    }
-});
-
-pub static COMPUTE_QUERIER: LazyLock<ComputeQuerier<WebWasmClient, EnigmaUtils>> =
-    LazyLock::new(|| ComputeQuerier::new(WEB_WASM_CLIENT.clone(), ENIGMA_UTILS.clone()));
-
-pub fn compute_querier(
-    url: impl Into<String>,
-    chain_id: &str,
-) -> ComputeQuerier<WebWasmClient, EnigmaUtils> {
-    ComputeQuerier::new(
-        WebWasmClient::new(url.into()),
-        EnigmaUtils::new(None, chain_id)
-            .expect("Failed to create EnigmaUtils")
-            .into(),
-    )
-}
-
-// TODO: kinda awkward. it would be cooler to use those ILb* types but they take deps.querier. I
-// bet we could make a compatible QuerierWrapper, but that sounds advanced.
-// TODO: I really need to find a better location for this...
-
-pub trait Querier {
-    async fn do_query(&self, contract: &cosmwasm_std::ContractInfo) -> Result<String, Error>;
-}
-
-impl<T: Serialize + Send + Sync> Querier for T {
-    async fn do_query(&self, contract: &cosmwasm_std::ContractInfo) -> Result<String, Error> {
-        let contract_address = &contract.address;
-        let code_hash = &contract.code_hash;
-        let query = self;
-
-        COMPUTE_QUERIER
-            .query_secret_contract(contract_address, code_hash, query)
-            .await
-            .map_err(Into::into)
-    }
-}
-
-// TODO: can we implement this Querier trait for something that performs the queries from the frontend?
-// use cosmwasm_std::QuerierWrapper;
-// use cosmwasm_std::Querier;
 
 // TODO: Querying of io key is problematic due to async. Explore further.
 //

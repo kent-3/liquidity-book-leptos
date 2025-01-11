@@ -1,3 +1,7 @@
-pub use crate::constants::*;
-pub use crate::error::Error;
-pub use crate::utils::*;
+pub use crate::{
+    constants::{contracts::*, *},
+    error::Error,
+    utils::*,
+};
+
+// pub type Result<T, E = Error> = core::result::Result<T, E>;

@@ -1,8 +1,8 @@
 use crate::{
-    constants::{contracts::*, Querier, CHAIN_ID, NODE},
     error::Error,
+    prelude::*,
     state::*,
-    utils::shorten_address,
+    support::{chain_query, Querier},
 };
 use ammber_sdk::contract_interfaces::{
     lb_factory::{self, LbPairInformation},
@@ -34,6 +34,9 @@ use serde::Serialize;
 use tonic_web_wasm_client::Client as WebWasmClient;
 use tracing::{debug, info, trace};
 
+// TODO: If possible, use batch queries for resources. Combine the outputs in a struct
+// and use that as the return type of the Resource.
+
 #[component]
 pub fn PoolManager() -> impl IntoView {
     info!("rendering <PoolManager/>");
@@ -59,56 +62,61 @@ pub fn PoolManager() -> impl IntoView {
             .get("token_b")
             .expect("Missing token_b URL param")
     };
-    let basis_points = move || params.read().get("bps").expect("Missing bps URL param");
+    let basis_points = move || {
+        params
+            .read()
+            .get("bps")
+            .and_then(|value| value.parse::<u16>().ok())
+            .expect("Missing bps URL param")
+    };
 
-    // TODO: change this to try to use the TOKEN_MAP first before querying the code hash
+    // TODO: these 2 functions feel very convoluted
+
+    async fn addr_2_contract(contract_address: impl Into<String>) -> Result<ContractInfo, Error> {
+        let contract_address = contract_address.into();
+
+        if let Some(token) = TOKEN_MAP.get(&contract_address) {
+            Ok(ContractInfo {
+                address: Addr::unchecked(token.contract_address.clone()),
+                code_hash: token.code_hash.clone(),
+            })
+        } else {
+            let client = WebWasmClient::new(NODE.to_string());
+            let encryption_utils = EnigmaUtils::new(None, CHAIN_ID).unwrap();
+            let compute = ComputeQuerier::new(client, encryption_utils.into());
+
+            compute
+                .code_hash_by_contract_address(&contract_address)
+                .await
+                .map_err(Error::from)
+                .map(|code_hash| ContractInfo {
+                    address: Addr::unchecked(contract_address),
+                    code_hash,
+                })
+        }
+    }
+
     async fn token_symbol_convert(address: String) -> String {
-        // Assume token_x is AMBER
-        let contract = ContractInfo {
-            address: Addr::unchecked(address),
-            code_hash: LB_AMBER.code_hash.clone(),
-        };
-        secret_toolkit_snip20::QueryMsg::TokenInfo {}
-            .do_query(&contract)
-            .await
-            .inspect(|response| trace!("{:?}", response))
-            .and_then(|response| Ok(serde_json::from_str::<TokenInfoResponse>(&response)?))
-            .map(|x| x.token_info.symbol)
-            .unwrap()
+        if let Some(token) = TOKEN_MAP.get(&address) {
+            return token.symbol.clone();
+        }
+        let contract = addr_2_contract(&address).await.unwrap();
+
+        chain_query::<TokenInfoResponse>(
+            contract.address.to_string(),
+            contract.code_hash,
+            secret_toolkit_snip20::QueryMsg::TokenInfo {},
+        )
+        .await
+        .map(|x| x.token_info.symbol)
+        .unwrap_or(address)
     }
 
     let token_a_symbol =
         AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_a()).await });
 
-    let token_b_symbol = AsyncDerived::new_unsync(move || async move {
-        // Assume token_y is sSCRT
-        let contract = ContractInfo {
-            address: Addr::unchecked(token_b()),
-            code_hash: LB_SSCRT.code_hash.clone(),
-        };
-        secret_toolkit_snip20::QueryMsg::TokenInfo {}
-            .do_query(&contract)
-            .await
-            .inspect(|response| trace!("{:?}", response))
-            .and_then(|response| Ok(serde_json::from_str::<TokenInfoResponse>(&response)?))
-            .map(|x| x.token_info.symbol)
-            .unwrap()
-    });
-
-    async fn addr_2_contract(contract_address: impl AsRef<str>) -> Result<ContractInfo, Error> {
-        let client = WebWasmClient::new(NODE.to_string());
-        let encryption_utils = EnigmaUtils::new(None, CHAIN_ID).unwrap();
-        let compute = ComputeQuerier::new(client, encryption_utils.into());
-
-        compute
-            .code_hash_by_contract_address(contract_address.as_ref())
-            .await
-            .map_err(Error::from)
-            .map(|code_hash| ContractInfo {
-                address: Addr::unchecked(contract_address.as_ref()),
-                code_hash,
-            })
-    }
+    let token_b_symbol =
+        AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_b()).await });
 
     // TODO: Move these to a separate module. IDK if it's worth splitting up the query functions
     // from the resources.
@@ -194,17 +202,8 @@ pub fn PoolManager() -> impl IntoView {
             .await
             .inspect(|response| trace!("{:?}", response))
             .and_then(|response| Ok(serde_json::from_str::<BatchQueryResponse>(&response)?))
-            .and_then(|response| {
-                Ok(extract_bins_from_batch_response(parse_batch_query(
-                    response,
-                )))
-            })
-        // .and_then(|responses| {
-        //     Ok(responses
-        //         .into_iter()
-        //         .map(|response| format!("{:?}", response))
-        //         .collect())
-        // })
+            .map(parse_batch_query)
+            .map(extract_bins_from_batch_response)
     }
 
     fn extract_bins_from_batch_response(
@@ -213,7 +212,7 @@ pub fn PoolManager() -> impl IntoView {
         batch_response
             .items
             .into_iter()
-            .filter(|item| item.status == BatchItemResponseStatus::SUCCESS) // Process only successful items
+            .filter(|item| item.status == BatchItemResponseStatus::SUCCESS)
             .map(|item| {
                 serde_json::from_str::<BinResponse>(&item.response)
                     .expect("Invalid BinResponse JSON")
@@ -221,10 +220,11 @@ pub fn PoolManager() -> impl IntoView {
             .collect()
     }
 
+    // FIXME: what's up with the hardcoded code hashes? It still works for some reason...
     let lb_pair_information: Resource<LbPairInformation> = Resource::new(
         move || (token_a(), token_b(), basis_points()),
         move |(token_a, token_b, basis_points)| {
-            SendWrapper::new(async move {
+            async move {
                 // let token_x = addr_2_contract(token_a).await.unwrap();
                 // let token_y = addr_2_contract(token_b).await.unwrap();
                 let token_x = ContractInfo {
@@ -237,12 +237,16 @@ pub fn PoolManager() -> impl IntoView {
                     code_hash: "0bbaa17a6bd4533f5dc3eae14bfd1152891edaabcc0d767f611bb70437b3a159"
                         .to_string(),
                 };
-                let bin_step = basis_points.parse::<u16>().unwrap();
-                query_lb_pair_information(token_x, token_y, bin_step)
+                let bin_step = basis_points;
+                // query_lb_pair_information(token_x, token_y, bin_step)
+                //     .await
+                //     .map(|x| x.lb_pair_information)
+                //     .unwrap()
+                LB_FACTORY
+                    .get_lb_pair_information(token_x, token_y, bin_step)
                     .await
-                    .map(|x| x.lb_pair_information)
                     .unwrap()
-            })
+            }
         },
     );
 
@@ -297,28 +301,28 @@ pub fn PoolManager() -> impl IntoView {
         },
     );
 
-    let next_non_empty_bin = Resource::new(
-        move || (lb_pair_information.track(), active_id.track()),
-        move |_| {
-            SendWrapper::new(async move {
-                let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
-                let id = active_id.await?;
-                query_next_non_empty_bin(&lb_pair_contract, id).await
-            })
-        },
-    );
-    let bin_total_supply = Resource::new(
-        move || (lb_pair_information.track(), active_id.track()),
-        move |_| {
-            SendWrapper::new(async move {
-                let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
-                let id = active_id.await?;
-                query_total_supply(&lb_pair_contract, id)
-                    .await
-                    .map(|x| format!("{x:?}"))
-            })
-        },
-    );
+    // let next_non_empty_bin = Resource::new(
+    //     move || (lb_pair_information.track(), active_id.track()),
+    //     move |_| {
+    //         SendWrapper::new(async move {
+    //             let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
+    //             let id = active_id.await?;
+    //             query_next_non_empty_bin(&lb_pair_contract, id).await
+    //         })
+    //     },
+    // );
+    // let bin_total_supply = Resource::new(
+    //     move || (lb_pair_information.track(), active_id.track()),
+    //     move |_| {
+    //         SendWrapper::new(async move {
+    //             let lb_pair_contract = lb_pair_information.await.lb_pair.contract;
+    //             let id = active_id.await?;
+    //             query_total_supply(&lb_pair_contract, id)
+    //                 .await
+    //                 .map(|x| format!("{x:?}"))
+    //         })
+    //     },
+    // );
 
     let nearby_liquidity = Resource::new(
         move || (lb_pair_information.track(), active_id.track()),
@@ -428,16 +432,16 @@ pub fn PoolManager() -> impl IntoView {
                         })}
                     </li>
                 </Suspense>
-                <Suspense fallback=|| view! { <div>"Loading Next Non-Empty Bin..."</div> }>
-                    <li>
-                        "Next Non-Empty Bin ID: "
-                        {move || Suspend::new(async move { next_non_empty_bin.await })}
-                    </li>
-                </Suspense>
+                // <Suspense fallback=|| view! { <div>"Loading Next Non-Empty Bin..."</div> }>
+                //     <li>
+                //         "Next Non-Empty Bin ID: "
+                //         {move || Suspend::new(async move { next_non_empty_bin.await })}
+                //     </li>
+                // </Suspense>
                 // a bit crazy innit. but it works.
                 <Suspense fallback=|| view! { <div>"Loading Batch Query..."</div> }>
                     <li>
-                        "Batch Query: "
+                        "Nearby Bin Reserves: "
                         {move || Suspend::new(async move {
                             nearby_liquidity
                                 .await
