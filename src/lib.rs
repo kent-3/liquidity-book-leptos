@@ -216,10 +216,22 @@ pub fn App() -> impl IntoView {
 
     // Node references
 
+    let wallet_dialog_ref = NodeRef::<Dialog>::new();
     let options_dialog_ref = NodeRef::<Dialog>::new();
 
     // HTML Elements
 
+    let toggle_wallet_menu = move |_| match wallet_dialog_ref.get() {
+        Some(dialog) => match dialog.open() {
+            false => {
+                let _ = dialog.show();
+            }
+            true => dialog.close(),
+        },
+        None => {
+            let _ = window().alert_with_message("Something is wrong!");
+        }
+    };
     let toggle_options_menu = move |_| match options_dialog_ref.get() {
         Some(dialog) => match dialog.open() {
             false => {
@@ -233,39 +245,58 @@ pub fn App() -> impl IntoView {
     };
 
     let key_name = move || keplr.key.get().and_then(Result::ok).map(|key| key.name);
+    let key_address = move || {
+        keplr
+            .key
+            .get()
+            .and_then(Result::ok)
+            .map(|key| key.bech32_address)
+    };
 
     view! {
         <Router>
             // <div class="background-image"></div>
             <header>
                 <div class="flex justify-between items-center">
-                    <div class="my-3 font-bold text-3xl line-clamp-1">"Liquidity Book"</div>
+                    <div class="my-2 font-bold text-3xl line-clamp-1">"Liquidity Book"</div>
                     <Show when=move || keplr.key.get().and_then(|key| key.ok()).is_some()>
                         <p class="hidden sm:block text-sm outline outline-2 outline-offset-8 outline-neutral-500">
                             "Connected as "<strong>{key_name}</strong>
                         </p>
                     </Show>
-                    <Show
-                        when=move || keplr.enabled.get()
-                        fallback=move || {
-                            view! {
-                                <button
-                                    on:click=enable_keplr
-                                    disabled=enable_keplr_action.pending()
-                                >
-                                    Connect Wallet
-                                </button>
+                    <div class="flex gap-1">
+                        // This seems convoluted... is there a better way?
+                        <Show
+                            when=move || keplr.enabled.get()
+                            fallback=move || {
+                                view! {
+                                    <button
+                                        on:click=enable_keplr
+                                        disabled=enable_keplr_action.pending()
+                                    >
+                                        "Connect Wallet"
+                                    </button>
+                                    <button on:click=toggle_options_menu>"Settings"</button>
+                                }
                             }
-                        }
-                    >
-                        <button on:click=toggle_options_menu>"Options"</button>
-                    </Show>
+                        >
+                            <div class="relative inline-block">
+                                <button on:click=toggle_wallet_menu>
+                                    {key_address().map(shorten_address)}
+                                </button>
+                                <WalletMenu
+                                    dialog_ref=wallet_dialog_ref
+                                    toggle_menu=toggle_options_menu
+                                />
+                            </div>
+                        </Show>
+                    </div>
                 </div>
                 <hr />
-                <Nav/>
+                <Nav />
                 <hr />
             </header>
-            <main class="overflow-x-auto">
+            <main class="p-2 overflow-x-auto">
                 <Routes transition=true fallback=|| "This page could not be found.">
                     <Route path=path!("/liquidity-book-leptos/") view=Home />
                     <ParentRoute path=path!("/liquidity-book-leptos/pool") view=Pool>
@@ -311,6 +342,154 @@ pub fn LoadingModal(when: Memo<bool>, #[prop(into)] message: String) -> impl Int
                 <Spinner2 size="h-8 w-8" />
                 <div class="font-bold">{message}</div>
             </div>
+        </dialog>
+    }
+}
+
+#[component]
+pub fn WalletMenu(
+    dialog_ref: NodeRef<Dialog>,
+    toggle_menu: impl Fn(MouseEvent) + 'static,
+) -> impl IntoView {
+    info!("rendering <WalletMenu/>");
+
+    let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
+    let chain_id = use_context::<ChainId>().expect("chain id context missing!");
+    let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
+    let token_map = use_context::<TokenMap>().expect("tokens context missing!");
+
+    let disable_keplr = move |_: MouseEvent| {
+        Keplr::disable(CHAIN_ID);
+        keplr.enabled.set(false);
+        // keplr.key.set(None);
+    };
+
+    let key_address = move || {
+        keplr
+            .key
+            .get()
+            .and_then(Result::ok)
+            .map(|key| key.bech32_address)
+    };
+
+    let user_balance = Resource::new(
+        move || keplr.key.track(),
+        move |_| {
+            let client = Client::new(endpoint.get());
+            SendWrapper::new(async move {
+                let bank = BankQuerier::new(client);
+                let key = keplr.key.await?;
+
+                bank.balance(key.bech32_address, "uscrt")
+                    .await
+                    .map(|balance| Coin::from(balance.balance.unwrap()))
+                    .map_err(Error::from)
+                    .inspect(|coin| debug!("{coin:?}"))
+                    .inspect_err(|err| error!("{err:?}"))
+                    .map(|coin| coin.amount.parse::<u128>().unwrap_or_default())
+                    .map(|amount| display_token_amount(amount, 6u8))
+            })
+        },
+    );
+
+    // move || user_balance.get().and_then(Result::ok).map(|coin| display_token_amount(coin.amount, 6))
+
+    view! {
+        <dialog
+            node_ref=dialog_ref
+            class="mr-0 mt-2 border border-neutral-600 rounded py-4 px-0"
+        >
+            // <!-- Header -->
+            <div class="flex items-center justify-between w-72 px-6 pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-amber-500/70 rounded-full"></div>
+                    <div>
+                        <div class="text-xs text-neutral-400">"Connected Account:"</div>
+                        <div class="text-sm font-semibold">
+                            {key_address().map(shorten_address)}
+                        </div>
+                    </div>
+                </div>
+                <button title="Disconnect wallet" class="w-12 h-12 p-0 bg-transparent hover:bg-neutral-800 transition-all duration-150 rounded-full inline-flex items-center justify-center outline outline-2 outline-offset-2 outline-transparent border border-solid border-neutral-800">
+                    <svg
+                        width="16"
+                        height="18"
+                        viewBox="0 0 16 18"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        focusable="false"
+                        class="w-4 h-4 inline-block fill-red-500"
+                        aria-hidden="true"
+                    >
+                        <path
+                            fill-rule="evenodd"
+                            clip-rule="evenodd"
+                            d="M9 1C9 0.447715 8.55229 0 8 0C7.44772 0 7 0.447715 7 1V6C7 6.55228 7.44772 7 8 7C8.55229 7 9 6.55228 9 6V1ZM4.9989 4.86666C5.47754 4.59113 5.64219 3.97975 5.36666 3.5011C5.09113 3.02246 4.47975 2.85781 4.0011 3.13334C1.61296 4.50808 0 7.08185 0 10.034C0 14.4381 3.58632 18 8 18C12.4137 18 16 14.4381 16 10.034C16 7.08185 14.387 4.50808 11.9989 3.13334C11.5203 2.85781 10.9089 3.02246 10.6333 3.5011C10.3578 3.97975 10.5225 4.59113 11.0011 4.86666C12.7976 5.90081 14 7.82945 14 10.034C14 13.3244 11.3183 16 8 16C4.68169 16 2 13.3244 2 10.034C2 7.82945 3.20243 5.90081 4.9989 4.86666Z"
+                            fill="current"
+                        ></path>
+                    </svg>
+                </button>
+            </div>
+            <hr class="m-0 border-neutral-600"/>
+            // <!-- Menu Items -->
+            <ul class="space-y-2 px-3 py-4 list-none font-semibold">
+                <li>
+                    <a href="#" class="hover:no-underline no-underline flex items-center gap-3 px-4 py-2 rounded-md text-neutral-200 hover:bg-neutral-800 transition-all duration-150">
+                        <span>"🌊"</span>
+                        "My Pools"
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="hover:no-underline no-underline flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-200 hover:bg-neutral-800 transition-all duration-150">
+                        <span>"🔄"</span>
+                        "Activity"
+                    </a>
+                </li>
+                <li>
+                    <div on:click=toggle_menu class="hover:no-underline no-underline flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-neutral-800 transition-all duration-150">
+                        <span>"⚙️"</span>
+                        "Settings"
+                    </div>
+                </li>
+            </ul>
+            <hr class="m-0 border-neutral-600"/>
+        // <!-- Token List -->
+        <div class="space-y-2, px-3 pt-4">
+              // <!-- Wallet Header -->
+                <div class="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-200 font-semibold">
+                    <span>"💰"</span>
+                    "Wallet"
+                </div>
+            // <!-- Token Item -->
+            <div class="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-800">
+            <div class="flex items-center gap-3">
+                <img src="/icons/scrt-black-192.png" alt="SCRT logo" class="w-8 h-8"/>
+                <div>
+                <div class="text-sm font-semibold">SCRT</div>
+                <div class="text-xs text-gray-400">Secret</div>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-sm font-semibold">{move || user_balance.get().and_then(Result::ok)}</div>
+                <div class="text-xs text-gray-400">$0</div>
+            </div>
+            </div>
+
+            // <!-- Token Item -->
+            <div class="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-800">
+            <div class="flex items-center gap-3">
+                <img src="https://raw.githubusercontent.com/traderjoe-xyz/joe-tokenlists/main/logos/0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E/logo.png" alt="USDC logo" class="w-8 h-8"/>
+                <div>
+                <div class="text-sm font-semibold">USDC</div>
+                <div class="text-xs text-gray-400">USD Coin</div>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-sm font-semibold">0</div>
+                <div class="text-xs text-gray-400">$0</div>
+            </div>
+            </div>
+        </div>
         </dialog>
     }
 }
@@ -497,24 +676,24 @@ fn Home() -> impl IntoView {
             </p>
             <ul>
                 <li>
-                    <strong>"No Slippage:"</strong>
+                    <strong>"No Slippage: "</strong>
                     <span>"Enabling token swaps with zero slippage within designated bins"</span>
                 </li>
                 <li>
-                    <strong>"Adaptive Pricing:"</strong>
+                    <strong>"Adaptive Pricing: "</strong>
                     <span>
                         "Offering Liquidity Providers extra dynamic fees during periods of
                         increased market volatility"
                     </span>
                 </li>
                 <li>
-                    <strong>"Enhanced Capital Efficiency:"</strong>
+                    <strong>"Enhanced Capital Efficiency: "</strong>
                     <span>
                         "Facilitating high-volume trading with minimal liquidity requirements"
                     </span>
                 </li>
                 <li>
-                    <strong>"Customizable Liquidity:"</strong>
+                    <strong>"Customizable Liquidity: "</strong>
                     <span>
                         "Liquidity providers can customize their liquidity distributions
                         based on their strategy"

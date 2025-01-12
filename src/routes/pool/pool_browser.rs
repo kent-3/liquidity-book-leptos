@@ -25,9 +25,7 @@ pub fn PoolBrowser() -> impl IntoView {
         <div class="text-3xl font-bold">"Pool"</div>
         <div class="text-sm text-neutral-400">"Provide liquidity and earn fees."</div>
 
-        <h3 class="mb-1">
-            "Existing Pools - " {move || number_of_lb_pairs.get()}
-        </h3>
+        <h3 class="mb-1">"Existing Pools - " {move || number_of_lb_pairs.get()}</h3>
         // crazy, but it works
         <Suspense fallback=|| view! { <div>"Loading..."</div> }>
             <ul>
@@ -57,8 +55,14 @@ pub fn PoolBrowser() -> impl IntoView {
                                     " - "
                                     {format!(
                                         "[{}, {}, {} bps]",
-                                        TOKEN_MAP.get(&n.token_x.unique_key()).map(|t| t.symbol.clone()).unwrap_or_default(),
-                                        TOKEN_MAP.get(&n.token_y.unique_key()).map(|t| t.symbol.clone()).unwrap_or_default(),
+                                        TOKEN_MAP
+                                            .get(&n.token_x.unique_key())
+                                            .map(|t| t.symbol.clone())
+                                            .unwrap_or_default(),
+                                        TOKEN_MAP
+                                            .get(&n.token_y.unique_key())
+                                            .map(|t| t.symbol.clone())
+                                            .unwrap_or_default(),
                                         n.bin_step,
                                     )}
                                 </li>

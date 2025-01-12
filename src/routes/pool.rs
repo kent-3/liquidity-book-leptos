@@ -30,11 +30,7 @@ pub fn Pool() -> impl IntoView {
 
     // provide_context(resource);
 
-    view! {
-        <div class="p-2">
-            <Outlet />
-        </div>
-    }
+    view! { <Outlet /> }
 }
 
 // NOTE: If the Router gets complicated enough, it's possible to split it up like this:

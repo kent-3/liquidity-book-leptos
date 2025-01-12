@@ -61,14 +61,16 @@ pub fn display_token_amount(amount: impl Into<u128>, decimals: impl Into<u32>) -
     // Adjust the width dynamically based on decimals
     let fractional_str = format!("{:0width$}", fractional_part, width = decimals as usize);
 
-    // Trim trailing zeros for a cleaner display
-    let trimmed_fractional = fractional_str.trim_end_matches('0');
+    format!("{}.{}", integer_part, fractional_str)
 
-    if trimmed_fractional.is_empty() {
-        integer_part.to_string()
-    } else {
-        format!("{}.{}", integer_part, trimmed_fractional)
-    }
+    // Trim trailing zeros for a cleaner display
+    // let trimmed_fractional = fractional_str.trim_end_matches('0');
+    //
+    // if trimmed_fractional.is_empty() {
+    //     integer_part.to_string()
+    // } else {
+    //     format!("{}.{}", integer_part, trimmed_fractional)
+    // }
 }
 
 pub fn parse_token_amount(amount: impl AsRef<str>, decimals: impl Into<u32>) -> u128 {

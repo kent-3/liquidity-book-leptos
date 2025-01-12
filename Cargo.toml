@@ -101,7 +101,7 @@ ethnum = "1.5.0"
 [dependencies.shade-protocol]
 git = "https://github.com/securesecrets/shade"
 branch = "orderbook/library"
-features = ["swap", "liquidity-book", "snip20", "utils"]
+features = ["swap", "snip20", "utils"]
 
 [patch.crates-io]
 secret-sdk-proto = { git = "https://github.com/kent-3/secret-rust", branch = "main" }
@@ -112,8 +112,8 @@ secretrs = { git = "https://github.com/kent-3/secret-rust", branch = "main" }
 # [patch."https://github.com/securesecrets/shade.git"]
 # shade-protocol = { path = "../shade/packages/shade_protocol" }
 
-[patch."https://github.com/kent-3/secret-clients.git"]
-rsecret = { path = "../secret-clients/rsecret" }
+# [patch."https://github.com/kent-3/secret-clients.git"]
+# rsecret = { path = "../secret-clients/rsecret" }
 
 # [patch."https://github.com/kent-3/liquidity-book.git"]
 # liquidity-book = { path = "../liquidity-book/packages/liquidity-book" }

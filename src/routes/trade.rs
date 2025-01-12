@@ -225,112 +225,110 @@ pub fn Trade() -> impl IntoView {
 
     view! {
         <LoadingModal when=swap.pending() message="Preparing Transaction... (watch the console)" />
-        <div class="p-2">
-            <div class="container max-w-sm space-y-6">
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <div>"From"</div>
-                        <Secret20Balance token_address=token_x.into() />
-                    </div>
-                    <div class="flex justify-between space-x-2">
-                        <input
-                            class="p-1 "
-                            type="number"
-                            placeholder="0.0"
-                            bind:value=amount_in
-                            prop:value=move || amount_x.get()
-                            on:change=move |ev| {
-                                let new_value = event_target_value(&ev);
-                                set_amount_x.set(new_value.parse().unwrap_or_default());
-                                set_amount_y.set("".to_string());
-                                set_swap_for_y.set(true);
-                            }
-                        />
-                        <select
-                            node_ref=select_x_node_ref
-                            class="p-1 w-28"
-                            title="Select Token X"
-                            on:input=move |ev| {
-                                let token_x = event_target_value(&ev);
-                                set_token_x.set(None);
-                                set_token_x.set(Some(token_x));
-                            }
-                            prop:value=move || token_x.get().unwrap_or_default()
-                        >
-                            <option value="" disabled selected>
-                                "Select Token"
-                            </option>
-                            <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
-                            <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
-                            <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
-                            <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
-                        </select>
-                    </div>
+        <div class="container max-w-sm space-y-6">
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <div>"From"</div>
+                    <Secret20Balance token_address=token_x.into() />
                 </div>
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <div>"To"</div>
-                        <Secret20Balance token_address=token_y.into() />
-                    </div>
-                    <div class="flex justify-between space-x-2">
-                        <input
-                            class="p-1 "
-                            type="number"
-                            placeholder="0.0"
-                            prop:value=move || amount_y.get()
-                            on:change=move |ev| {
-                                let new_value = event_target_value(&ev);
-                                set_amount_y.set(new_value.parse().unwrap_or_default());
-                                set_amount_x.set("".to_string());
-                                set_swap_for_y.set(false);
-                            }
-                        />
-                        <select
-                            node_ref=select_y_node_ref
-                            class="p-1 w-28"
-                            title="Select Token Y"
-                            on:change=move |ev| {
-                                let token_y = event_target_value(&ev);
-                                set_token_y.set(None);
-                                set_token_y.set(Some(token_y));
-                            }
-                            prop:value=move || token_y.get().unwrap_or_default()
-                        >
-                            <option value="" disabled selected>
-                                "Select Token"
-                            </option>
-                            <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
-                            <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
-                            <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
-                            <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
-                        </select>
-                    </div>
+                <div class="flex justify-between space-x-2">
+                    <input
+                        class="p-1 "
+                        type="number"
+                        placeholder="0.0"
+                        bind:value=amount_in
+                        prop:value=move || amount_x.get()
+                        on:change=move |ev| {
+                            let new_value = event_target_value(&ev);
+                            set_amount_x.set(new_value.parse().unwrap_or_default());
+                            set_amount_y.set("".to_string());
+                            set_swap_for_y.set(true);
+                        }
+                    />
+                    <select
+                        node_ref=select_x_node_ref
+                        class="p-1 w-28"
+                        title="Select Token X"
+                        on:input=move |ev| {
+                            let token_x = event_target_value(&ev);
+                            set_token_x.set(None);
+                            set_token_x.set(Some(token_x));
+                        }
+                        prop:value=move || token_x.get().unwrap_or_default()
+                    >
+                        <option value="" disabled selected>
+                            "Select Token"
+                        </option>
+                        <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
+                        <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
+                        <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
+                        <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
+                    </select>
                 </div>
-                <button class="p-1 block" on:click=move |_| { _ = get_quote.dispatch(()) }>
-                    "Estimate Swap"
-                </button>
-                // returns the final amount (the output token)
-                <p>
-                    {move || {
-                        format!(
-                            "{:?}",
-                            get_quote
-                                .value()
-                                .get()
-                                .and_then(|result| result.map(|mut quote| quote.amounts.pop()).ok())
-                                .unwrap_or_default(),
-                        )
-                    }}
-                </p>
-                <button
-                    class="p-1 block"
-                    disabled=move || !keplr.enabled.get()
-                    on:click=move |_| _ = swap.dispatch(())
-                >
-                    "Swap"
-                </button>
-            // <span class="text-xs">"(This will send 1 micro sSCRT to yourself)"</span>
             </div>
+            <div class="space-y-2">
+                <div class="flex justify-between">
+                    <div>"To"</div>
+                    <Secret20Balance token_address=token_y.into() />
+                </div>
+                <div class="flex justify-between space-x-2">
+                    <input
+                        class="p-1 "
+                        type="number"
+                        placeholder="0.0"
+                        prop:value=move || amount_y.get()
+                        on:change=move |ev| {
+                            let new_value = event_target_value(&ev);
+                            set_amount_y.set(new_value.parse().unwrap_or_default());
+                            set_amount_x.set("".to_string());
+                            set_swap_for_y.set(false);
+                        }
+                    />
+                    <select
+                        node_ref=select_y_node_ref
+                        class="p-1 w-28"
+                        title="Select Token Y"
+                        on:change=move |ev| {
+                            let token_y = event_target_value(&ev);
+                            set_token_y.set(None);
+                            set_token_y.set(Some(token_y));
+                        }
+                        prop:value=move || token_y.get().unwrap_or_default()
+                    >
+                        <option value="" disabled selected>
+                            "Select Token"
+                        </option>
+                        <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
+                        <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
+                        <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
+                        <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
+                    </select>
+                </div>
+            </div>
+            <button class="p-1 block" on:click=move |_| { _ = get_quote.dispatch(()) }>
+                "Estimate Swap"
+            </button>
+            // returns the final amount (the output token)
+            <p>
+                {move || {
+                    format!(
+                        "{:?}",
+                        get_quote
+                            .value()
+                            .get()
+                            .and_then(|result| result.map(|mut quote| quote.amounts.pop()).ok())
+                            .unwrap_or_default(),
+                    )
+                }}
+            </p>
+            <button
+                class="p-1 block"
+                disabled=move || !keplr.enabled.get()
+                on:click=move |_| _ = swap.dispatch(())
+            >
+                "Swap"
+            </button>
+        // <span class="text-xs">"(This will send 1 micro sSCRT to yourself)"</span>
         </div>
     }
 }
