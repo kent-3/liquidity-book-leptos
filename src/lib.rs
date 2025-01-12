@@ -43,7 +43,7 @@ mod utils;
 use components::{Spinner2, SuggestChains};
 use constants::{CHAIN_ID, NODE, TOKEN_MAP};
 use error::Error;
-use routes::{pool::*, trade::*};
+use routes::{nav::Nav, pool::*, trade::*};
 use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
 use types::Coin;
 
@@ -262,12 +262,7 @@ pub fn App() -> impl IntoView {
                     </Show>
                 </div>
                 <hr />
-                <nav>
-                    <A href="/liquidity-book-leptos/">"Home"</A>
-                    <A href="/liquidity-book-leptos/pool">"Pool"</A>
-                    <A href="/liquidity-book-leptos/trade">"Trade"</A>
-                    <A href="/liquidity-book-leptos/analytics">"Analytics"</A>
-                </nav>
+                <Nav/>
                 <hr />
             </header>
             <main class="overflow-x-auto">
@@ -487,8 +482,8 @@ fn Home() -> impl IntoView {
     // );
 
     view! {
-        <div class="max-w-lg">
-            <h1 class="font-semibold">Introduction</h1>
+        <div class="p-2 max-w-lg">
+            <div class="text-3xl font-bold mb-4">"Introduction"</div>
             <p>
                 "This project presents an efficient Automated Market Maker (AMM)
                 protocol, modeled after the Liquidity Book protocol used by Trader Joe ("
@@ -497,32 +492,32 @@ fn Home() -> impl IntoView {
                     target="_blank"
                     rel="noopener noreferrer"
                 >
-                    Liquidity Book docs
+                    "Liquidity Book docs"
                 </a>"). The protocol retains the key features of its predecessor, such as:"
             </p>
             <ul>
                 <li>
-                    <strong>No Slippage:</strong>
-                    <span>Enabling token swaps with zero slippage within designated bins</span>
+                    <strong>"No Slippage:"</strong>
+                    <span>"Enabling token swaps with zero slippage within designated bins"</span>
                 </li>
                 <li>
-                    <strong>Adaptive Pricing:</strong>
+                    <strong>"Adaptive Pricing:"</strong>
                     <span>
-                        Offering Liquidity Providers extra dynamic fees during periods of
-                        increased market volatility
+                        "Offering Liquidity Providers extra dynamic fees during periods of
+                        increased market volatility"
                     </span>
                 </li>
                 <li>
-                    <strong>Enhanced Capital Efficiency:</strong>
+                    <strong>"Enhanced Capital Efficiency:"</strong>
                     <span>
-                        Facilitating high-volume trading with minimal liquidity requirements
+                        "Facilitating high-volume trading with minimal liquidity requirements"
                     </span>
                 </li>
                 <li>
-                    <strong>Customizable Liquidity:</strong>
+                    <strong>"Customizable Liquidity:"</strong>
                     <span>
-                        Liquidity providers can customize their liquidity distributions
-                        based on their strategy
+                        "Liquidity providers can customize their liquidity distributions
+                        based on their strategy"
                     </span>
                 </li>
             </ul>

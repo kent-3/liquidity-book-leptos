@@ -226,7 +226,6 @@ pub fn Trade() -> impl IntoView {
     view! {
         <LoadingModal when=swap.pending() message="Preparing Transaction... (watch the console)" />
         <div class="p-2">
-            <div class="text-3xl font-bold mb-4">"Trade"</div>
             <div class="container max-w-sm space-y-6">
                 <div class="space-y-2">
                     <div class="flex justify-between">

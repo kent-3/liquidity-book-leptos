@@ -7,6 +7,7 @@
 /* Base styles */
 html {
   -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
   text-rendering: optimizelegibility;
   font-family:
     Segoe UI,
@@ -364,7 +365,6 @@ ul {
 
   ::view-transition-new(contact) {
     animation: 300ms fadeIn cubic-bezier(0.2, 0, 0, 1);
-    /* Hold final state of animation */
     animation-fill-mode: forwards;
   }
 
