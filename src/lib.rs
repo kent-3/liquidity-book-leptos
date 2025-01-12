@@ -395,10 +395,7 @@ pub fn WalletMenu(
     // move || user_balance.get().and_then(Result::ok).map(|coin| display_token_amount(coin.amount, 6))
 
     view! {
-        <dialog
-            node_ref=dialog_ref
-            class="mr-0 mt-2 border border-neutral-600 rounded py-4 px-0"
-        >
+        <dialog node_ref=dialog_ref class="mr-0 mt-2 border border-neutral-600 rounded py-4 px-0">
             // <!-- Header -->
             <div class="flex items-center justify-between w-72 px-6 pb-4">
                 <div class="flex items-center gap-3">
@@ -410,7 +407,10 @@ pub fn WalletMenu(
                         </div>
                     </div>
                 </div>
-                <button title="Disconnect wallet" class="w-12 h-12 p-0 bg-transparent hover:bg-neutral-800 transition-all duration-150 rounded-full inline-flex items-center justify-center outline outline-2 outline-offset-2 outline-transparent border border-solid border-neutral-800">
+                <button
+                    title="Disconnect wallet"
+                    class="w-12 h-12 p-0 bg-transparent hover:bg-neutral-800 transition-all duration-150 rounded-full inline-flex items-center justify-center outline outline-2 outline-offset-2 outline-transparent border border-solid border-neutral-800"
+                >
                     <svg
                         width="16"
                         height="18"
@@ -430,66 +430,81 @@ pub fn WalletMenu(
                     </svg>
                 </button>
             </div>
-            <hr class="m-0 border-neutral-600"/>
+            <hr class="m-0 border-neutral-600" />
             // <!-- Menu Items -->
             <ul class="space-y-2 px-3 py-4 list-none font-semibold">
                 <li>
-                    <a href="#" class="hover:no-underline no-underline flex items-center gap-3 px-4 py-2 rounded-md text-neutral-200 hover:bg-neutral-800 transition-all duration-150">
+                    <a
+                        href="#"
+                        class="hover:no-underline no-underline flex items-center gap-3 px-4 py-2 rounded-md text-neutral-200 hover:bg-neutral-800 transition-all duration-150"
+                    >
                         <span>"🌊"</span>
                         "My Pools"
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="hover:no-underline no-underline flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-200 hover:bg-neutral-800 transition-all duration-150">
+                    <a
+                        href="#"
+                        class="hover:no-underline no-underline flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-200 hover:bg-neutral-800 transition-all duration-150"
+                    >
                         <span>"🔄"</span>
                         "Activity"
                     </a>
                 </li>
                 <li>
-                    <div on:click=toggle_menu class="hover:no-underline no-underline flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-neutral-800 transition-all duration-150">
+                    <div
+                        on:click=toggle_menu
+                        class="hover:no-underline no-underline flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-neutral-800 transition-all duration-150"
+                    >
                         <span>"⚙️"</span>
                         "Settings"
                     </div>
                 </li>
             </ul>
-            <hr class="m-0 border-neutral-600"/>
-        // <!-- Token List -->
-        <div class="space-y-2, px-3 pt-4">
-              // <!-- Wallet Header -->
+            <hr class="m-0 border-neutral-600" />
+            // <!-- Token List -->
+            <div class="space-y-2, px-3 pt-4">
+                // <!-- Wallet Header -->
                 <div class="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-200 font-semibold">
                     <span>"💰"</span>
                     "Wallet"
                 </div>
-            // <!-- Token Item -->
-            <div class="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-800">
-            <div class="flex items-center gap-3">
-                <img src="/icons/scrt-black-192.png" alt="SCRT logo" class="w-8 h-8"/>
-                <div>
-                <div class="text-sm font-semibold">SCRT</div>
-                <div class="text-xs text-gray-400">Secret</div>
+                // <!-- Token Item -->
+                <div class="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-800">
+                    <div class="flex items-center gap-3">
+                        <img src="/icons/scrt-black-192.png" alt="SCRT logo" class="w-8 h-8" />
+                        <div>
+                            <div class="text-sm font-semibold">SCRT</div>
+                            <div class="text-xs text-gray-400">Secret</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-semibold">
+                            {move || user_balance.get().and_then(Result::ok)}
+                        </div>
+                        <div class="text-xs text-gray-400">$0</div>
+                    </div>
                 </div>
-            </div>
-            <div class="text-right">
-                <div class="text-sm font-semibold">{move || user_balance.get().and_then(Result::ok)}</div>
-                <div class="text-xs text-gray-400">$0</div>
-            </div>
-            </div>
 
-            // <!-- Token Item -->
-            <div class="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-800">
-            <div class="flex items-center gap-3">
-                <img src="https://raw.githubusercontent.com/traderjoe-xyz/joe-tokenlists/main/logos/0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E/logo.png" alt="USDC logo" class="w-8 h-8"/>
-                <div>
-                <div class="text-sm font-semibold">USDC</div>
-                <div class="text-xs text-gray-400">USD Coin</div>
+                // <!-- Token Item -->
+                <div class="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-800">
+                    <div class="flex items-center gap-3">
+                        <img
+                            src="https://raw.githubusercontent.com/traderjoe-xyz/joe-tokenlists/main/logos/0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E/logo.png"
+                            alt="USDC logo"
+                            class="w-8 h-8"
+                        />
+                        <div>
+                            <div class="text-sm font-semibold">USDC</div>
+                            <div class="text-xs text-gray-400">USD Coin</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-semibold">0</div>
+                        <div class="text-xs text-gray-400">$0</div>
+                    </div>
                 </div>
             </div>
-            <div class="text-right">
-                <div class="text-sm font-semibold">0</div>
-                <div class="text-xs text-gray-400">$0</div>
-            </div>
-            </div>
-        </div>
         </dialog>
     }
 }
