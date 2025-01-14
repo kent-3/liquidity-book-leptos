@@ -82,7 +82,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                                 view! {
                                     <div
                                         title=error.to_string()
-                                        class="py-0 px-2 text-violet-400 text-bold text-sm cursor-default hover:bg-violet-500/20 text-ellipsis"
+                                        class="py-0 px-2 text-gold text-bold text-sm cursor-default hover:bg-gold/20 text-ellipsis"
                                     >
                                         "Error 🛈"
                                     </div>

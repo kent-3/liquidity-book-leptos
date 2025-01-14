@@ -9,13 +9,13 @@ use ammber_sdk::{
 use cosmwasm_std::Addr;
 use keplr::Keplr;
 use leptos::prelude::*;
+use liquidity_book::core::TokenType;
 use rsecret::{
     secret_client::CreateTxSenderOptions,
     tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
     TxOptions,
 };
 use secretrs::{compute::MsgExecuteContractResponse, tx::Msg, AccountId};
-use shade_protocol::swap::core::TokenType;
 use std::str::FromStr;
 use tracing::{debug, error, info};
 

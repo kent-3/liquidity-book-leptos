@@ -45,12 +45,12 @@ leptos_meta = { version = "0.7.3" }
 reactive_stores = { version = "0.1.3" }
 
 # Leptos extensions and related
+thaw = { version = "0.4.1", features = ["csr"] }
+leptos_icons = { version = "0.5.0" }
+icondata = "0.5"
+
 # leptos-use = { git = "https://github.com/Synphonyte/leptos-use.git", branch = "leptos-0.7" }
 # leptonic = { git = "https://github.com/lpotthast/leptonic.git", branch = "main" }
-# thaw = { version = "0.4.0-alpha", git = "https://github.com/thaw-ui/thaw.git", branch = "thaw/fluent", features = [
-#   "csr",
-#   "nightly",
-# ] }
 # codee = { version = "0.2", features = [
 #   "json_serde",
 #   "msgpack_serde",
@@ -93,15 +93,10 @@ cosmwasm-std = { package = "secret-cosmwasm-std", version = "1.1.11" }
 secret-toolkit-snip20 = { version = "0.10.2" }
 secretrs = { version = "0.1.3", default-features = false }
 rsecret = { git = "https://github.com/kent-3/secret-clients", branch = "main" }
+
+#
 liquidity-book = { git = "https://github.com/kent-3/liquidity-book.git" }
-
-# idk
 ethnum = "1.5.0"
-
-[dependencies.shade-protocol]
-git = "https://github.com/securesecrets/shade"
-branch = "orderbook/library"
-features = ["swap", "snip20", "utils"]
 
 [patch.crates-io]
 secret-sdk-proto = { git = "https://github.com/kent-3/secret-rust", branch = "main" }

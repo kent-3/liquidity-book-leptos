@@ -7,11 +7,11 @@ use ammber_sdk::contract_interfaces::{
 };
 use cosmwasm_std::{Addr, ContractInfo, StdResult, Uint128};
 use leptos::prelude::*;
+use liquidity_book::core::TokenType;
 use rsecret::query::compute::ComputeQuerier;
 use secretrs::utils::EnigmaUtils;
 use send_wrapper::SendWrapper;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use shade_protocol::swap::core::TokenType;
 use std::sync::{Arc, LazyLock};
 use tonic_web_wasm_client::Client as WebWasmClient;
 use tracing::{debug, error};

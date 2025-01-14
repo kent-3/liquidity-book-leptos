@@ -31,10 +31,65 @@ html {
 body {
   @apply max-w-5xl mx-auto sm:px-4 px-2;
   @apply bg-neutral-900 text-neutral-200;
+  font-feature-settings: "kern";
 }
 
 ::selection {
   @apply bg-violet-600 text-white;
+}
+
+/* Container to position the toasts */
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+/* Toast styles */
+.toast {
+  background-color: #333;
+  color: #fff;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateX(100%);
+  animation:
+    slide-in 0.5s ease-out forwards,
+    fade-out 0.5s 3.5s ease-out forwards;
+}
+
+/* Keyframes for sliding in */
+@keyframes slide-in {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Keyframes for fading out */
+@keyframes fade-out {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+#mainTitle:hover {
+  transform: rotate(2deg);
 }
 
 a[aria-current] {
@@ -86,9 +141,11 @@ nav a:hover {
     width: 100%;
     height: 100%;
     background:
-      linear-gradient(rgba(255, 255, 255, 1) 0%,
+      linear-gradient(
+        rgba(255, 255, 255, 1) 0%,
         rgba(255, 255, 255, 0.8) 60%,
-        rgba(255, 255, 255, 0) 100%),
+        rgba(255, 255, 255, 0) 100%
+      ),
       url("images/mountains4.webp") center / cover no-repeat fixed;
     z-index: -1;
     translate: 0 10px;
@@ -220,6 +277,14 @@ dialog::backdrop {
   }
 }
 
+.material-symbols-rounded {
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
+
 .btn {
   @apply font-bold py-2 px-4;
 }
@@ -278,6 +343,7 @@ ul {
 /* 	'standard-accelerate': 'cubic-bezier(0.3, 0.1, 1, 1)', */
 /* 	'emphasized-decelerate': 'cubic-bezier(0.05, 0.7, 0.1, 1.0)', */
 /* 	'emphasized-accelerate': 'cubic-bezier(0.3, 0.0, 0.8, 0.15)' */
+/*  'easy-ease': 'cubic-bezier(0.33, 0, 0.67, 1)' */
 /* } */
 
 .slideIn {

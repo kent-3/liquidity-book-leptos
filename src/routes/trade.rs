@@ -11,14 +11,15 @@ use ammber_sdk::contract_interfaces::{
 };
 use cosmwasm_std::{to_binary, Addr, Uint128, Uint64};
 use keplr::Keplr;
-use leptos::{html::Select, logging::*, prelude::*};
+use leptos::{html, logging::*, prelude::*};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
+use liquidity_book::core::{TokenAmount, TokenType};
 use rsecret::tx::compute::MsgExecuteContractRaw;
 use rsecret::{secret_client::CreateTxSenderOptions, tx::ComputeServiceClient, TxOptions};
 use secretrs::proto::cosmos::tx::v1beta1::BroadcastMode;
 use secretrs::AccountId;
-use shade_protocol::swap::core::{TokenAmount, TokenType};
 use std::str::FromStr;
+use thaw::*;
 use tracing::{debug, info};
 
 #[component]
@@ -46,8 +47,8 @@ pub fn Trade() -> impl IntoView {
     let (amount_y, set_amount_y) = signal(String::default());
     let (swap_for_y, set_swap_for_y) = signal(true);
 
-    let select_x_node_ref = NodeRef::<Select>::new();
-    let select_y_node_ref = NodeRef::<Select>::new();
+    let select_x_node_ref = NodeRef::<html::Select>::new();
+    let select_y_node_ref = NodeRef::<html::Select>::new();
 
     Effect::new(move || {
         let token_x = token_x.get().unwrap_or_default();
@@ -225,7 +226,11 @@ pub fn Trade() -> impl IntoView {
 
     view! {
         <LoadingModal when=swap.pending() message="Preparing Transaction... (watch the console)" />
-        <div class="container max-w-sm space-y-6">
+        <div class="grid gap-4 sm:grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)] grid-cols-1 grid-rows-2">
+        <div class="container flex items-center justify-center sm:row-auto row-start-2 outline outline-2 outline-neutral-700 rounded">
+            <p class="text-center italic text-neutral-500">"what should go here?"</p>
+        </div>
+        <div class="container space-y-6 sm:row-auto row-start-1">
             <div class="space-y-2">
                 <div class="flex justify-between">
                     <div>"From"</div>
@@ -329,6 +334,7 @@ pub fn Trade() -> impl IntoView {
                 "Swap"
             </button>
         // <span class="text-xs">"(This will send 1 micro sSCRT to yourself)"</span>
+        </div>
         </div>
     }
 }

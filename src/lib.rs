@@ -3,6 +3,8 @@
 // use codee::string::FromToStringCodec;
 // use leptos_use::storage::use_local_storage;
 
+use std::time::Duration;
+
 use crate::prelude::*;
 use crate::support::chain_query;
 use ammber_sdk::contract_interfaces::{
@@ -20,12 +22,14 @@ use leptos::{
     logging::*,
     prelude::*,
 };
+use leptos_icons::Icon;
 use leptos_meta::*;
 use leptos_router::components::{ParentRoute, Route, Router, Routes, A};
 use leptos_router_macro::path;
 use rsecret::query::{bank::BankQuerier, compute::ComputeQuerier};
 use send_wrapper::SendWrapper;
 use serde::{Deserialize, Serialize};
+use thaw::*;
 use tonic_web_wasm_client::Client;
 use tracing::{debug, error, info, trace};
 use web_sys::{js_sys, wasm_bindgen::JsValue};
@@ -57,6 +61,7 @@ pub struct NumberOfLbPairs(pub Resource<u32>);
 pub fn App() -> impl IntoView {
     info!("rendering <App/>");
 
+    // Provides context that manages stylesheets, titles, meta tags, etc.
     provide_meta_context();
 
     // Global Contexts
@@ -253,12 +258,21 @@ pub fn App() -> impl IntoView {
             .map(|key| key.bech32_address)
     };
 
+    let theme = RwSignal::new(Theme::dark());
+
     view! {
+        // <Html attr:lang="en" attr:dir="ltr" attr:data-theme="dark" />
+
+        // <ConfigProvider theme>
+        //         <ToasterProvider position=ToastPosition::BottomEnd>
+        //         </ToasterProvider>
+        // </ConfigProvider>
+
         <Router>
             // <div class="background-image"></div>
             <header>
                 <div class="flex justify-between items-center">
-                    <div class="my-2 font-bold text-3xl line-clamp-1">"Liquidity Book"</div>
+                    <div id="mainTitle" class="my-2 font-bold text-3xl line-clamp-1 transition-transform duration-300">"Liquidity Book"</div>
                     <Show when=move || keplr.key.get().and_then(|key| key.ok()).is_some()>
                         <p class="hidden sm:block text-sm outline outline-2 outline-offset-8 outline-neutral-500">
                             "Connected as "<strong>{key_name}</strong>
@@ -273,16 +287,33 @@ pub fn App() -> impl IntoView {
                                     <button
                                         on:click=enable_keplr
                                         disabled=enable_keplr_action.pending()
+                                        class="min-w-24 text-sm font-semibold leading-none py-[5px] px-[12px] inline-flex justify-center items-center align-middle"
                                     >
                                         "Connect Wallet"
                                     </button>
-                                    <button on:click=toggle_options_menu>"Settings"</button>
+                                    <button
+                                        on:click=toggle_options_menu
+                                        class="text-xl font-semibold leading-none py-[2px] px-[8px] inline-flex justify-center items-center align-middle"
+                                    >
+                                        // "⚙"
+                                    <svg xmlns="http://www.w3.org/2000/svg"  class="stroke-white" height="24px" viewBox="0 0 24 24" width="24px" stroke-width="1.5" stroke="currentColor" fill="none">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    </svg>
+                                    // <svg xmlns="http://www.w3.org/2000/svg" class="fill-white" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M433-80q-27 0-46.5-18T363-142l-9-66q-13-5-24.5-12T307-235l-62 26q-25 11-50 2t-39-32l-47-82q-14-23-8-49t27-43l53-40q-1-7-1-13.5v-27q0-6.5 1-13.5l-53-40q-21-17-27-43t8-49l47-82q14-23 39-32t50 2l62 26q11-8 23-15t24-12l9-66q4-26 23.5-44t46.5-18h94q27 0 46.5 18t23.5 44l9 66q13 5 24.5 12t22.5 15l62-26q25-11 50-2t39 32l47 82q14 23 8 49t-27 43l-53 40q1 7 1 13.5v27q0 6.5-2 13.5l53 40q21 17 27 43t-8 49l-48 82q-14 23-39 32t-50-2l-60-26q-11 8-23 15t-24 12l-9 66q-4 26-23.5 44T527-80h-94Zm7-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"/></svg>
+                                    </button>
                                 }
                             }
                         >
                             <div class="relative inline-block">
-                                <button on:click=toggle_wallet_menu>
-                                    {key_address().map(shorten_address)}
+
+                                <button
+                                    on:click=toggle_wallet_menu
+                                        class="min-w-24 text-sm font-semibold leading-none py-[5px] px-[12px] inline-flex justify-center items-center align-middle"
+                                    // class="min-w-24 transition-shadow active:bg-neutral-900 active:border-neutral-600 hover:bg-neutral-700 hover:border-neutral-500 ease-standard duration-100 box-border font-semibold leading-5 inline-flex items-center justify-center rounded border border-solid border-neutral-600 bg-neutral-800 text-sm py-[5px] px-[12px]"
+                                >
+                                   "Wallet Menu"
+                                    // {move || key_address().map(shorten_address)}
                                 </button>
                                 <WalletMenu
                                     dialog_ref=wallet_dialog_ref
@@ -312,7 +343,7 @@ pub fn App() -> impl IntoView {
                 </Routes>
             </main>
             <LoadingModal when=enable_keplr_action.pending() message="Requesting Connection" />
-            <OptionsMenu dialog_ref=options_dialog_ref toggle_menu=toggle_options_menu />
+            <SettingsMenu dialog_ref=options_dialog_ref toggle_menu=toggle_options_menu />
         </Router>
     }
 }
@@ -394,22 +425,50 @@ pub fn WalletMenu(
 
     // move || user_balance.get().and_then(Result::ok).map(|coin| display_token_amount(coin.amount, 6))
 
+    // let toaster = ToasterInjection::expect_context();
+    //
+    // let on_click = move |_| {
+    //     toaster.dispatch_toast(
+    //         move || {
+    //             view! {
+    //                <Toast>
+    //                    <ToastTitle>"Email sent"</ToastTitle>
+    //                    <ToastBody>
+    //                        "This is a toast body"
+    //                        <ToastBodySubtitle slot>
+    //                            "Subtitle"
+    //                        </ToastBodySubtitle>
+    //                    </ToastBody>
+    //                    <ToastFooter>
+    //                        "Footer"
+    //                        // <Link>Action</Link>
+    //                        // <Link>Action</Link>
+    //                    </ToastFooter>
+    //                </Toast>
+    //             }
+    //         },
+    //         ToastOptions::default().with_timeout(Duration::from_secs(5)),
+    //     );
+    // };
+
+    let icon = icondata::MdiPool;
+
     view! {
-        <dialog node_ref=dialog_ref class="mr-0 mt-2 border border-neutral-600 rounded py-4 px-0">
+        <dialog node_ref=dialog_ref class="mr-0 mt-2 border border-neutral-600 rounded py-3 px-0">
             // <!-- Header -->
-            <div class="flex items-center justify-between w-72 px-6 pb-4">
+            <div class="flex items-center justify-between w-72 px-6 pb-3">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-amber-500/70 rounded-full"></div>
+                    <div class="w-8 h-8 bg-transparent outline outline-2 outline-offset-1 outline-foam rounded-full"></div>
                     <div>
-                        <div class="text-xs text-neutral-400">"Connected Account:"</div>
-                        <div class="text-sm font-semibold">
-                            {key_address().map(shorten_address)}
+                        <div class="text-xs text-neutral-400 font-light">"Connected Account:"</div>
+                        <div class="text-base font-semibold">
+                            {move || key_address().map(shorten_address)}
                         </div>
                     </div>
                 </div>
                 <button
                     title="Disconnect wallet"
-                    class="w-12 h-12 p-0 bg-transparent hover:bg-neutral-800 transition-all duration-150 rounded-full inline-flex items-center justify-center outline outline-2 outline-offset-2 outline-transparent border border-solid border-neutral-800"
+                    class="w-10 h-10 p-0 bg-transparent active:bg-black hover:bg-neutral-700 hover:outline-gold hover:border transition-all ease-standard duration-150 rounded-full inline-flex items-center justify-center outline outline-1 outline-offset-0 outline-transparent border border-solid border-neutral-700"
                 >
                     <svg
                         width="16"
@@ -418,7 +477,7 @@ pub fn WalletMenu(
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
                         focusable="false"
-                        class="w-4 h-4 inline-block fill-red-500"
+                        class="w-4 h-4 inline-block fill-gold"
                         aria-hidden="true"
                     >
                         <path
@@ -432,47 +491,56 @@ pub fn WalletMenu(
             </div>
             <hr class="m-0 border-neutral-600" />
             // <!-- Menu Items -->
-            <ul class="space-y-2 px-3 py-4 list-none font-semibold">
+            <ul class="space-y-1 px-1 py-2 list-none font-semibold text-base">
                 <li>
                     <a
                         href="#"
-                        class="hover:no-underline no-underline flex items-center gap-3 px-4 py-2 rounded-md text-neutral-200 hover:bg-neutral-800 transition-all duration-150"
+                        class="hover:no-underline no-underline flex items-center gap-3 px-3 py-2 rounded text-neutral-200 hover:bg-neutral-800 transition-all duration-150"
                     >
-                        <span>"🌊"</span>
+                        // <Icon icon=icondata::MdiPool height="1.25rem" width="1.25rem" style="color: #f6c177;" />
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#f6c177"><path d="M213-280q-29 0-42 12.5T135-250q-23 5-39-4.5T80-283q0-15 13-29t41-28q5-3 26.5-11.5T217-360q55 0 74 20t56 20q37 0 55.5-20t76.5-20q58 0 78.5 20t57.5 20q37 0 54-20t74-20q23 0 44.5 5.5T831-338q25 13 37 27t12 28q0 19-16 28.5t-39 4.5q-23-5-36.5-17.5T747-280q-37 0-55.5 20T615-240q-58 0-78.5-20T479-280q-37 0-55.5 20T346-240q-59 0-77-20t-56-20Zm0-160q-28 0-41.5 12.5T135-410q-23 5-39-4.5T80-443q0-15 13-29t41-28q5-3 26.5-11.5T217-520q55 0 74 20t56 20q37 0 55.5-20t76.5-20q58 0 78.5 20t56.5 20q36 0 54-20t74-20q35 0 56.5 8.5T825-500q29 15 42 28.5t13 28.5q0 19-16.5 28.5T824-410q-23-5-36-17.5T747-440q-37 0-55.5 20T615-400q-58 0-78.5-20T479-440q-37 0-54.5 20T348-400q-59 0-78.5-20T213-440Zm0-160q-28 0-41.5 12.5T135-570q-23 5-39-4.5T80-603q0-15 13-29t41-28q5-3 26.5-11.5T217-680q55 0 74 20t56 20q37 0 55.5-20t76.5-20q58 0 78.5 20t56.5 20q36 0 54-20t74-20q35 0 56.5 8.5T825-660q29 15 42 28.5t13 28.5q0 19-16.5 28.5T824-570q-23-5-36-17.5T747-600q-37 0-55.5 20T615-560q-58 0-78.5-20T479-600q-37 0-54.5 20T348-560q-59 0-78.5-20T213-600Z"/></svg>
+                        // <span>"🌊"</span>
                         "My Pools"
+            <span class="ml-auto text-lg leading-none font-normal">"›"</span>
                     </a>
                 </li>
                 <li>
                     <a
                         href="#"
-                        class="hover:no-underline no-underline flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-200 hover:bg-neutral-800 transition-all duration-150"
+                        class="hover:no-underline no-underline flex items-center gap-3 px-3 py-2 rounded text-neutral-200 hover:bg-neutral-800 transition-all duration-150"
                     >
-                        <span>"🔄"</span>
+
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#f6c177"><path d="M480-120q-126 0-223-76.5T131-392q-4-15 6-27.5t27-14.5q16-2 29 6t18 24q24 90 99 147t170 57q117 0 198.5-81.5T760-480q0-117-81.5-198.5T480-760q-69 0-129 32t-101 88h70q17 0 28.5 11.5T360-600q0 17-11.5 28.5T320-560H160q-17 0-28.5-11.5T120-600v-160q0-17 11.5-28.5T160-800q17 0 28.5 11.5T200-760v54q51-64 124.5-99T480-840q75 0 140.5 28.5t114 77q48.5 48.5 77 114T840-480q0 75-28.5 140.5t-77 114q-48.5 48.5-114 77T480-120Zm40-376 100 100q11 11 11 28t-11 28q-11 11-28 11t-28-11L452-452q-6-6-9-13.5t-3-15.5v-159q0-17 11.5-28.5T480-680q17 0 28.5 11.5T520-640v144Z"/></svg>
+                        // <span>"🔄"</span>
                         "Activity"
+            <span class="ml-auto text-lg leading-none font-normal">"›"</span>
                     </a>
                 </li>
                 <li>
                     <div
                         on:click=toggle_menu
-                        class="hover:no-underline no-underline flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-neutral-800 transition-all duration-150"
+                        class="hover:no-underline cursor-default no-underline flex items-center gap-3 px-3 py-2 rounded hover:bg-neutral-800 transition-all duration-150"
                     >
-                        <span>"⚙️"</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#f6c177"><path d="M433-80q-27 0-46.5-18T363-142l-9-66q-13-5-24.5-12T307-235l-62 26q-25 11-50 2t-39-32l-47-82q-14-23-8-49t27-43l53-40q-1-7-1-13.5v-27q0-6.5 1-13.5l-53-40q-21-17-27-43t8-49l47-82q14-23 39-32t50 2l62 26q11-8 23-15t24-12l9-66q4-26 23.5-44t46.5-18h94q27 0 46.5 18t23.5 44l9 66q13 5 24.5 12t22.5 15l62-26q25-11 50-2t39 32l47 82q14 23 8 49t-27 43l-53 40q1 7 1 13.5v27q0 6.5-2 13.5l53 40q21 17 27 43t-8 49l-48 82q-14 23-39 32t-50-2l-60-26q-11 8-23 15t-24 12l-9 66q-4 26-23.5 44T527-80h-94Zm7-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"/></svg>
+                        // <span>"⚙️"</span>
                         "Settings"
+            <span class="ml-auto text-lg leading-none font-normal">"›"</span>
                     </div>
                 </li>
             </ul>
             <hr class="m-0 border-neutral-600" />
             // <!-- Token List -->
-            <div class="space-y-2, px-3 pt-4">
+            <div class="space-y-1 px-1 pt-2">
                 // <!-- Wallet Header -->
-                <div class="flex items-center gap-3 px-4 py-2 rounded-lg text-neutral-200 font-semibold">
-                    <span>"💰"</span>
+                <div class="flex items-center gap-3 px-3 py-2 text-neutral-200 font-semibold">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#f6c177"><path d="M200-200v-560 560Zm0 80q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v100h-80v-100H200v560h560v-100h80v100q0 33-23.5 56.5T760-120H200Zm320-160q-33 0-56.5-23.5T440-360v-240q0-33 23.5-56.5T520-680h280q33 0 56.5 23.5T880-600v240q0 33-23.5 56.5T800-280H520Zm280-80v-240H520v240h280Zm-160-60q25 0 42.5-17.5T700-480q0-25-17.5-42.5T640-540q-25 0-42.5 17.5T580-480q0 25 17.5 42.5T640-420Z"/></svg>
+                    // <span>"💰"</span>
                     "Wallet"
                 </div>
                 // <!-- Token Item -->
-                <div class="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-800">
+                <div class="flex items-center justify-between px-3 py-2 rounded hover:bg-neutral-800">
                     <div class="flex items-center gap-3">
-                        <img src="/icons/scrt-black-192.png" alt="SCRT logo" class="w-8 h-8" />
+                        <img src="/icons/scrt-black-192.png" alt="SCRT logo" class="w-6 h-6" />
                         <div>
                             <div class="text-sm font-semibold">SCRT</div>
                             <div class="text-xs text-gray-400">Secret</div>
@@ -487,12 +555,12 @@ pub fn WalletMenu(
                 </div>
 
                 // <!-- Token Item -->
-                <div class="flex items-center justify-between p-3 rounded-lg hover:bg-neutral-800">
+                <div class="flex items-center justify-between px-3 py-2 rounded hover:bg-neutral-800">
                     <div class="flex items-center gap-3">
                         <img
                             src="https://raw.githubusercontent.com/traderjoe-xyz/joe-tokenlists/main/logos/0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E/logo.png"
                             alt="USDC logo"
-                            class="w-8 h-8"
+                            class="w-6 h-6"
                         />
                         <div>
                             <div class="text-sm font-semibold">USDC</div>
@@ -510,11 +578,11 @@ pub fn WalletMenu(
 }
 
 #[component]
-pub fn OptionsMenu(
+pub fn SettingsMenu(
     dialog_ref: NodeRef<Dialog>,
     toggle_menu: impl Fn(MouseEvent) + 'static,
 ) -> impl IntoView {
-    info!("rendering <OptionsMenu/>");
+    info!("rendering <SettingMenu/>");
 
     let url_input = NodeRef::<Input>::new();
     let chain_id_input = NodeRef::<Input>::new();
@@ -555,7 +623,7 @@ pub fn OptionsMenu(
     };
 
     view! {
-        <dialog node_ref=dialog_ref class="inset-0">
+        <dialog node_ref=dialog_ref class="inset-0 rounded border-neutral-200">
             // NOTE: In this case, the effect is so small, it's not worth worrying about.
             // class=("invisible", move || dialog_ref.get().is_some_and(|dialog| !dialog.open()))
             <div class="flex flex-col gap-4 items-center">
@@ -563,10 +631,11 @@ pub fn OptionsMenu(
                     "Close Menu"
                 </button>
                 <SuggestChains />
-                <div>"Node Configuration"</div>
+        // TODO: just use a regular signal setter
                 <form class="flex flex-col gap-4" on:submit=on_submit>
+                <div>"Node Endpoint"</div>
                     <input type="text" value=NODE node_ref=url_input class="w-64" />
-                    <input type="text" value=CHAIN_ID node_ref=chain_id_input />
+                    // <input type="text" value=CHAIN_ID node_ref=chain_id_input />
                     <input type="submit" value="Update" class="" />
                 </form>
                 <button
@@ -715,6 +784,19 @@ fn Home() -> impl IntoView {
                     </span>
                 </li>
             </ul>
+        </div>
+    }
+}
+
+#[component]
+fn ToastMaster() -> impl IntoView {
+    info!("rendering <ToastMaster/>");
+
+    view! {
+        <div class="toast-container">
+            <div class="toast">
+        "Hello"
+            </div>
         </div>
     }
 }

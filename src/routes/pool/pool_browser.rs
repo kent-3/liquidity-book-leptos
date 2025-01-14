@@ -4,7 +4,7 @@ use ammber_sdk::contract_interfaces::lb_pair::LbPair;
 use cosmwasm_std::ContractInfo;
 use leptos::prelude::*;
 use leptos_router::components::A;
-use shade_protocol::swap::core::TokenType;
+use liquidity_book::core::TokenType;
 use tracing::{debug, info};
 
 #[component]
