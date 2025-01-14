@@ -10,6 +10,16 @@ module.exports = {
         "ping-once": "ping 1s cubic-bezier(0, 0, 0.2, 1) 1",
         "spin-slow": "spin 3s linear infinite",
       },
+      boxShadow: {
+        "gold-glow":
+          "0 0 8px rgba(246, 193, 119, 0.6), 0 0 16px rgba(246, 193, 119, 0.4), 0 0 32px rgba(246, 193, 119, 0.2)",
+        // "foam-glow":
+        //   "0 0 6px rgba(156, 207, 216, 0.6), 0 0 12px rgba(156, 207, 216, 0.4), 0 0 18px rgba(156, 207, 216, 0.2)",
+        "foam-glow": "0 0 6px rgba(156, 207, 216, 1)", // Single-layer shadow for glowing effect
+      },
+      dropShadow: {
+        "foam-glow": "0 0 6px rgba(156, 207, 216, 0.9)", // Simple glow effect
+      },
       colors: {
         // base: "#191724",
         // surface: "#1f1d2e",

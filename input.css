@@ -1,5 +1,17 @@
 /* @import "style/leptonic/leptonic-themes"; */
 
+:root {
+  --tw-blur: blur(0);
+  --tw-brightness: brightness(1);
+  --tw-contrast: contrast(1);
+  --tw-grayscale: grayscale(0);
+  --tw-hue-rotate: hue-rotate(0deg);
+  --tw-invert: invert(0);
+  --tw-saturate: saturate(1);
+  --tw-sepia: sepia(0);
+  --tw-drop-shadow: drop-shadow(0 0 #0000);
+}
+
 /* @tailwind base; */
 @tailwind components;
 @tailwind utilities;
