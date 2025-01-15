@@ -465,7 +465,10 @@ pub fn WalletMenu(
     // };
 
     view! {
-        <dialog node_ref=dialog_ref class="mr-0 mt-2 px-0 py-3 shadow-lg bg-neutral-800 rounded border border-neutral-600">
+        <dialog
+            node_ref=dialog_ref
+            class="mr-0 mt-2 px-0 py-3 shadow-lg bg-neutral-800 rounded border border-neutral-600"
+        >
             // <!-- Header -->
             <div class="flex items-center justify-between w-72 px-6 pb-3">
                 <div class="flex items-center gap-3">
@@ -481,7 +484,7 @@ pub fn WalletMenu(
                 </div>
                 <button
                     title="Disconnect wallet"
-                    class="w-10 h-10 p-0 bg-transparent active:bg-neutral-900 hover:bg-neutral-700 hover:outline-gold hover:saturate-150 hover:shadow-gold-glow transition-all ease-standard duration-200 rounded-full inline-flex items-center justify-center outline outline-[1.5px] outline-offset-0 outline-transparent border border-solid border-neutral-500"
+                    class="w-10 h-10 p-0 bg-transparent active:bg-neutral-900 hover:bg-neutral-700 hover:outline-gold hover:saturate-150 hover:shadow-gold-glow transition-all ease-standard duration-200 rounded-full inline-flex items-center justify-center outline outline-1 outline-offset-0 outline-transparent border border-solid border-neutral-500"
                 >
                     <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -603,7 +606,7 @@ pub fn WalletMenu(
                     "Wallet"
                 </div>
                 // <!-- Token Item -->
-                <div class="flex items-center justify-between px-3 py-2 rounded hover:bg-neutral-800">
+                <div class="flex items-center justify-between px-3 py-2 rounded hover:bg-neutral-700">
                     <div class="flex items-center gap-3">
                         <img src="/icons/uscrt.png" class="w-6 h-6" />
                         <div>
@@ -620,7 +623,7 @@ pub fn WalletMenu(
                 </div>
 
                 // <!-- Token Item -->
-                <div class="flex items-center justify-between px-3 py-2 rounded hover:bg-neutral-800">
+                <div class="flex items-center justify-between px-3 py-2 rounded hover:bg-neutral-700">
                     <div class="flex items-center gap-3">
                         <img
                             src="https://raw.githubusercontent.com/traderjoe-xyz/joe-tokenlists/main/logos/0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E/logo.png"
@@ -639,7 +642,7 @@ pub fn WalletMenu(
                 </div>
 
                 // <!-- Token Item -->
-                <div class="flex items-center justify-between px-3 py-2 rounded hover:bg-neutral-800">
+                <div class="flex items-center justify-between px-3 py-2 rounded hover:bg-neutral-700">
                     <div class="flex items-center gap-3">
                         <img src="/icons/amber.svg" alt="AMBER logo" class="w-6 h-6" />
                         <div>
