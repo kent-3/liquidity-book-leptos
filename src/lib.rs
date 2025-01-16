@@ -21,6 +21,7 @@ use leptos::{
     html::{Dialog, Input},
     logging::*,
     prelude::*,
+    task::spawn_local,
 };
 use leptos_icons::Icon;
 use leptos_meta::*;
@@ -47,7 +48,7 @@ mod utils;
 use components::{Spinner2, SuggestChains};
 use constants::{CHAIN_ID, NODE, TOKEN_MAP};
 use error::Error;
-use routes::{nav::Nav, pool::*, trade::*};
+use routes::{home::Home, nav::Nav, pool::*, trade::*};
 use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
 use types::Coin;
 
@@ -55,7 +56,7 @@ use types::Coin;
 // and use that as the return type of the Resource.
 
 #[derive(Clone)]
-pub struct NumberOfLbPairs(pub Resource<u32>);
+pub struct NumberOfLbPairs(pub LocalResource<u32>);
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -96,48 +97,117 @@ pub fn App() -> impl IntoView {
     let sscrt_address = SYMBOL_TO_ADDR.get("SSCRT").expect("sSCRT is missing!");
     debug!("sSCRT address: {sscrt_address}");
 
+    use codee::string::FromToStringCodec;
+    use leptos_use::storage::*;
+
+    // Bind string with LocalStorage stored in string format:
+    let (id, set_id, _) = use_local_storage::<u32, FromToStringCodec>("my-id");
+
+    Effect::new(move || debug!("id signal is {}", id.get()));
+
+    // spawn_local(async move {
+    //     if id.get() == 0 {
+    //         let number = LB_FACTORY
+    //             .get_number_of_lb_pairs()
+    //             .await
+    //             .unwrap_or_default();
+    //         set_id.set(number);
+    //     }
+    // });
+
+    // let storage = window()
+    //     .local_storage()
+    //     .expect("local storage not available?")
+    //     .expect("local storage returned none?");
+
+    // Effect::new(move || {
+    //     let x = storage.get_item("my-id");
+    //     debug!("{:?}", x);
+    // });
+
+    // spawn_local(async move {
+    //     if Ok(None) == storage.get_item("my-id") {
+    //         let number = LB_FACTORY
+    //             .get_number_of_lb_pairs()
+    //             .await
+    //             .unwrap_or_default();
+    //
+    //         let _ = storage.set_item("lb_pairs", &number.to_string());
+    //     }
+    // });
+
     // TODO: How can we get these lb_pair queries to only happen when navigating to the "pool" route,
     // but not re-run every time that page loads? We need some kind of in-memory cache for this,
     // because we do want it to re-run if the user refreshes the page (to load any new pairs).
 
-    let number_of_lb_pairs: Resource<u32> = Resource::new(
-        move || (),
-        move |_| async {
-            LB_FACTORY
-                .get_number_of_lb_pairs()
-                .await
-                .unwrap_or_default()
-        },
-    );
+    let number_of_lb_pairs: LocalResource<u32> = LocalResource::new(move || async move {
+        let storage = window()
+            .local_storage()
+            .expect("local storage not available?")
+            .expect("local storage returned none?");
 
-    let all_lb_pairs: Resource<Vec<LbPair>> = Resource::new(
-        move || (),
-        move |_| async move {
-            let i = number_of_lb_pairs.await;
-            let mut queries = Vec::new();
+        match storage.get_item("number_of_lb_pairs") {
+            Ok(None) => {
+                let number = LB_FACTORY
+                    .get_number_of_lb_pairs()
+                    .await
+                    .unwrap_or_default();
 
-            for index in 0..i {
-                queries.push(BatchQueryParams {
-                    id: index.to_string(),
-                    contract: LB_FACTORY.0.clone(),
-                    query_msg: lb_factory::QueryMsg::GetLbPairAtIndex { index },
-                });
+                let _ = storage.set_item("number_of_lb_pairs", &number.to_string());
+
+                number
             }
+            Ok(Some(number)) => number.parse::<u32>().unwrap(),
+            _ => 0,
+        }
+    });
 
-            let batch_query_message = msg_batch_query(queries);
+    // Effect::new(move || {
+    //     if let Some(number) = number_of_lb_pairs.get().as_deref() {
+    //         set_id.set(*number)
+    //     }
+    // });
 
+    let all_lb_pairs: LocalResource<Vec<LbPair>> = LocalResource::new(move || async move {
+        let storage = window()
+            .local_storage()
+            .expect("local storage not available?")
+            .expect("local storage returned none?");
+
+        let i = number_of_lb_pairs.await;
+        let mut queries = Vec::new();
+
+        for index in 0..i {
+            queries.push(BatchQueryParams {
+                id: index.to_string(),
+                contract: LB_FACTORY.0.clone(),
+                query_msg: lb_factory::QueryMsg::GetLbPairAtIndex { index },
+            });
+        }
+
+        let batch_query_message = msg_batch_query(queries);
+
+        match storage.get_item("all_lb_pairs") {
             // TODO: change BATCH_QUERY_ROUTER to automatically know the current chain_id
-            chain_query::<BatchQueryResponse>(
-                BATCH_QUERY_ROUTER.pulsar.code_hash.clone(),
-                BATCH_QUERY_ROUTER.pulsar.address.to_string(),
-                batch_query_message,
-            )
-            .await
-            .map(parse_batch_query)
-            .map(extract_pairs_from_batch)
-            .unwrap()
-        },
-    );
+            Ok(None) => {
+                let pairs = chain_query::<BatchQueryResponse>(
+                    BATCH_QUERY_ROUTER.pulsar.code_hash.clone(),
+                    BATCH_QUERY_ROUTER.pulsar.address.to_string(),
+                    batch_query_message,
+                )
+                .await
+                .map(parse_batch_query)
+                .map(extract_pairs_from_batch)
+                .unwrap();
+
+                let _ = storage.set_item("all_lb_pairs", &serde_json::to_string(&pairs).unwrap());
+
+                pairs
+            }
+            Ok(Some(pairs)) => serde_json::from_str(&pairs).unwrap(),
+            _ => vec![],
+        }
+    });
 
     fn extract_pairs_from_batch(batch_response: BatchQueryParsedResponse) -> Vec<LbPair> {
         batch_response
@@ -729,145 +799,6 @@ pub fn SettingsMenu(
                 </button>
             </div>
         </dialog>
-    }
-}
-
-#[component]
-fn Home() -> impl IntoView {
-    info!("rendering <Home/>");
-
-    let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
-    let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
-    let token_map = use_context::<TokenMap>().expect("tokens context missing!");
-
-    let viewing_keys = Resource::new(
-        move || keplr.key.track(),
-        move |_| {
-            let tokens = token_map.clone();
-            SendWrapper::new(async move {
-                if keplr.enabled.get_untracked() {
-                    debug!("gathering viewing_keys");
-                    let mut keys = Vec::new();
-                    for (_, token) in tokens.iter() {
-                        let key_result =
-                            Keplr::get_secret_20_viewing_key(CHAIN_ID, &token.contract_address)
-                                .await;
-
-                        if let Ok(key) = key_result {
-                            keys.push((token.name.clone(), token.contract_address.clone(), key));
-                        }
-                    }
-                    debug!("Found {} viewing keys.", keys.len());
-                    keys
-                } else {
-                    vec![]
-                }
-            })
-        },
-    );
-
-    let viewing_keys_list = move || {
-        Suspend::new(async move {
-            viewing_keys
-                .await
-                .into_iter()
-                .map(|(name, address, key)| {
-                    view! {
-                        <li>
-                            <strong>{name}</strong>
-                            ", "
-                            {address}
-                            ": "
-                            {key}
-                        </li>
-                    }
-                })
-                .collect_view()
-        })
-    };
-
-    let user_balance = Resource::new(
-        move || keplr.key.track(),
-        move |_| {
-            let client = Client::new(endpoint.get());
-            SendWrapper::new(async move {
-                let bank = BankQuerier::new(client);
-                let key = keplr.key.await?;
-
-                bank.balance(key.bech32_address, "uscrt")
-                    .await
-                    .map(|balance| Coin::from(balance.balance.unwrap()))
-                    .map_err(Error::from)
-                    .inspect(|coin| debug!("{coin:?}"))
-                    .inspect_err(|err| error!("{err:?}"))
-            })
-        },
-    );
-
-    // TODO: move all static resources like this (query response is always the same) to a separate
-    // module. Implement caching with local storage. They can all use a random account for the
-    // EncryptionUtils, since they don't depend on user address.
-
-    // let enigma_utils = EnigmaUtils::new(None, "secret-4").unwrap();
-    // let contract_address = "secret1s09x2xvfd2lp2skgzm29w2xtena7s8fq98v852";
-    // let code_hash = "9a00ca4ad505e9be7e6e6dddf8d939b7ec7e9ac8e109c8681f10db9cacb36d42";
-    // let token_info = Resource::new(
-    //     || (),
-    //     move |_| {
-    //         debug!("loading token_info resource");
-    //         let compute =
-    //             ComputeQuerier::new(Client::new(endpoint.get()), enigma_utils.clone().into());
-    //         SendWrapper::new(async move {
-    //             let query = QueryMsg::TokenInfo {};
-    //             compute
-    //                 .query_secret_contract(contract_address, code_hash, query)
-    //                 .await
-    //                 .map_err(Error::generic)
-    //         })
-    //     },
-    // );
-
-    view! {
-        <div class="p-2 max-w-lg">
-            <div class="text-3xl font-bold mb-4">"Introduction"</div>
-            <p>
-                "This project presents an efficient Automated Market Maker (AMM)
-                protocol, modeled after the Liquidity Book protocol used by Trader Joe ("
-                <a
-                    href="https://docs.traderjoexyz.com/concepts/concentrated-liquidity"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    "Liquidity Book docs"
-                </a>"). The protocol retains the key features of its predecessor, such as:"
-            </p>
-            <ul>
-                <li>
-                    <strong>"No Slippage: "</strong>
-                    <span>"Enabling token swaps with zero slippage within designated bins"</span>
-                </li>
-                <li>
-                    <strong>"Adaptive Pricing: "</strong>
-                    <span>
-                        "Offering Liquidity Providers extra dynamic fees during periods of
-                        increased market volatility"
-                    </span>
-                </li>
-                <li>
-                    <strong>"Enhanced Capital Efficiency: "</strong>
-                    <span>
-                        "Facilitating high-volume trading with minimal liquidity requirements"
-                    </span>
-                </li>
-                <li>
-                    <strong>"Customizable Liquidity: "</strong>
-                    <span>
-                        "Liquidity providers can customize their liquidity distributions
-                        based on their strategy"
-                    </span>
-                </li>
-            </ul>
-        </div>
     }
 }
 

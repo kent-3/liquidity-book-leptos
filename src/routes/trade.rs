@@ -233,11 +233,15 @@ pub fn Trade() -> impl IntoView {
             <div class="container space-y-6 sm:row-auto row-start-1">
                 <div class="space-y-2">
                     <div class="flex justify-between">
-                        <div>"From"</div>
+                        <label class="block mb-1 text-base" for="from-token">
+                            "From"
+                        </label>
+                        // <div>"From"</div>
                         <Secret20Balance token_address=token_x.into() />
                     </div>
                     <div class="flex justify-between space-x-2">
                         <input
+                            id="from-token"
                             class="p-1 "
                             type="number"
                             placeholder="0.0"

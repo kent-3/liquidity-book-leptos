@@ -232,8 +232,8 @@ pub fn PoolManager() -> impl IntoView {
         >
             "🡨 Back to pools list"
         </a>
-        <div class="flex flex-wrap py-2 items-center gap-x-4 gap-y-2">
 
+        <div class="flex flex-wrap py-2 items-center gap-x-4 gap-y-2">
             <Suspense fallback=move || {
                 view! { <div class="text-3xl font-bold">{token_a}" / "{token_b}</div> }
             }>
@@ -256,145 +256,164 @@ pub fn PoolManager() -> impl IntoView {
             </div>
         </div>
 
-        <details class="text-neutral-300 font-bold">
-            <summary class="text-lg cursor-pointer">Pool Details</summary>
-            <ul class="my-1 font-normal text-base text-neutral-200 ">
-                <Suspense fallback=|| view! { <div>"Loading Total Reserves..."</div> }>
-                    <li>
-                        "Total Reserves: "<span tabindex="0" class="cursor-pointer text-white peer">
-                            "🛈"
-                        </span>
-                        <li class="list-none text-sm font-bold text-violet-400 peer-focus:block hidden">
-                            "🛈 Reserves may be in reverse order"
+        <div class="grid auto-rows-min grid-cols-1 sm:grid-cols-2 gap-8">
+
+            <details class="text-neutral-300 font-bold">
+                <summary class="text-lg cursor-pointer">Pool Details</summary>
+                <ul class="my-1 font-normal text-base text-neutral-200 ">
+                    <Suspense fallback=|| view! { <div>"Loading Total Reserves..."</div> }>
+                        <li>
+                            "Total Reserves: "
+                            <span tabindex="0" class="cursor-pointer text-white peer">
+                                "🛈"
+                            </span>
+                            <li class="list-none text-sm font-bold text-violet-400 peer-focus:block hidden">
+                                "🛈 Reserves may be in reverse order"
+                            </li>
+                            {move || Suspend::new(async move {
+                                let reserves = total_reserves.await.unwrap();
+                                view! {
+                                    <li class="pl-4 list-none">
+                                        "reserve_x: "{reserves.reserve_x.to_string()}
+                                    </li>
+                                    <li class="pl-4 list-none">
+                                        "reserve_y: "{reserves.reserve_y.to_string()}
+                                    </li>
+                                }
+                            })}
                         </li>
-                        {move || Suspend::new(async move {
-                            let reserves = total_reserves.await.unwrap();
-                            view! {
-                                <li class="pl-4 list-none">
-                                    "reserve_x: "{reserves.reserve_x.to_string()}
-                                </li>
-                                <li class="pl-4 list-none">
-                                    "reserve_y: "{reserves.reserve_y.to_string()}
-                                </li>
+                    </Suspense>
+                    <Suspense fallback=|| view! { <div>"Loading Active ID..."</div> }>
+                        <li>
+                            "Active Bin ID: " {move || Suspend::new(async move { active_id.await })}
+                        </li>
+                    </Suspense>
+                    <Suspense fallback=|| view! { <div>"Loading Bin Reserves..."</div> }>
+                        <li>
+                            "Active Bin Reserves: "
+                            {move || Suspend::new(async move {
+                                let reserves = bin_reserves.await.unwrap();
+                                view! {
+                                    <li class="pl-4 list-none">
+                                        "bin_reserve_x: "{reserves.bin_reserve_x.to_string()}
+                                    </li>
+                                    <li class="pl-4 list-none">
+                                        "bin_reserve_y: "{reserves.bin_reserve_y.to_string()}
+                                    </li>
+                                }
+                            })}
+                        </li>
+                    </Suspense>
+                    // a bit crazy innit. but it works.
+                    <Suspense fallback=|| view! { <div>"Loading Nearby Bins..."</div> }>
+                        <li>
+                            "Nearby Bins: "
+                            {move || Suspend::new(async move {
+                                nearby_bins
+                                    .await
+                                    .and_then(|bins| {
+                                        Ok(
+                                            bins
+                                                .into_iter()
+                                                .map(|bin| {
+                                                    view! {
+                                                        <li class="pl-4 list-none">
+                                                            {bin.bin_id} " " {bin.bin_reserve_x.to_string()} " "
+                                                            {bin.bin_reserve_y.to_string()}
+                                                        </li>
+                                                    }
+                                                })
+                                                .collect::<Vec<_>>(),
+                                        )
+                                    })
+                            })}
+                        </li>
+                    </Suspense>
+                // <SecretQuery query=bin_total_supply />
+                </ul>
+            </details>
+
+            <div class="block px-5 py-4 max-w-md w-full box-border space-y-5 mx-auto outline outline-2 outline-neutral-700 rounded max-h-max">
+
+                <div class="flex gap-4 w-full max-w-md">
+                    // This preserves the query params when navigating to nested routes.
+                    // TODO: this is terribly complicated. it works, but there must be a simpler way
+                    <button
+                        class="w-full"
+                        on:click={
+                            let navigate_ = navigate.clone();
+                            move |_| {
+                                let mut pathname = location.pathname.get();
+                                let query_params = location.search.get();
+                                if pathname.ends_with('/') {
+                                    pathname.pop();
+                                }
+                                if pathname.ends_with("/add") || pathname.ends_with("/remove") {
+                                    pathname = pathname
+                                        .rsplit_once('/')
+                                        .map(|(base, _)| base)
+                                        .unwrap_or(&pathname)
+                                        .to_string();
+                                }
+                                let new_route = format!("{pathname}/add/?{query_params}");
+                                navigate_(&new_route, Default::default());
                             }
-                        })}
-                    </li>
-                </Suspense>
-                <Suspense fallback=|| view! { <div>"Loading Active ID..."</div> }>
-                    <li>
-                        "Active Bin ID: " {move || Suspend::new(async move { active_id.await })}
-                    </li>
-                </Suspense>
-                <Suspense fallback=|| view! { <div>"Loading Bin Reserves..."</div> }>
-                    <li>
-                        "Active Bin Reserves: "
-                        {move || Suspend::new(async move {
-                            let reserves = bin_reserves.await.unwrap();
-                            view! {
-                                <li class="pl-4 list-none">
-                                    "bin_reserve_x: "{reserves.bin_reserve_x.to_string()}
-                                </li>
-                                <li class="pl-4 list-none">
-                                    "bin_reserve_y: "{reserves.bin_reserve_y.to_string()}
-                                </li>
+                        }
+                    >
+                        "Add Liquidity"
+                    </button>
+
+                    <button
+                        class="w-full"
+                        on:click={
+                            let navigate_ = navigate.clone();
+                            move |_| {
+                                let mut pathname = location.pathname.get();
+                                let query_params = location.search.get();
+                                if pathname.ends_with('/') {
+                                    pathname.pop();
+                                }
+                                if pathname.ends_with("/add") || pathname.ends_with("/remove") {
+                                    pathname = pathname
+                                        .rsplit_once('/')
+                                        .map(|(base, _)| base)
+                                        .unwrap_or(&pathname)
+                                        .to_string();
+                                }
+                                let new_route = format!("{pathname}/remove/?{query_params}");
+                                navigate_(&new_route, Default::default());
                             }
-                        })}
-                    </li>
-                </Suspense>
-                // a bit crazy innit. but it works.
-                <Suspense fallback=|| view! { <div>"Loading Nearby Bins..."</div> }>
-                    <li>
-                        "Nearby Bins: "
-                        {move || Suspend::new(async move {
-                            nearby_bins
-                                .await
-                                .and_then(|bins| {
-                                    Ok(
-                                        bins
-                                            .into_iter()
-                                            .map(|bin| {
-                                                view! {
-                                                    <li class="pl-4 list-none">
-                                                        {bin.bin_id} " " {bin.bin_reserve_x.to_string()} " "
-                                                        {bin.bin_reserve_y.to_string()}
-                                                    </li>
-                                                }
-                                            })
-                                            .collect::<Vec<_>>(),
-                                    )
-                                })
-                        })}
-                    </li>
-                </Suspense>
-            // <SecretQuery query=bin_total_supply />
-            </ul>
-        </details>
+                        }
+                    >
+                        "Remove Liquidity"
+                    </button>
 
-        <div class="flex gap-4 py-2">
-            // This preserves the query params when navigating to nested routes.
-            // TODO: this is terribly complicated. it works, but there must be a simpler way
-            <button on:click={
-                let navigate_ = navigate.clone();
-                move |_| {
-                    let mut pathname = location.pathname.get();
-                    let query_params = location.search.get();
-                    if pathname.ends_with('/') {
-                        pathname.pop();
-                    }
-                    if pathname.ends_with("/add") || pathname.ends_with("/remove") {
-                        pathname = pathname
-                            .rsplit_once('/')
-                            .map(|(base, _)| base)
-                            .unwrap_or(&pathname)
-                            .to_string();
-                    }
-                    let new_route = format!("{pathname}/add/?{query_params}");
-                    navigate_(&new_route, Default::default());
-                }
-            }>"Add Liquidity"</button>
+                // <button on:click={
+                // let navigate_ = navigate.clone();
+                // move |_| {
+                // let mut pathname = location.pathname.get();
+                // let query_params = location.search.get();
+                // if pathname.ends_with('/') {
+                // pathname.pop();
+                // }
+                // if pathname.ends_with("/add") || pathname.ends_with("/remove") {
+                // pathname = pathname
+                // .rsplit_once('/')
+                // .map(|(base, _)| base)
+                // .unwrap_or(&pathname)
+                // .to_string();
+                // }
+                // let new_route = format!("{pathname}/?{query_params}");
+                // navigate_(&new_route, Default::default());
+                // }
+                // }>"Nevermind"</button>
+                </div>
 
-            <button on:click={
-                let navigate_ = navigate.clone();
-                move |_| {
-                    let mut pathname = location.pathname.get();
-                    let query_params = location.search.get();
-                    if pathname.ends_with('/') {
-                        pathname.pop();
-                    }
-                    if pathname.ends_with("/add") || pathname.ends_with("/remove") {
-                        pathname = pathname
-                            .rsplit_once('/')
-                            .map(|(base, _)| base)
-                            .unwrap_or(&pathname)
-                            .to_string();
-                    }
-                    let new_route = format!("{pathname}/remove/?{query_params}");
-                    navigate_(&new_route, Default::default());
-                }
-            }>"Remove Liquidity"</button>
+                <Outlet />
 
-            <button on:click={
-                let navigate_ = navigate.clone();
-                move |_| {
-                    let mut pathname = location.pathname.get();
-                    let query_params = location.search.get();
-                    if pathname.ends_with('/') {
-                        pathname.pop();
-                    }
-                    if pathname.ends_with("/add") || pathname.ends_with("/remove") {
-                        pathname = pathname
-                            .rsplit_once('/')
-                            .map(|(base, _)| base)
-                            .unwrap_or(&pathname)
-                            .to_string();
-                    }
-                    let new_route = format!("{pathname}/?{query_params}");
-                    navigate_(&new_route, Default::default());
-                }
-            }>"Nevermind"</button>
+            </div>
+
         </div>
-
-        <Outlet />
     }
 }
 

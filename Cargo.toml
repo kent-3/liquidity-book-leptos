@@ -48,15 +48,10 @@ reactive_stores = { version = "0.1.3" }
 thaw = { version = "0.4.1", features = ["csr"] }
 leptos_icons = { version = "0.5.0" }
 icondata = "0.5"
-
-# leptos-use = { git = "https://github.com/Synphonyte/leptos-use.git", branch = "leptos-0.7" }
-# leptonic = { git = "https://github.com/lpotthast/leptonic.git", branch = "main" }
-# codee = { version = "0.2", features = [
-#   "json_serde",
-#   "msgpack_serde",
-#   "base64",
-#   "prost",
-# ] }
+# leptos-struct-table = "0.14.0-beta"
+leptos-use = { version = "0.15.3", default-features = false, features = ["storage"] }
+codee = { version = "0.2", features = ["json_serde", "json_serde_wasm", "base64", "prost"] }
+# leptonic = { git = "https://github.com/lpotthast/leptonic.git", branch = "migrate-to-leptos-0.7" }
 
 # gRPC
 tonic = { version = "0.12.2", default-features = false }

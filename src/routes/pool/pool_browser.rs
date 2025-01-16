@@ -1,7 +1,6 @@
 use crate::prelude::*;
 use crate::Error;
 use ammber_sdk::contract_interfaces::lb_pair::LbPair;
-use cosmwasm_std::ContractInfo;
 use leptos::prelude::*;
 use leptos_router::components::A;
 use liquidity_book::core::TokenType;
@@ -18,14 +17,47 @@ pub fn PoolBrowser() -> impl IntoView {
     let number_of_lb_pairs = use_context::<crate::NumberOfLbPairs>()
         .expect("missing the NumberOfLbPairsResponse resource context")
         .0;
-    let all_lb_pairs =
-        use_context::<Resource<Vec<LbPair>>>().expect("missing the Vec<LbPair> resource context");
+    let all_lb_pairs = use_context::<LocalResource<Vec<LbPair>>>()
+        .expect("missing the Vec<LbPair> resource context");
+
+    // TODO: experiment with leptos_struct_table
+    // use leptos_struct_table::*;
+
+    // #[derive(TableRow, Clone, Default, Debug)]
+    // #[table(impl_vec_data_provider)]
+    // struct Pool {
+    //     pub pool_name: String,
+    //     pub liquidity: u32,
+    //     pub depth_x: u32,
+    //     pub depth_y: u32,
+    //     pub fees: u32,
+    // }
+    //
+    // let rows = all_lb_pairs
+    //     .get()
+    //     .map(|vec| {
+    //         vec.iter()
+    //             .map(|n| Pool {
+    //                 pool_name: n.contract.address.to_string(),
+    //                 ..Default::default()
+    //             })
+    //             .collect::<Vec<Pool>>()
+    //     })
+    //     .unwrap_or_default();
+
+    // Effect::new(move || debug!("{:?}", rows));
 
     view! {
         <div class="text-3xl font-bold">"Pool"</div>
         <div class="text-sm text-neutral-400">"Provide liquidity and earn fees."</div>
 
-        <h3 class="mb-1">"Existing Pools - " {move || number_of_lb_pairs.get()}</h3>
+        // <table>
+        // <TableContent rows=rows scroll_container="html"/>
+        // </table>
+
+        <h3 class="mb-1">
+            "Existing Pools - " {move || number_of_lb_pairs.get().as_deref().cloned()}
+        </h3>
         // crazy, but it works
         <Suspense fallback=|| view! { <div>"Loading..."</div> }>
             <ul>

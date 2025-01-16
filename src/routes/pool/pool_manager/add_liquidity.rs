@@ -1,3 +1,5 @@
+use crate::chain_query;
+use crate::support::COMPUTE_QUERIER;
 use crate::{error::Error, prelude::*, state::*, support::Querier};
 use ammber_sdk::{
     constants::liquidity_config::{
@@ -24,6 +26,7 @@ use rsecret::{
     tx::ComputeServiceClient,
     TxOptions,
 };
+use secret_toolkit_snip20::TokenInfoResponse;
 use secretrs::{
     compute::{MsgExecuteContract, MsgExecuteContractResponse},
     tx::Msg,
@@ -54,6 +57,48 @@ pub fn AddLiquidity() -> impl IntoView {
             .and_then(|string| string.parse::<u16>().ok())
             .unwrap_or_default()
     };
+
+    // TODO: move these to support/utils
+    async fn addr_2_contract(contract_address: impl Into<String>) -> Result<ContractInfo, Error> {
+        let contract_address = contract_address.into();
+
+        if let Some(token) = TOKEN_MAP.get(&contract_address) {
+            Ok(ContractInfo {
+                address: Addr::unchecked(token.contract_address.clone()),
+                code_hash: token.code_hash.clone(),
+            })
+        } else {
+            COMPUTE_QUERIER
+                .code_hash_by_contract_address(&contract_address)
+                .await
+                .map_err(Error::from)
+                .map(|code_hash| ContractInfo {
+                    address: Addr::unchecked(contract_address),
+                    code_hash,
+                })
+        }
+    }
+    async fn token_symbol_convert(address: String) -> String {
+        if let Some(token) = TOKEN_MAP.get(&address) {
+            return token.symbol.clone();
+        }
+        let contract = addr_2_contract(&address).await.unwrap();
+
+        chain_query::<TokenInfoResponse>(
+            contract.address.to_string(),
+            contract.code_hash,
+            secret_toolkit_snip20::QueryMsg::TokenInfo {},
+        )
+        .await
+        .map(|x| x.token_info.symbol)
+        .unwrap_or(address)
+    }
+
+    let token_a_symbol =
+        AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_a()).await });
+
+    let token_b_symbol =
+        AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_b()).await });
 
     // prevents scrolling to the top of the page each time a query param changes
     let nav_options = NavigateOptions {
@@ -402,25 +447,25 @@ pub fn AddLiquidity() -> impl IntoView {
     };
 
     view! {
-        <div class="container max-w-xs py-2 space-y-2">
+        <div class="max-w-md space-y-2">
             <div class="text-xl font-semibold">Deposit Liquidity</div>
             <div class="flex items-center gap-2">
-                <div class="basis-1/3 text-md text-ellipsis overflow-hidden">{token_a}</div>
                 <input
-                    class="p-1 basis-2/3"
+                    class="p-1 w-full"
                     type="number"
                     placeholder="Enter Amount"
                     on:change=move |ev| set_amount_x.set(event_target_value(&ev))
                 />
+                <div class="text-sm p-2">{move || token_a_symbol.get()}</div>
             </div>
             <div class="flex items-center gap-2">
-                <div class="basis-1/3 text-md text-ellipsis overflow-hidden">{token_b}</div>
                 <input
-                    class="p-1 basis-2/3"
+                    class="p-1 w-full"
                     type="number"
                     placeholder="Enter Amount"
                     on:change=move |ev| set_amount_y.set(event_target_value(&ev))
                 />
+                <div class="text-sm p-2">{move || token_b_symbol.get()}</div>
             </div>
 
             <div class="text-xl font-semibold !mt-6">Choose Liquidity Shape</div>
@@ -458,30 +503,117 @@ pub fn AddLiquidity() -> impl IntoView {
                 <div class="font-mono">"todo!()"</div>
             </Show>
             <Show when=move || price_by() == "radius">
-                <div class="flex items-center gap-2">
-                    <div class="basis-1/3">"Target Price:"</div>
-                    <input
-                        class="p-1 basis-2/3"
-                        type="decimal"
-                        placeholder="Enter Target Price"
-                        min="0"
-                        prop:value=move || target_price.get()
-                        on:change=move |ev| set_target_price.set(event_target_value(&ev))
-                    />
-                </div>
-                <div class="flex items-center gap-2">
-                    <div class="basis-1/3">"Radius:"</div>
-                    <input
-                        class="p-1 basis-2/3"
-                        type="number"
-                        placeholder="Enter Bin Radius"
-                        min="0"
-                        prop:value=move || radius.get()
-                        on:change=move |ev| {
-                            set_radius
-                                .set(event_target_value(&ev).parse::<u32>().unwrap_or_default())
-                        }
-                    />
+                // <div class="flex items-center gap-2">
+                // <div class="basis-1/3">"Target Price:"</div>
+                // <input
+                // class="p-1 basis-2/3"
+                // type="decimal"
+                // placeholder="Enter Target Price"
+                // min="0"
+                // prop:value=move || target_price.get()
+                // on:change=move |ev| set_target_price.set(event_target_value(&ev))
+                // />
+                // </div>
+                // <div class="flex items-center gap-2">
+                // <div class="basis-1/3">"Radius:"</div>
+                // <input
+                // class="p-1 basis-2/3"
+                // type="number"
+                // placeholder="Enter Bin Radius"
+                // min="0"
+                // prop:value=move || radius.get()
+                // on:change=move |ev| {
+                // set_radius
+                // .set(event_target_value(&ev).parse::<u32>().unwrap_or_default())
+                // }
+                // />
+                // </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block mb-1 text-xs" for="target-price">
+                            Target Price:
+                        </label>
+                        <input
+                            id="target-price"
+                            class="p-1 w-full box-border"
+                            type="decimal"
+                            placeholder="Enter Target Price"
+                            min="0"
+                            prop:value=move || target_price.get()
+                            on:change=move |ev| set_target_price.set(event_target_value(&ev))
+                        />
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs" for="radius">
+                            Radius (number of bins):
+                        </label>
+                        <input
+                            id="radius"
+                            class="p-1 w-full box-border"
+                            type="number"
+                            placeholder="Enter Bin Radius"
+                            min="0"
+                            prop:value=move || radius.get()
+                            on:change=move |ev| {
+                                set_radius
+                                    .set(event_target_value(&ev).parse::<u32>().unwrap_or_default())
+                            }
+                        />
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs" for="range-min">
+                            Range Min:
+                        </label>
+                        <input
+                            id="range-min"
+                            class="p-1 w-full box-border"
+                            type="decimal"
+                            placeholder="Range Min"
+                            disabled
+                        />
+                    // prop:value=move || range_min.get()
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs" for="range-max">
+                            Range Max:
+                        </label>
+                        <input
+                            id="range-max"
+                            class="p-1 w-full box-border"
+                            type="decimal"
+                            placeholder="Range Max"
+                            disabled
+                        />
+                    // prop:value=move || range_max.get()
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs" for="num-bins">
+                            Num Bins:
+                        </label>
+                        <input
+                            id="num-bins"
+                            class="p-1 w-full box-border"
+                            type="number"
+                            placeholder="Number of Bins"
+                            min="0"
+                            disabled
+                        />
+                    // prop:value=move || num_bins.get()
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-xs" for="pct-range">
+                            Pct Range:
+                        </label>
+                        <input
+                            id="pct-range"
+                            class="p-1 w-full box-border"
+                            type="decimal"
+                            placeholder="Percentage Range"
+                            disabled
+                        />
+                    // prop:value=move || pct_range.get()
+                    </div>
                 </div>
 
                 <button class="w-full p-1 !mt-6" on:click=add_liquidity>
