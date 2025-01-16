@@ -66,7 +66,7 @@ pub fn Trade() -> impl IntoView {
 
     let amount_in = RwSignal::new(String::new());
 
-    let get_quote = Action::new(move |_: &()| {
+    let get_quote: Action<(), Result<Quote, Error>> = Action::new(move |_: &()| {
         let token_x = token_x.get();
         let token_y = token_y.get();
         let amount_in = amount_in.get();
@@ -203,8 +203,7 @@ pub fn Trade() -> impl IntoView {
             let tx = compute_service_client
                 .execute_contract(
                     msg,
-                    // FIXME: get from the quote.route or path.token_path
-                    "9a00ca4ad505e9be7e6e6dddf8d939b7ec7e9ac8e109c8681f10db9cacb36d42",
+                    path().unwrap().token_path[0].address().as_str(),
                     tx_options,
                 )
                 .await
@@ -224,11 +223,44 @@ pub fn Trade() -> impl IntoView {
         }
     });
 
+    use liquidity_book::interfaces::lb_quoter::Quote;
+
+    let current_quote = move || {
+        get_quote
+            .value()
+            .get()
+            .and_then(Result::ok)
+            .map(|quote| serde_json::to_string_pretty(&quote).unwrap())
+        // .map(|quote| format!("{:#?}", quote))
+    };
+
+    // returns the final amount (the output token)
+    let amount_out = move || {
+        get_quote
+            .value()
+            .get()
+            .and_then(Result::ok)
+            .map(|mut quote| quote.amounts.pop())
+            .flatten()
+            .map(|amount| amount.to_string())
+    };
+
+    // pub struct Quote {
+    //     pub route: Vec<TokenType>,
+    //     pub pairs: Vec<ContractInfo>,
+    //     pub bin_steps: Vec<u16>,
+    //     pub versions: Vec<Version>,
+    //     pub amounts: Vec<Uint128>,
+    //     pub virtual_amounts_without_slippage: Vec<Uint128>,
+    //     pub fees: Vec<Uint128>,
+    // }
+
     view! {
         <LoadingModal when=swap.pending() message="Preparing Transaction... (watch the console)" />
-        <div class="grid gap-4 sm:grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)] grid-cols-1 grid-rows-2">
-            <div class="container flex items-center justify-center sm:row-auto row-start-2 outline outline-2 outline-neutral-700 rounded">
-                <p class="text-center italic text-neutral-500">"what should go here?"</p>
+        <div class="grid gap-4 sm:grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)] grid-cols-1 grid-rows-2 sm:grid-rows-1">
+            <div class="container block align-middle sm:row-auto row-start-2 outline outline-2 outline-neutral-700 rounded">
+                // <p class="text-center italic text-neutral-500">"what should go here?"</p>
+                <pre class="px-2 text-xs whitespace-pre-wrap text-neutral-300">{current_quote}</pre>
             </div>
             <div class="container space-y-6 sm:row-auto row-start-1">
                 <div class="space-y-2">
@@ -242,7 +274,7 @@ pub fn Trade() -> impl IntoView {
                     <div class="flex justify-between space-x-2">
                         <input
                             id="from-token"
-                            class="p-1 "
+                            class="p-1 w-full"
                             type="number"
                             placeholder="0.0"
                             bind:value=amount_in
@@ -282,7 +314,7 @@ pub fn Trade() -> impl IntoView {
                     </div>
                     <div class="flex justify-between space-x-2">
                         <input
-                            class="p-1 "
+                            class="p-1 w-full"
                             type="number"
                             placeholder="0.0"
                             prop:value=move || amount_y.get()
@@ -314,22 +346,16 @@ pub fn Trade() -> impl IntoView {
                         </select>
                     </div>
                 </div>
-                <button class="p-1 block" on:click=move |_| { _ = get_quote.dispatch(()) }>
+                <button
+                    class="p-1 block"
+                    disabled=move || amount_in.get().is_empty()
+                    on:click=move |_| { _ = get_quote.dispatch(()) }
+                >
                     "Estimate Swap"
                 </button>
-                // returns the final amount (the output token)
-                <p>
-                    {move || {
-                        format!(
-                            "{:?}",
-                            get_quote
-                                .value()
-                                .get()
-                                .and_then(|result| result.map(|mut quote| quote.amounts.pop()).ok())
-                                .unwrap_or_default(),
-                        )
-                    }}
-                </p>
+                <Show when=move || amount_out().is_some() fallback=|| ()>
+                    <p>"Amount out: " {amount_out}</p>
+                </Show>
                 <button
                     class="p-1 block"
                     disabled=move || !keplr.enabled.get()

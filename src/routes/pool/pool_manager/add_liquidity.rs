@@ -532,7 +532,7 @@ pub fn AddLiquidity() -> impl IntoView {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block mb-1 text-xs" for="target-price">
-                            Target Price:
+                            "Target Price:"
                         </label>
                         <input
                             id="target-price"
@@ -546,7 +546,7 @@ pub fn AddLiquidity() -> impl IntoView {
                     </div>
                     <div>
                         <label class="block mb-1 text-xs" for="radius">
-                            Radius (number of bins):
+                            "Radius (number of bins):"
                         </label>
                         <input
                             id="radius"
@@ -563,7 +563,7 @@ pub fn AddLiquidity() -> impl IntoView {
                     </div>
                     <div>
                         <label class="block mb-1 text-xs" for="range-min">
-                            Range Min:
+                            "Range Min:"
                         </label>
                         <input
                             id="range-min"
@@ -576,7 +576,7 @@ pub fn AddLiquidity() -> impl IntoView {
                     </div>
                     <div>
                         <label class="block mb-1 text-xs" for="range-max">
-                            Range Max:
+                            "Range Max:"
                         </label>
                         <input
                             id="range-max"
@@ -589,7 +589,7 @@ pub fn AddLiquidity() -> impl IntoView {
                     </div>
                     <div>
                         <label class="block mb-1 text-xs" for="num-bins">
-                            Num Bins:
+                            "Num Bins:"
                         </label>
                         <input
                             id="num-bins"
@@ -603,7 +603,7 @@ pub fn AddLiquidity() -> impl IntoView {
                     </div>
                     <div>
                         <label class="block mb-1 text-xs" for="pct-range">
-                            Pct Range:
+                            "Pct Range:"
                         </label>
                         <input
                             id="pct-range"
