@@ -52,6 +52,9 @@ use routes::{home::Home, nav::Nav, pool::*, trade::*};
 use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
 use types::Coin;
 
+// TODO: configure this to be different in dev mode
+pub static BASE_URL: &str = "/liquidity-book-leptos";
+
 // TODO: If possible, use batch queries for resources. Combine the outputs in a struct
 // and use that as the return type of the Resource.
 
@@ -543,7 +546,7 @@ pub fn WalletMenu(
             <div class="flex items-center justify-between w-72 px-6 pb-3">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 flex items-center justify-center bg-transparent outline outline-[1.5px] outline-foam shadow-foam-glow rounded-full">
-                        <img class="w-5 h-5" src="/icons/SECRET_FOAM-ICON_RGB.svg" />
+                        <img class="w-5 h-5" src=format!("{BASE_URL}{}", "/icons/SECRET_FOAM-ICON_RGB.svg") />
                     </div>
                     <div>
                         <div class="text-xs text-neutral-400 font-light">"Connected Account:"</div>
@@ -678,7 +681,7 @@ pub fn WalletMenu(
                 // <!-- Token Item -->
                 <div class="flex items-center justify-between px-3 py-2 rounded hover:bg-neutral-700">
                     <div class="flex items-center gap-3">
-                        <img src="/icons/uscrt.png" class="w-6 h-6" />
+                        <img src=format!("{BASE_URL}{}", "/icons/uscrt.png") class="w-6 h-6" />
                         <div>
                             <div class="text-sm font-semibold">SCRT</div>
                             <div class="text-xs text-gray-400">Secret</div>
@@ -714,7 +717,7 @@ pub fn WalletMenu(
                 // <!-- Token Item -->
                 <div class="flex items-center justify-between px-3 py-2 rounded hover:bg-neutral-700">
                     <div class="flex items-center gap-3">
-                        <img src="/icons/amber.svg" alt="AMBER logo" class="w-6 h-6" />
+                        <img src=format!("{BASE_URL}{}", "/icons/amber.svg") class="w-6 h-6" />
                         <div>
                             <div class="text-sm font-semibold">AMBER</div>
                             <div class="text-xs text-gray-400">Amber</div>
