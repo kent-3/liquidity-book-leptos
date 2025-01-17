@@ -33,9 +33,9 @@ pub use remove_liquidity::RemoveLiquidity;
 
 #[derive(Clone)]
 pub struct MyData {
-    pub x: f64,
-    pub y1: f64,
-    pub y2: f64,
+    x: f64,
+    y1: f64,
+    y2: f64,
 }
 
 impl MyData {
@@ -47,17 +47,17 @@ impl MyData {
 pub fn load_data() -> Signal<Vec<MyData>> {
     Signal::derive(|| {
         vec![
-            MyData::new(0.0, 0.0, 0.5),
-            MyData::new(1.0, 0.0, 1.0),
-            MyData::new(2.0, 0.0, 2.5),
-            MyData::new(3.0, 0.0, 3.0),
-            MyData::new(4.0, 0.0, 3.0),
-            MyData::new(5.0, 1.5, 1.5),
-            MyData::new(6.0, 3.0, 0.0),
-            MyData::new(7.0, 3.0, 0.0),
-            MyData::new(8.0, 2.5, 0.0),
-            MyData::new(9.0, 1.0, 0.0),
-            MyData::new(10.0, 0.5, 0.0),
+            MyData::new(45.0, 1.0, 0.0),
+            MyData::new(46.0, 2.0, 0.0),
+            MyData::new(47.0, 3.0, 0.0),
+            MyData::new(48.0, 4.0, 0.0),
+            MyData::new(49.0, 5.0, 0.0),
+            MyData::new(50.0, 3.0, 3.0),
+            MyData::new(51.0, 0.0, 5.0),
+            MyData::new(52.0, 0.0, 4.0),
+            MyData::new(53.0, 0.0, 3.0),
+            MyData::new(54.0, 0.0, 2.0),
+            MyData::new(55.0, 0.0, 1.0),
         ]
     })
 }
@@ -68,16 +68,17 @@ use leptos_chartistry::*;
 pub fn Example(debug: Signal<bool>, data: Signal<Vec<MyData>>) -> impl IntoView {
     let series = Series::new(|data: &MyData| data.x)
         .with_min_y(0.00)
-        // .with_colours([
-        //     Colour::from_rgb(115, 115, 115),
-        //     Colour::from_rgb(245, 50, 91),
-        // ])
-        .bar(|data: &MyData| data.y2)
-        .bar(|data: &MyData| data.y1);
+        .with_x_range(Some(40.0), Some(60.0))
+        .with_colours([
+            Colour::from_rgb(246, 193, 119),
+            Colour::from_rgb(49, 116, 143),
+        ])
+        .bar(Bar::new(|data: &MyData| data.y1).with_name("Token Y"))
+        .bar(Bar::new(|data: &MyData| data.y2).with_name("Token X"));
 
     view! {
         <Chart
-            aspect_ratio=AspectRatio::from_outer_height(330.0, 2.3)
+            aspect_ratio=AspectRatio::from_outer_height(330.0, 1.73)
             debug=debug
             series=series
             data=data

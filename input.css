@@ -50,12 +50,31 @@ body {
   @apply bg-pine text-white;
 }
 
+/* First N children */
+/* ._chartistry svg g g rect:nth-child(-n+5) { */
+/*     fill: blue; */
+/* } */
+
+/* Last N children */
+/* ._chartistry svg g g rect:nth-last-child(-n+5) { */
+/*     fill: red; */
+/* } */
+
+/* ._chartistry aside table tbody tr td:first-child { */
+/*     display: none; */
+/* } */
+
+/* doesn't actually work / the gaps are still there */
+/* ._chartistry svg g g rect[height="0"]{ */
+/*     display: none; */
+/* } */
+
 ._chartistry_tick_label {
   @apply text-neutral-200 stroke-neutral-500 fill-neutral-500;
 }
 
 ._chartistry_tooltip {
-  @apply !bg-neutral-700 !rounded !border-none;
+  @apply !p-3 !bg-neutral-700 !rounded !border-none;
 }
 
 /* Container to position the toasts */
