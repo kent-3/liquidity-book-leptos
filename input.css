@@ -386,7 +386,7 @@ ul {
 
   to {
     opacity: 0;
-    transform: translate(-25vw, 0);
+    transform: translate(-100px, 0);
   }
 }
 
@@ -418,7 +418,7 @@ ul {
 
   to {
     opacity: 0;
-    transform: translate(25vw, 0);
+    transform: translate(100px, 0);
   }
 }
 

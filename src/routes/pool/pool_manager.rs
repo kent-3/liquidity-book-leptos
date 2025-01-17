@@ -303,7 +303,7 @@ pub fn PoolManager() -> impl IntoView {
         <div class="grid auto-rows-min grid-cols-1 sm:grid-cols-2 gap-8">
 
             // left side of the screen
-            <div class="flex flex-col items-center gap-4">
+            <div class="flex flex-col items-center gap-6">
                 // my liquidity box
                 <div class="block w-full outline outline-2 outline-neutral-700 rounded">
                     <div class="px-6 py-4">
@@ -363,6 +363,16 @@ pub fn PoolManager() -> impl IntoView {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="block w-full outline outline-2 outline-neutral-700 rounded">
+                    <div class="px-6 py-4">
+                        <div class="w-full">
+                            <h2 class="m-0 mb-2 text-xl">"Fees Earned"</h2>
+                            <div class="flex justify-center items-center h-48">
+                                <p class="text-neutral-500">"You have no fees earned"</p>
                             </div>
                         </div>
                     </div>

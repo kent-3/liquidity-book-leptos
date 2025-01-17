@@ -55,7 +55,15 @@ pub fn PoolBrowser() -> impl IntoView {
         // <TableContent rows=rows scroll_container="html"/>
         // </table>
 
-        <h3 class="mb-3">"All Pools - " {move || number_of_lb_pairs.get().as_deref().cloned()}</h3>
+        <div class="flex items-center justify-between">
+            <h3 class="mb-3">"All Pools - " {move || number_of_lb_pairs.get().as_deref().cloned()}</h3>
+
+            <div class="">
+                <A href="/liquidity-book-leptos/pool/create">
+                    <button class="p-1">"Create New Pool"</button>
+                </A>
+            </div>
+        </div>
 
         <div class="flex flex-col gap-2 md:hidden">
             <Suspense fallback=|| {
@@ -204,12 +212,6 @@ pub fn PoolBrowser() -> impl IntoView {
                 </Suspense>
 
             </table>
-        </div>
-
-        <div class="mt-4">
-            <A href="/liquidity-book-leptos/pool/create">
-                <button class="p-1">"Create New Pool"</button>
-            </A>
         </div>
     }
 }
