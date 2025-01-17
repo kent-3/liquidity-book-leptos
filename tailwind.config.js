@@ -26,7 +26,7 @@ module.exports = {
         // overlay: "#26233a",
         muted: "#6e6a86",
         subtle: "#908caa",
-        // text: "#e0def4",
+        text: "#e0def4",
         love: "#eb6f92",
         gold: "#f6c177",
         rose: "#ebbcba",

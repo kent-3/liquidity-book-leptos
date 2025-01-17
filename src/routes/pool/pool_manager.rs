@@ -42,6 +42,10 @@ pub fn PoolManager() -> impl IntoView {
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
+    // TODO: I should provide a context here with all the pool information. that way child
+    // components like the Add/Remove liquidity ones can access it. I don't think putting the
+    // active_id as a query param in the url is a good idea (it should be updated frequently).
+
     let params = use_params_map();
     // TODO: decide on calling these a/b or x/y
     let token_a = move || {

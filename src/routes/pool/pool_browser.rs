@@ -55,55 +55,156 @@ pub fn PoolBrowser() -> impl IntoView {
         // <TableContent rows=rows scroll_container="html"/>
         // </table>
 
-        <h3 class="mb-1">
-            "Existing Pools - " {move || number_of_lb_pairs.get().as_deref().cloned()}
-        </h3>
-        // crazy, but it works
-        <Suspense fallback=|| view! { <div>"Loading..."</div> }>
-            <ul>
+        <h3 class="mb-3">"All Pools - " {move || number_of_lb_pairs.get().as_deref().cloned()}</h3>
+
+        <div class="flex flex-col gap-2 md:hidden">
+            <Suspense fallback=|| {
+                view! { <div>"Loading..."</div> }
+            }>
                 {move || Suspend::new(async move {
                     all_lb_pairs
                         .await
                         .into_iter()
                         .map(|n| {
                             view! {
-                                <li>
-                                    <a href=format!(
-                                        "/liquidity-book-leptos/pool/{}/{}/{}",
-                                        match n.token_x {
-                                            TokenType::CustomToken { ref contract_addr, .. } => {
-                                                contract_addr.to_string()
-                                            }
-                                            TokenType::NativeToken { ref denom } => denom.to_string(),
-                                        },
-                                        match n.token_y {
-                                            TokenType::CustomToken { ref contract_addr, .. } => {
-                                                contract_addr.to_string()
-                                            }
-                                            TokenType::NativeToken { ref denom } => denom.to_string(),
-                                        },
-                                        n.bin_step,
-                                    )>{n.contract.address.to_string()}</a>
-                                    " - "
-                                    {format!(
-                                        "[{}, {}, {} bps]",
-                                        TOKEN_MAP
-                                            .get(&n.token_x.unique_key())
-                                            .map(|t| t.symbol.clone())
-                                            .unwrap_or_default(),
-                                        TOKEN_MAP
-                                            .get(&n.token_y.unique_key())
-                                            .map(|t| t.symbol.clone())
-                                            .unwrap_or_default(),
-                                        n.bin_step,
-                                    )}
-                                </li>
+                                <div class="block bg-neutral-800 rounded space-y-4 border border-solid border-neutral-700 p-4">
+                                    <div class="flex items-center gap-4 text-base font-semibold">
+                                        <a
+                                            class="no-underline text-white"
+                                            href=format!(
+                                                "/liquidity-book-leptos/pool/{}/{}/{}",
+                                                match n.token_x {
+                                                    TokenType::CustomToken { ref contract_addr, .. } => {
+                                                        contract_addr.to_string()
+                                                    }
+                                                    TokenType::NativeToken { ref denom } => denom.to_string(),
+                                                },
+                                                match n.token_y {
+                                                    TokenType::CustomToken { ref contract_addr, .. } => {
+                                                        contract_addr.to_string()
+                                                    }
+                                                    TokenType::NativeToken { ref denom } => denom.to_string(),
+                                                },
+                                                n.bin_step,
+                                            )
+                                        >
+                                            <div class="">
+                                                {format!(
+                                                    "{} – {}",
+                                                    TOKEN_MAP
+                                                        .get(&n.token_x.unique_key())
+                                                        .map(|t| t.symbol.clone())
+                                                        .unwrap_or_default(),
+                                                    TOKEN_MAP
+                                                        .get(&n.token_y.unique_key())
+                                                        .map(|t| t.symbol.clone())
+                                                        .unwrap_or_default(),
+                                                )}
+                                            </div>
+                                        </a>
+                                        <div class="text-white text-xs py-1 px-2 rounded-full bg-neutral-700">
+                                            {format!("{} bps", n.bin_step)}
+                                        </div>
+
+                                    </div>
+                                    // TODO: how would I get this data while inside of the iterator?
+                                    <div class="flex flex-row justify-between text-sm">
+                                        <div class="flex flex-col">
+                                            <p class="mb-1 mt-0 text-neutral-400">"Liquidity"</p>
+                                            <p class="my-0 font-semibold">"$0.00"</p>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <p class="mb-1 mt-0 text-neutral-400">"Volume (24H)"</p>
+                                            <p class="my-0 font-semibold">"$0.00"</p>
+                                        </div>
+                                        <div class="flex flex-col">
+                                            <p class="mb-1 mt-0 text-neutral-400">"Fees (24H)"</p>
+                                            <p class="my-0 font-semibold">"$0.00"</p>
+                                        </div>
+                                    </div>
+                                </div>
                             }
                         })
                         .collect_view()
                 })}
-            </ul>
-        </Suspense>
+            </Suspense>
+        </div>
+
+        <div class="hidden md:block box-border p-2 min-w-full border border-solid border-neutral-700 rounded bg-neutral-800">
+            <table class="min-w-full -my-2 border-spacing-x-0 border-spacing-y-2">
+                <thead class="bg-neutral-700 rounded box-border border-0 border-solid border-spacing-x-0 border-spacing-y-2">
+                    <tr class="">
+                        <th class="px-4 py-2 text-left">Pool Name</th>
+                        <th class="px-4 py-2 text-right">Volume</th>
+                        <th class="px-4 py-2 text-right">Liquidity</th>
+                        <th class="px-4 py-2 text-right">Fees</th>
+                    </tr>
+                </thead>
+                // crazy, but it works
+                <Suspense fallback=|| view! { <div>"Loading..."</div> }>
+                    <tbody>
+                        {move || Suspend::new(async move {
+                            all_lb_pairs
+                                .await
+                                .into_iter()
+                                .map(|n| {
+                                    view! {
+                                        <tr>
+                                            <td class="px-4 py-2">
+                                                <div class="flex items-center gap-4 text-sm font-semibold">
+                                                    <a
+                                                        class="no-underline text-white"
+                                                        href=format!(
+                                                            "/liquidity-book-leptos/pool/{}/{}/{}",
+                                                            match n.token_x {
+                                                                TokenType::CustomToken { ref contract_addr, .. } => {
+                                                                    contract_addr.to_string()
+                                                                }
+                                                                TokenType::NativeToken { ref denom } => denom.to_string(),
+                                                            },
+                                                            match n.token_y {
+                                                                TokenType::CustomToken { ref contract_addr, .. } => {
+                                                                    contract_addr.to_string()
+                                                                }
+                                                                TokenType::NativeToken { ref denom } => denom.to_string(),
+                                                            },
+                                                            n.bin_step,
+                                                        )
+                                                    >
+                                                        <div class="">
+                                                            {format!(
+                                                                "{} – {}",
+                                                                TOKEN_MAP
+                                                                    .get(&n.token_x.unique_key())
+                                                                    .map(|t| t.symbol.clone())
+                                                                    .unwrap_or_default(),
+                                                                TOKEN_MAP
+                                                                    .get(&n.token_y.unique_key())
+                                                                    .map(|t| t.symbol.clone())
+                                                                    .unwrap_or_default(),
+                                                            )}
+                                                        </div>
+                                                    </a>
+                                                    <div class="text-white text-xs py-1 px-2 rounded-full bg-neutral-700">
+                                                        {format!("{} bps", n.bin_step)}
+                                                    </div>
+
+                                                </div>
+                                            </td>
+                                            // TODO: how would I get this data while inside of the iterator?
+                                            <td class="px-4 py-2 text-right">"$0.00"</td>
+                                            <td class="px-4 py-2 text-right">"$0.00"</td>
+                                            <td class="px-4 py-2 text-right">"$0.00"</td>
+                                        </tr>
+                                    }
+                                })
+                                .collect_view()
+                        })}
+                    </tbody>
+                </Suspense>
+
+            </table>
+        </div>
 
         <div class="mt-4">
             <A href="/liquidity-book-leptos/pool/create">

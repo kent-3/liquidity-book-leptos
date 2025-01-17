@@ -369,7 +369,7 @@ ul {
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translate(25vw, 0px);
+    transform: translate(100px, 0px);
   }
 
   to {
@@ -401,7 +401,7 @@ ul {
 @keyframes slideInBack {
   from {
     opacity: 0;
-    transform: translate(-25vw, 0);
+    transform: translate(-100px, 1);
   }
 
   to {

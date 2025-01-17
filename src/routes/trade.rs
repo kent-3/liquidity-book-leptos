@@ -349,7 +349,7 @@ pub fn Trade() -> impl IntoView {
                 <button
                     class="p-1 block"
                     disabled=move || amount_in.get().is_empty()
-                    on:click=move |_| { _ = get_quote.dispatch(()) }
+                    on:click=move |_| _ = get_quote.dispatch(())
                 >
                     "Estimate Swap"
                 </button>
