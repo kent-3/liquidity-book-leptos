@@ -50,6 +50,14 @@ body {
   @apply bg-pine text-white;
 }
 
+._chartistry_tick_label {
+  @apply text-neutral-200 stroke-neutral-500 fill-neutral-500;
+}
+
+._chartistry_tooltip {
+  @apply !bg-neutral-700 !rounded !border-none;
+}
+
 /* Container to position the toasts */
 .toast-container {
   position: fixed;

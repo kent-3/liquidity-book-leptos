@@ -31,10 +31,35 @@ mod remove_liquidity;
 pub use add_liquidity::AddLiquidity;
 pub use remove_liquidity::RemoveLiquidity;
 
+#[derive(Clone)]
 pub struct MyData {
     pub x: f64,
     pub y1: f64,
     pub y2: f64,
+}
+
+impl MyData {
+    fn new(x: f64, y1: f64, y2: f64) -> Self {
+        Self { x, y1, y2 }
+    }
+}
+
+pub fn load_data() -> Signal<Vec<MyData>> {
+    Signal::derive(|| {
+        vec![
+            MyData::new(0.0, 0.0, 0.5),
+            MyData::new(1.0, 0.0, 1.0),
+            MyData::new(2.0, 0.0, 2.5),
+            MyData::new(3.0, 0.0, 3.0),
+            MyData::new(4.0, 0.0, 3.0),
+            MyData::new(5.0, 1.5, 1.5),
+            MyData::new(6.0, 3.0, 0.0),
+            MyData::new(7.0, 3.0, 0.0),
+            MyData::new(8.0, 2.5, 0.0),
+            MyData::new(9.0, 1.0, 0.0),
+            MyData::new(10.0, 0.5, 0.0),
+        ]
+    })
 }
 
 use leptos_chartistry::*;
@@ -42,21 +67,29 @@ use leptos_chartistry::*;
 #[component]
 pub fn Example(debug: Signal<bool>, data: Signal<Vec<MyData>>) -> impl IntoView {
     let series = Series::new(|data: &MyData| data.x)
-        .bar(|data: &MyData| data.y1)
-        .bar(|data: &MyData| data.y2);
+        .with_min_y(0.00)
+        // .with_colours([
+        //     Colour::from_rgb(115, 115, 115),
+        //     Colour::from_rgb(245, 50, 91),
+        // ])
+        .bar(|data: &MyData| data.y2)
+        .bar(|data: &MyData| data.y1);
+
     view! {
         <Chart
-            aspect_ratio=AspectRatio::from_outer_height(300.0, 1.2)
+            aspect_ratio=AspectRatio::from_outer_height(330.0, 2.3)
             debug=debug
             series=series
             data=data
+            font_width=14.0
+            font_height=14.0
 
-            left=TickLabels::aligned_floats()
+            // left=TickLabels::aligned_floats()
             inner=[
-                AxisMarker::left_edge().into_inner(),
-                AxisMarker::bottom_edge().into_inner(),
-                YGridLine::default().into_inner(),
+                // AxisMarker::bottom_edge().with_arrow(false).into_inner(),
             ]
+            bottom=TickLabels::aligned_floats()
+            tooltip=Tooltip::left_cursor()
         />
     }
 }
@@ -259,6 +292,9 @@ pub fn PoolManager() -> impl IntoView {
         }
     });
 
+    let debug = RwSignal::new(false);
+    let my_data = load_data();
+
     view! {
         <a
             href="/liquidity-book-leptos/pool"
@@ -340,7 +376,8 @@ pub fn PoolManager() -> impl IntoView {
                         <div class="w-full">
                             <h2 class="m-0 mb-2 text-xl">My Liquidity</h2>
                             <div class="flex justify-center items-center h-48">
-                                <p class="text-neutral-500">"You have no liquidity in this pool"</p>
+                                <Example debug=debug.into() data=my_data.into() />
+                                // <p class="text-neutral-500">"You have no liquidity in this pool"</p>
                             </div>
                         </div>
                     </div>
