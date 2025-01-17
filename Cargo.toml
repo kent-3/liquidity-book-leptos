@@ -52,6 +52,7 @@ icondata = "0.5"
 leptos-use = { version = "0.15.3", default-features = false, features = ["storage"] }
 codee = { version = "0.2", features = ["json_serde", "json_serde_wasm", "base64", "prost"] }
 # leptonic = { git = "https://github.com/lpotthast/leptonic.git", branch = "migrate-to-leptos-0.7" }
+leptos-chartistry = { version = "0.2.1" }
 
 # gRPC
 tonic = { version = "0.12.2", default-features = false }
