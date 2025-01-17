@@ -185,6 +185,9 @@ pub fn PoolManager() -> impl IntoView {
     // NOTE: We have a lot of Resources depending on other Resources.
     //       It works, but I wonder if there is a better way.
 
+    // TODO: I don't think there's any need to track signals. These should all be
+    //       LocalResources that only run once on page load.
+
     let total_reserves = Resource::new(
         move || lb_pair.track(),
         move |_| async move { ILbPair(lb_pair.await.contract).get_reserves().await },
@@ -200,63 +203,99 @@ pub fn PoolManager() -> impl IntoView {
         },
     );
 
-    let nearby_bins = Resource::new(
-        move || (lb_pair.track(), active_id.track()),
-        move |_| {
-            SendWrapper::new(async move {
-                let lb_pair_contract = lb_pair.await.contract;
-                let id = active_id.await?;
-                let mut batch = Vec::new();
+    let nearby_bins = LocalResource::new(move || {
+        async move {
+            let lb_pair_contract = lb_pair.await.contract;
+            let id = active_id.await?;
+            let mut batch = Vec::new();
 
-                let radius = 10;
+            let radius = 49;
 
-                for i in 0..(radius * 2 + 1) {
-                    let offset_id = if i < radius {
-                        id - (radius - i) as u32 // Subtract for the first half
-                    } else {
-                        id + (i - radius) as u32 // Add for the second half
-                    };
+            for i in 0..(radius * 2 + 1) {
+                let offset_id = if i < radius {
+                    id - (radius - i) as u32 // Subtract for the first half
+                } else {
+                    id + (i - radius) as u32 // Add for the second half
+                };
 
-                    batch.push(BatchQueryParams {
-                        id: offset_id.to_string(),
-                        contract: lb_pair_contract.clone(),
-                        query_msg: lb_pair::QueryMsg::GetBin { id: offset_id },
-                    });
-                }
+                batch.push(BatchQueryParams {
+                    id: offset_id.to_string(),
+                    contract: lb_pair_contract.clone(),
+                    query_msg: lb_pair::QueryMsg::GetBin { id: offset_id },
+                });
+            }
 
-                query_nearby_bins(batch).await
-            })
-        },
-    );
+            query_nearby_bins(batch).await
+        }
+    });
 
     view! {
         <a
             href="/liquidity-book-leptos/pool"
-            class="block text-neutral-200/50 text-sm font-bold cursor-pointer no-underline"
+            class="inline-flex gap-x-2 items-center text-neutral-500 text-sm font-bold cursor-pointer no-underline"
         >
-            "🡨 Back to pools list"
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                class="w-[14px] h-[14px] stroke-neutral-500"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
+                />
+            </svg>
+            "Back to pools list"
         </a>
 
         <div class="flex flex-wrap py-2 items-center gap-x-4 gap-y-2">
             <Suspense fallback=move || {
                 view! { <div class="text-3xl font-bold">{token_a}" / "{token_b}</div> }
             }>
+                // TODO: add token icons here
                 <div class="text-3xl font-bold">
                     {move || Suspend::new(async move { token_a_symbol.await })}" / "
                     {move || Suspend::new(async move { token_b_symbol.await })}
                 </div>
             </Suspense>
 
-            <div class="flex items-center gap-x-4">
-                <div class="text-md font-bold p-1 outline outline-1 outline-offset-2 outline-neutral-500/50">
+            <div class="flex items-center gap-x-2 sm:pl-4">
+                <span class="text-sm text-white inline-flex font-bold px-2 py-1 rounded-full border border-solid border-neutral-700">
                     {basis_points}" bps"
-                </div>
-                <a href="about:blank" target="_blank" rel="noopener">
-                    <div class="text-md font-bold p-1 outline outline-1 outline-offset-2 outline-neutral-500/50">
-                        {move || { lb_pair.get().map(|x| shorten_address(x.contract.address)) }}
-                        " ↗"
-                    </div>
-                </a>
+                </span>
+                <span class="inline-flex px-2 py-1 rounded-full border border-solid border-neutral-700">
+                    <a
+                        href="about:blank"
+                        target="_blank"
+                        rel="noopener"
+                        class="no-underline text-white text-sm font-bold"
+                    >
+                        <div class="flex gap-1 items-center">
+                            <div>
+                                {move || {
+                                    lb_pair.get().map(|x| shorten_address(x.contract.address))
+                                }}
+                            </div>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="2"
+                                stroke="currentColor"
+                                class="w-[14px] h-[14px] stroke-white"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                                />
+                            </svg>
+                        </div>
+                    </a>
+                </span>
             </div>
         </div>
 
@@ -391,28 +430,10 @@ pub fn PoolManager() -> impl IntoView {
                     >
                         "Remove Liquidity"
                     </button>
-
-                // <button on:click={
-                // let navigate_ = navigate.clone();
-                // move |_| {
-                // let mut pathname = location.pathname.get();
-                // let query_params = location.search.get();
-                // if pathname.ends_with('/') {
-                // pathname.pop();
-                // }
-                // if pathname.ends_with("/add") || pathname.ends_with("/remove") {
-                // pathname = pathname
-                // .rsplit_once('/')
-                // .map(|(base, _)| base)
-                // .unwrap_or(&pathname)
-                // .to_string();
-                // }
-                // let new_route = format!("{pathname}/?{query_params}");
-                // navigate_(&new_route, Default::default());
-                // }
-                // }>"Nevermind"</button>
                 </div>
 
+                // TODO: I think add/remove liquidity should not be separate routes, and instead toggle
+                // visibility with a tab-group-like thing
                 <Outlet />
 
             </div>

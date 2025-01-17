@@ -134,10 +134,10 @@ pub fn PoolBrowser() -> impl IntoView {
             <table class="min-w-full -my-2 border-spacing-x-0 border-spacing-y-2">
                 <thead class="bg-neutral-700 rounded box-border border-0 border-solid border-spacing-x-0 border-spacing-y-2">
                     <tr class="">
-                        <th class="px-4 py-2 text-left">Pool Name</th>
-                        <th class="px-4 py-2 text-right">Volume</th>
-                        <th class="px-4 py-2 text-right">Liquidity</th>
-                        <th class="px-4 py-2 text-right">Fees</th>
+                        <th class="px-4 py-2 text-left">"Pool Name"</th>
+                        <th class="px-4 py-2 text-right">"Volume (24H)"</th>
+                        <th class="px-4 py-2 text-right">"Liquidity"</th>
+                        <th class="px-4 py-2 text-right">"Fees (24H)"</th>
                     </tr>
                 </thead>
                 // crazy, but it works

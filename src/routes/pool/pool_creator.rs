@@ -167,9 +167,23 @@ pub fn PoolCreator() -> impl IntoView {
     view! {
         <a
             href="/liquidity-book-leptos/pool"
-            class="block text-neutral-200/50 text-sm font-bold cursor-pointer no-underline"
+            class="inline-flex gap-x-2 items-center text-neutral-500 text-sm font-bold cursor-pointer no-underline"
         >
-            "🡨 Back to pools list"
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke="currentColor"
+                class="w-[14px] h-[14px] stroke-neutral-500"
+            >
+                <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
+                />
+            </svg>
+            "Back to pools list"
         </a>
         <div class="py-3 text-2xl font-bold text-center sm:text-left">"Create New Pool"</div>
         <form

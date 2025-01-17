@@ -53,8 +53,8 @@ use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
 use types::Coin;
 
 // TODO: configure this to be different in dev mode
-pub static BASE_URL: &str = "";
-// pub static BASE_URL: &str = "/liquidity-book-leptos";
+// pub static BASE_URL: &str = "";
+pub static BASE_URL: &str = "/liquidity-book-leptos";
 
 // TODO: If possible, use batch queries for resources. Combine the outputs in a struct
 // and use that as the return type of the Resource.
@@ -346,7 +346,7 @@ pub fn App() -> impl IntoView {
                         "Liquidity Book"
                     </div>
                     <Show when=move || keplr.key.get().and_then(|key| key.ok()).is_some()>
-                        <p class="hidden sm:block text-sm outline outline-2 outline-offset-8 outline-neutral-500">
+                        <p class="hidden m-0 sm:block text-sm outline outline-2 outline-offset-8 outline-neutral-500">
                             "Connected as "<strong>{key_name}</strong>
                         </p>
                     </Show>
@@ -602,7 +602,21 @@ pub fn WalletMenu(
                             />
                         </svg>
                         "My Pools"
-                        <span class="ml-auto text-lg leading-none font-normal">"›"</span>
+                        // <span class="ml-auto text-lg leading-none font-normal">"›"</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2.5"
+                            stroke="currentColor"
+                            class="ml-auto w-4 h-4 stroke-neutral-400"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                            />
+                        </svg>
                     </a>
                 </li>
                 <li>
@@ -625,7 +639,21 @@ pub fn WalletMenu(
                             />
                         </svg>
                         "Activity"
-                        <span class="ml-auto text-lg leading-none font-normal">"›"</span>
+                        // <span class="ml-auto text-lg leading-none font-normal">"›"</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2.5"
+                            stroke="currentColor"
+                            class="ml-auto w-4 h-4 stroke-neutral-400"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                            />
+                        </svg>
                     </a>
                 </li>
                 <li>
@@ -655,7 +683,21 @@ pub fn WalletMenu(
                             />
                         </svg>
                         "Settings"
-                        <span class="ml-auto text-lg leading-none font-normal">"›"</span>
+                        // <span class="ml-auto text-lg leading-none font-normal">"›"</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2.5"
+                            stroke="currentColor"
+                            class="ml-auto w-4 h-4 stroke-neutral-400"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                            />
+                        </svg>
                     </div>
                 </li>
             </ul>
