@@ -47,7 +47,7 @@ body {
 }
 
 ::selection {
-  @apply bg-violet-600 text-white;
+  @apply bg-pine text-white;
 }
 
 /* Container to position the toasts */

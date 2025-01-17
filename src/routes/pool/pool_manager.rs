@@ -251,7 +251,8 @@ pub fn PoolManager() -> impl IntoView {
             "Back to pools list"
         </a>
 
-        <div class="flex flex-wrap py-2 items-center gap-x-4 gap-y-2">
+        // page title with the token symbols
+        <div class="flex flex-wrap py-2 items-center gap-x-4 gap-y-2 mb-4">
             <Suspense fallback=move || {
                 view! { <div class="text-3xl font-bold">{token_a}" / "{token_b}</div> }
             }>
@@ -301,84 +302,153 @@ pub fn PoolManager() -> impl IntoView {
 
         <div class="grid auto-rows-min grid-cols-1 sm:grid-cols-2 gap-8">
 
-            <details class="text-neutral-300 font-bold">
-                <summary class="text-lg cursor-pointer">Pool Details</summary>
-                <ul class="my-1 font-normal text-base text-neutral-200 ">
-                    <Suspense fallback=|| view! { <div>"Loading Total Reserves..."</div> }>
-                        <li>
-                            "Total Reserves: "
-                            <span tabindex="0" class="cursor-pointer text-white peer">
-                                "🛈"
-                            </span>
-                            <li class="list-none text-sm font-bold text-violet-400 peer-focus:block hidden">
-                                "🛈 Reserves may be in reverse order"
-                            </li>
-                            {move || Suspend::new(async move {
-                                let reserves = total_reserves.await.unwrap();
-                                view! {
-                                    <li class="pl-4 list-none">
-                                        "reserve_x: "{reserves.reserve_x.to_string()}
-                                    </li>
-                                    <li class="pl-4 list-none">
-                                        "reserve_y: "{reserves.reserve_y.to_string()}
-                                    </li>
-                                }
-                            })}
-                        </li>
-                    </Suspense>
-                    <Suspense fallback=|| view! { <div>"Loading Active ID..."</div> }>
-                        <li>
-                            "Active Bin ID: " {move || Suspend::new(async move { active_id.await })}
-                        </li>
-                    </Suspense>
-                    <Suspense fallback=|| view! { <div>"Loading Bin Reserves..."</div> }>
-                        <li>
-                            "Active Bin Reserves: "
-                            {move || Suspend::new(async move {
-                                let reserves = bin_reserves.await.unwrap();
-                                view! {
-                                    <li class="pl-4 list-none">
-                                        "bin_reserve_x: "{reserves.bin_reserve_x.to_string()}
-                                    </li>
-                                    <li class="pl-4 list-none">
-                                        "bin_reserve_y: "{reserves.bin_reserve_y.to_string()}
-                                    </li>
-                                }
-                            })}
-                        </li>
-                    </Suspense>
-                    // a bit crazy innit. but it works.
-                    <Suspense fallback=|| view! { <div>"Loading Nearby Bins..."</div> }>
-                        <li>
-                            "Nearby Bins: "
-                            {move || Suspend::new(async move {
-                                nearby_bins
-                                    .await
-                                    .and_then(|bins| {
-                                        Ok(
-                                            bins
-                                                .into_iter()
-                                                .map(|bin| {
-                                                    view! {
-                                                        <li class="pl-4 list-none">
-                                                            {bin.bin_id} " " {bin.bin_reserve_x.to_string()} " "
-                                                            {bin.bin_reserve_y.to_string()}
-                                                        </li>
-                                                    }
-                                                })
-                                                .collect::<Vec<_>>(),
-                                        )
-                                    })
-                            })}
-                        </li>
-                    </Suspense>
-                // <SecretQuery query=bin_total_supply />
-                </ul>
-            </details>
+            // left side of the screen
+            <div class="flex flex-col items-center gap-4">
+                // my liquidity box
+                <div class="block w-full outline outline-2 outline-neutral-700 rounded">
+                    <div class="px-6 py-4">
+                        <div class="w-full">
+                            <h2 class="m-0 mb-2 text-xl">My Liquidity</h2>
+                            <div class="flex justify-center items-center h-48">
+                                <p class="text-neutral-500">"You have no liquidity in this pool"</p>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="m-0 border-2 border-neutral-700" />
+                    <div class="px-6 py-4">
+                        <h2 class="m-0 mb-2 text-xl">Deposit Balance</h2>
+                        <div class="flex flex-col gap-2 items-center">
+                            <div class="grid grid-cols-1 gap-4 w-full">
+                                <div class="grid grid-cols-[1fr_14px_1fr] gap-4 w-full items-center">
+                                    // token x deposit balance
+                                    <div class="flex items-center box-border px-4 py-3 h-16 bg-neutral-800 rounded">
+                                        <div class="flex items-center flex-row flex-1 gap-2">
+                                            // <img class="w-8 h-8 rounded-full" src="" / >
+                                            <div class="flex flex-col items-start gap-0">
+                                                <p class="m-0 text-sm box-content">
+                                                    <b class="text-white">0</b>
+                                                    " "
+                                                    {move || token_a_symbol.get()}
+                                                </p>
+                                                <p class="m-0 text-sm">"$0"</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke-width="2"
+                                        stroke="currentColor"
+                                        class="w-[14px] h-[14px] stroke-white"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M12 4.5v15m7.5-7.5h-15"
+                                        />
+                                    </svg>
+                                    // token y deposit balance
+                                    <div class="flex items-center box-border px-4 py-3 h-16 bg-neutral-800 rounded">
+                                        <div class="flex items-center flex-row flex-1 gap-2">
+                                            // <img class="w-8 h-8 rounded-full" src="" / >
+                                            <div class="flex flex-col items-start gap-0">
+                                                <p class="m-0 text-sm">
+                                                    <b class="text-white">0</b>
+                                                    " "
+                                                    {move || token_b_symbol.get()}
+                                                </p>
+                                                <p class="m-0 text-sm">"$0"</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="block px-5 py-4 max-w-md w-full box-border space-y-5 mx-auto outline outline-2 outline-neutral-700 rounded max-h-max">
+            </div>
 
-                <div class="flex gap-4 w-full max-w-md">
+            // <details class="text-neutral-300 font-bold">
+            // <summary class="text-lg cursor-pointer">Pool Details</summary>
+            // <ul class="my-1 font-normal text-base text-neutral-200 ">
+            // <Suspense fallback=|| view! { <div>"Loading Total Reserves..."</div> }>
+            // <li>
+            // "Total Reserves: "
+            // <span tabindex="0" class="cursor-pointer text-white peer">
+            // "🛈"
+            // </span>
+            // <li class="list-none text-sm font-bold text-violet-400 peer-focus:block hidden">
+            // "🛈 Reserves may be in reverse order"
+            // </li>
+            // {move || Suspend::new(async move {
+            // let reserves = total_reserves.await.unwrap();
+            // view! {
+            // <li class="pl-4 list-none">
+            // "reserve_x: "{reserves.reserve_x.to_string()}
+            // </li>
+            // <li class="pl-4 list-none">
+            // "reserve_y: "{reserves.reserve_y.to_string()}
+            // </li>
+            // }
+            // })}
+            // </li>
+            // </Suspense>
+            // <Suspense fallback=|| view! { <div>"Loading Active ID..."</div> }>
+            // <li>
+            // "Active Bin ID: " {move || Suspend::new(async move { active_id.await })}
+            // </li>
+            // </Suspense>
+            // <Suspense fallback=|| view! { <div>"Loading Bin Reserves..."</div> }>
+            // <li>
+            // "Active Bin Reserves: "
+            // {move || Suspend::new(async move {
+            // let reserves = bin_reserves.await.unwrap();
+            // view! {
+            // <li class="pl-4 list-none">
+            // "bin_reserve_x: "{reserves.bin_reserve_x.to_string()}
+            // </li>
+            // <li class="pl-4 list-none">
+            // "bin_reserve_y: "{reserves.bin_reserve_y.to_string()}
+            // </li>
+            // }
+            // })}
+            // </li>
+            // </Suspense>
+            // // a bit crazy innit. but it works.
+            // <Suspense fallback=|| view! { <div>"Loading Nearby Bins..."</div> }>
+            // <li>
+            // "Nearby Bins: "
+            // {move || Suspend::new(async move {
+            // nearby_bins
+            // .await
+            // .and_then(|bins| {
+            // Ok(
+            // bins
+            // .into_iter()
+            // .map(|bin| {
+            // view! {
+            // <li class="pl-4 list-none">
+            // {bin.bin_id} " " {bin.bin_reserve_x.to_string()} " "
+            // {bin.bin_reserve_y.to_string()}
+            // </li>
+            // }
+            // })
+            // .collect::<Vec<_>>(),
+            // )
+            // })
+            // })}
+            // </li>
+            // </Suspense>
+            // // <SecretQuery query=bin_total_supply />
+            // </ul>
+            // </details>
+
+            // right side of screen
+            <div class="block px-5 py-4 w-full box-border space-y-5 mx-auto outline outline-2 outline-neutral-700 rounded max-h-max">
+                // "Tab Group"
+                <div class="flex gap-4 w-full">
                     // This preserves the query params when navigating to nested routes.
                     // TODO: this is terribly complicated. it works, but there must be a simpler way
                     <button
@@ -405,7 +475,6 @@ pub fn PoolManager() -> impl IntoView {
                     >
                         "Add Liquidity"
                     </button>
-
                     <button
                         class="w-full"
                         on:click={
@@ -431,13 +500,10 @@ pub fn PoolManager() -> impl IntoView {
                         "Remove Liquidity"
                     </button>
                 </div>
-
                 // TODO: I think add/remove liquidity should not be separate routes, and instead toggle
                 // visibility with a tab-group-like thing
                 <Outlet />
-
             </div>
-
         </div>
     }
 }

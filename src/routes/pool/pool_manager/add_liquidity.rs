@@ -447,7 +447,7 @@ pub fn AddLiquidity() -> impl IntoView {
     };
 
     view! {
-        <div class="max-w-md space-y-2">
+        <div class="space-y-2">
             <div class="text-xl font-semibold">Deposit Liquidity</div>
             <div class="flex items-center gap-2">
                 <input

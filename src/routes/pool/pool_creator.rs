@@ -191,7 +191,7 @@ pub fn PoolCreator() -> impl IntoView {
             on:submit=create_pair_handler
         >
             <label class="block">
-                "Select Token"
+                <span class="mb-1 block">"Select Token"</span>
                 <select
                     class="block p-1 font-bold w-full max-w-xs"
                     name="token_x"
@@ -204,7 +204,7 @@ pub fn PoolCreator() -> impl IntoView {
                 </select>
             </label>
             <label class="block">
-                "Select Quote Asset"
+                <span class="mb-1 block">"Select Quote Asset"</span>
                 <select
                     class="block p-1 font-bold w-full max-w-xs"
                     name="token_y"
@@ -212,14 +212,13 @@ pub fn PoolCreator() -> impl IntoView {
                     on:input=move |ev| set_token_y.set(event_target_value(&ev))
                 >
                     <option value="SSCRT">"sSCRT"</option>
-                // <option value="sSCRT">sSCRT</option>
                 // <option value="stkd-SCRT">stkd-SCRT</option>
-                // <option value="SILK">SILK</option>
+                // <option value="USDC">USDC</option>
                 </select>
             </label>
             <label class="block">
-                "Select Bin Step"
-                <div class="block box-border pt-1 font-semibold w-full max-w-xs space-x-4">
+                <span class="mb-1 block">"Select Bin Step"</span>
+                <div class="block box-border font-semibold w-full max-w-xs space-x-4">
                     <label class="cursor-pointer">
                         <input
                             class=""
@@ -259,7 +258,7 @@ pub fn PoolCreator() -> impl IntoView {
                 </div>
             </label>
             <label class="block">
-                "Enter Active Price"
+                <span class="mb-1 block">"Enter Active Price"</span>
                 <input
                     name="active_price"
                     class="block p-1 font-bold w-full max-w-xs box-border"

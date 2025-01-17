@@ -53,8 +53,8 @@ use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
 use types::Coin;
 
 // TODO: configure this to be different in dev mode
-// pub static BASE_URL: &str = "";
-pub static BASE_URL: &str = "/liquidity-book-leptos";
+pub static BASE_URL: &str = "";
+// pub static BASE_URL: &str = "/liquidity-book-leptos";
 
 // TODO: If possible, use batch queries for resources. Combine the outputs in a struct
 // and use that as the return type of the Resource.
