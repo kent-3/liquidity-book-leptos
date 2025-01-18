@@ -564,17 +564,17 @@ pub fn WalletMenu(
                 <li>
                     <a href="#" >
                     <div class="menu-button" >
-                        <History size=24 color="#a3a3a3" />
+                        <History size=24 />
                         "Activity"
-                        <ChevronRight size=20 color="#a3a3a3" absolute_stroke_width=true />
+                        <ChevronRight size=20 absolute_stroke_width=true />
                     </div>
                     </a>
                 </li>
                 <li>
                     <div on:click=toggle_menu class="menu-button" >
-                        <Settings size=24 color="#a3a3a3" />
+                        <Settings size=24 />
                         "Settings"
-                        <ChevronRight size=20 color="#a3a3a3" absolute_stroke_width=true />
+                        <ChevronRight size=20 absolute_stroke_width=true />
                     </div>
                 </li>
             </ul>

@@ -64,11 +64,6 @@ body {
 /*     display: none; */
 /* } */
 
-/* doesn't actually work / the gaps are still there */
-/* ._chartistry svg g g rect[height="0"]{ */
-/*     display: none; */
-/* } */
-
 ._chartistry svg g g rect {
   rx: 2px;
 }
