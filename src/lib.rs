@@ -23,14 +23,17 @@ use leptos::{
     prelude::*,
     task::spawn_local,
 };
-use leptos_icons::Icon;
 use leptos_meta::*;
 use leptos_router::components::{ParentRoute, Route, Router, Routes, A};
 use leptos_router_macro::path;
+use lucide_leptos::{
+    ArrowLeft, ArrowUpDown, ChevronRight, ExternalLink, Factory, Flame, FlaskConical, Gauge,
+    History, KeyRound, Plus, Power, Router as RouterIcon, Settings, Wallet, Waves, WavesLadder,
+    Wrench, X,
+};
 use rsecret::query::{bank::BankQuerier, compute::ComputeQuerier};
 use send_wrapper::SendWrapper;
 use serde::{Deserialize, Serialize};
-use thaw::*;
 use tonic_web_wasm_client::Client;
 use tracing::{debug, error, info, trace};
 use web_sys::{js_sys, wasm_bindgen::JsValue};
@@ -332,7 +335,7 @@ pub fn App() -> impl IntoView {
             .map(|key| key.bech32_address)
     };
 
-    let theme = RwSignal::new(Theme::dark());
+    // let theme = RwSignal::new(Theme::dark());
 
     view! {
         <Router>
@@ -367,27 +370,7 @@ pub fn App() -> impl IntoView {
                                         on:click=toggle_options_menu
                                         class="text-xl font-semibold leading-none py-[2px] px-[8px] inline-flex justify-center items-center align-middle"
                                     >
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            class="stroke-white"
-                                            height="24px"
-                                            viewBox="0 0 24 24"
-                                            width="24px"
-                                            stroke-width="1.5"
-                                            stroke="currentColor"
-                                            fill="none"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
-                                            />
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                                            />
-                                        </svg>
+                                        <Settings size=20 color="#fff" />
                                     </button>
                                 }
                             }
@@ -563,141 +546,35 @@ pub fn WalletMenu(
                     title="Disconnect wallet"
                     class="w-10 h-10 p-0 bg-transparent active:bg-neutral-900 hover:bg-neutral-700 hover:outline-gold hover:saturate-150 hover:shadow-gold-glow transition-all ease-standard duration-200 rounded-full inline-flex items-center justify-center outline outline-1 outline-offset-0 outline-transparent border border-solid border-neutral-500"
                 >
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="2.5"
-                        stroke="currentColor"
-                        class="w-4 h-4 stroke-gold"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9"
-                        />
-                    </svg>
+                    <Power size=16 color="#f6c177" />
                 </button>
             </div>
             <hr class="m-0 border-neutral-600" />
             // <!-- Menu Items -->
             <ul class="space-y-1 px-1 py-2 list-none font-semibold text-base">
                 <li>
-                    <a
-                        href="#"
-                        class="hover:no-underline no-underline flex items-center gap-3 px-3 py-2 rounded text-neutral-200 hover:bg-neutral-700 ease-linear transition-all duration-200"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            class="w-6 h-6 stroke-neutral-400"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0 0 20.25 18V6A2.25 2.25 0 0 0 18 3.75H6A2.25 2.25 0 0 0 3.75 6v12A2.25 2.25 0 0 0 6 20.25Z"
-                            />
-                        </svg>
+                    <a href="#" >
+                    <div class="menu-button" >
+                        <WavesLadder size=24 />
                         "My Pools"
-                        // <span class="ml-auto text-lg leading-none font-normal">"›"</span>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="2.5"
-                            stroke="currentColor"
-                            class="ml-auto w-4 h-4 stroke-neutral-400"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="m8.25 4.5 7.5 7.5-7.5 7.5"
-                            />
-                        </svg>
+                        <ChevronRight size=20 absolute_stroke_width=true />
+                    </div>
                     </a>
                 </li>
                 <li>
-                    <a
-                        href="#"
-                        class="hover:no-underline no-underline flex items-center gap-3 px-3 py-2 rounded text-neutral-200 hover:bg-neutral-700 ease-linear transition-all duration-200"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            class="w-6 h-6 stroke-neutral-400"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                            />
-                        </svg>
+                    <a href="#" >
+                    <div class="menu-button" >
+                        <History size=24 color="#a3a3a3" />
                         "Activity"
-                        // <span class="ml-auto text-lg leading-none font-normal">"›"</span>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="2.5"
-                            stroke="currentColor"
-                            class="ml-auto w-4 h-4 stroke-neutral-400"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="m8.25 4.5 7.5 7.5-7.5 7.5"
-                            />
-                        </svg>
+                        <ChevronRight size=20 color="#a3a3a3" absolute_stroke_width=true />
+                    </div>
                     </a>
                 </li>
                 <li>
-                    <div
-                        on:click=toggle_menu
-                        class="hover:no-underline cursor-default no-underline flex items-center gap-3 px-3 py-2 rounded hover:bg-neutral-700 transition-all ease-linear duration-200"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            class="stroke-neutral-400"
-                            height="24px"
-                            viewBox="0 0 24 24"
-                            width="24px"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            fill="none"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
-                            />
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                            />
-                        </svg>
+                    <div on:click=toggle_menu class="menu-button" >
+                        <Settings size=24 color="#a3a3a3" />
                         "Settings"
-                        // <span class="ml-auto text-lg leading-none font-normal">"›"</span>
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="2.5"
-                            stroke="currentColor"
-                            class="ml-auto w-4 h-4 stroke-neutral-400"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="m8.25 4.5 7.5 7.5-7.5 7.5"
-                            />
-                        </svg>
+                        <ChevronRight size=20 color="#a3a3a3" absolute_stroke_width=true />
                     </div>
                 </li>
             </ul>
@@ -706,22 +583,7 @@ pub fn WalletMenu(
             <div class="px-1 pt-2">
                 // <!-- Wallet Header -->
                 <div class="flex items-center gap-3 px-3 py-2 text-neutral-200 font-semibold">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke-width="1.5"
-                        stroke="currentColor"
-                        class="w-6 h-6 stroke-neutral-400"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z"
-                        />
-                    </svg>
-                    // <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#f6c177"><path d="M200-200v-560 560Zm0 80q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v100h-80v-100H200v560h560v-100h80v100q0 33-23.5 56.5T760-120H200Zm320-160q-33 0-56.5-23.5T440-360v-240q0-33 23.5-56.5T520-680h280q33 0 56.5 23.5T880-600v240q0 33-23.5 56.5T800-280H520Zm280-80v-240H520v240h280Zm-160-60q25 0 42.5-17.5T700-480q0-25-17.5-42.5T640-540q-25 0-42.5 17.5T580-480q0 25 17.5 42.5T640-420Z"/></svg>
-                    // <span>"💰"</span>
+                    <Wallet size=24 color="#a3a3a3" />
                     "Wallet"
                 </div>
                 // <!-- Token Item -->

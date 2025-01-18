@@ -48,6 +48,43 @@
   }
 }
 
+.menu-button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 2.5rem;
+  width: 100%;
+  border-radius: 0.25rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  --tw-text-opacity: 1;
+  color: rgb(229 229 229 / var(--tw-text-opacity));
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+  transition-timing-function: linear;
+}
+
+.menu-button:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(64 64 64 / var(--tw-bg-opacity));
+}
+
+.menu-button > svg {
+  stroke: #a3a3a3;
+}
+
+.menu-button > :first-child {
+  margin-right: 0.75rem;
+}
+
+.menu-button > :last-child {
+  margin-left: auto;
+}
+
 .pointer-events-none {
   pointer-events: none;
 }
@@ -137,10 +174,6 @@
   margin-bottom: 1rem;
 }
 
-.ml-auto {
-  margin-left: auto;
-}
-
 .mr-0 {
   margin-right: 0px;
 }
@@ -216,10 +249,6 @@
   height: 4rem;
 }
 
-.h-4 {
-  height: 1rem;
-}
-
 .h-48 {
   height: 12rem;
 }
@@ -234,10 +263,6 @@
 
 .h-8 {
   height: 2rem;
-}
-
-.h-\[14px\] {
-  height: 14px;
 }
 
 .max-h-\[50vh\] {
@@ -255,10 +280,6 @@
 
 .w-28 {
   width: 7rem;
-}
-
-.w-4 {
-  width: 1rem;
 }
 
 .w-5 {
@@ -279,10 +300,6 @@
 
 .w-8 {
   width: 2rem;
-}
-
-.w-\[14px\] {
-  width: 14px;
 }
 
 .w-full {
@@ -599,24 +616,8 @@
   stroke: #75b6e7;
 }
 
-.stroke-gold {
-  stroke: #f6c177;
-}
-
-.stroke-neutral-400 {
-  stroke: #a3a3a3;
-}
-
-.stroke-neutral-500 {
-  stroke: #737373;
-}
-
 .stroke-neutral-900 {
   stroke: #171717;
-}
-
-.stroke-white {
-  stroke: #fff;
 }
 
 .p-0 {
@@ -970,10 +971,6 @@
 
 .duration-300 {
   transition-duration: 300ms;
-}
-
-.ease-linear {
-  transition-timing-function: linear;
 }
 
 .ease-standard {
@@ -1590,10 +1587,6 @@ ul {
 
 .hover\:bg-violet-500\/20:hover {
   background-color: rgb(139 92 246 / 0.2);
-}
-
-.hover\:no-underline:hover {
-  text-decoration-line: none;
 }
 
 .hover\:shadow-gold-glow:hover {

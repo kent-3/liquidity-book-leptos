@@ -20,6 +20,7 @@ use leptos_router::{
     nested_router::Outlet,
     NavigateOptions,
 };
+use lucide_leptos::{ArrowLeft, ExternalLink, Plus};
 use secret_toolkit_snip20::TokenInfoResponse;
 use send_wrapper::SendWrapper;
 use serde::Serialize;
@@ -377,25 +378,12 @@ pub fn PoolManager() -> impl IntoView {
             href="/liquidity-book-leptos/pool"
             class="inline-flex gap-x-2 items-center text-neutral-500 text-sm font-bold cursor-pointer no-underline"
         >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                class="w-[14px] h-[14px] stroke-neutral-500"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-                />
-            </svg>
+            <ArrowLeft size=14 color="#737373" />
             "Back to pools list"
         </a>
 
         // page title with the token symbols
-        <div class="flex flex-wrap py-2 items-center gap-x-4 gap-y-2 mb-4">
+        <div class="flex flex-wrap py-2 items-center gap-x-4 gap-y-2">
             <Suspense fallback=move || {
                 view! { <div class="text-3xl font-bold">{token_a}" / "{token_b}</div> }
             }>
@@ -423,26 +411,19 @@ pub fn PoolManager() -> impl IntoView {
                                     lb_pair.get().map(|x| shorten_address(x.contract.address))
                                 }}
                             </div>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke-width="2"
-                                stroke="currentColor"
-                                class="w-[14px] h-[14px] stroke-white"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
-                                />
-                            </svg>
+                            <ExternalLink size=14 color="white"/>
                         </div>
                     </a>
                 </span>
             </div>
         </div>
 
+        <div class="flex gap-4 items-center mt-2 mb-4">
+            <button>"Manage"</button>
+            <button>"Analytics"</button>
+        </div>
+
+        // main page layout structure
         <div class="grid auto-rows-min grid-cols-1 sm:grid-cols-2 gap-8">
 
             // left side of the screen
@@ -478,20 +459,7 @@ pub fn PoolManager() -> impl IntoView {
                                             </div>
                                         </div>
                                     </div>
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke-width="2"
-                                        stroke="currentColor"
-                                        class="w-[14px] h-[14px] stroke-white"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            d="M12 4.5v15m7.5-7.5h-15"
-                                        />
-                                    </svg>
+                                    <Plus size=14 color="white"/>
                                     // token y deposit balance
                                     <div class="flex items-center box-border px-4 py-3 h-16 bg-neutral-800 rounded">
                                         <div class="flex items-center flex-row flex-1 gap-2">

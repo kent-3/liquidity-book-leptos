@@ -90,6 +90,26 @@ body {
   backdrop-filter: blur(8px);
 }
 
+@layer components {
+  .menu-button {
+    @apply inline-flex justify-start items-center box-border;
+    @apply w-full h-10 px-3 py-1 rounded;
+    @apply text-neutral-200 hover:bg-neutral-700 transition-all ease-linear duration-200;
+  }
+
+  .menu-button > svg {
+    @apply stroke-neutral-400;
+  }
+
+  .menu-button > :first-child {
+    margin-right: 0.75rem;
+  }
+
+  .menu-button > :last-child {
+    margin-left: auto;
+  }
+}
+
 /* Container to position the toasts */
 .toast-container {
   position: fixed;

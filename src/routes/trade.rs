@@ -19,7 +19,6 @@ use rsecret::{secret_client::CreateTxSenderOptions, tx::ComputeServiceClient, Tx
 use secretrs::proto::cosmos::tx::v1beta1::BroadcastMode;
 use secretrs::AccountId;
 use std::str::FromStr;
-use thaw::*;
 use tracing::{debug, info};
 
 #[component]

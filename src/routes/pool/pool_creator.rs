@@ -10,6 +10,7 @@ use cosmwasm_std::Addr;
 use keplr::Keplr;
 use leptos::prelude::*;
 use liquidity_book::core::TokenType;
+use lucide_leptos::ArrowLeft;
 use rsecret::{
     secret_client::CreateTxSenderOptions,
     tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
@@ -169,20 +170,7 @@ pub fn PoolCreator() -> impl IntoView {
             href="/liquidity-book-leptos/pool"
             class="inline-flex gap-x-2 items-center text-neutral-500 text-sm font-bold cursor-pointer no-underline"
         >
-            <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                class="w-[14px] h-[14px] stroke-neutral-500"
-            >
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18"
-                />
-            </svg>
+            <ArrowLeft size=14 color="#737373" />
             "Back to pools list"
         </a>
         <div class="py-3 text-2xl font-bold text-center sm:text-left">"Create New Pool"</div>
