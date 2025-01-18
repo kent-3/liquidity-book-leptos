@@ -69,12 +69,25 @@ body {
 /*     display: none; */
 /* } */
 
+._chartistry svg g g rect {
+  rx: 2px;
+}
+
+._chartistry svg g g rect:hover {
+  @apply brightness-150;
+}
+
+._chartistry aside table tbody tr td ._chartistry_snippet ._chartistry_taster {
+  display: none;
+}
+
 ._chartistry_tick_label {
   @apply text-neutral-200 stroke-neutral-500 fill-neutral-500;
 }
 
 ._chartistry_tooltip {
-  @apply !p-3 !bg-neutral-700 !rounded !border-none;
+  @apply !p-3 !bg-neutral-700/40 !rounded !border-none;
+  backdrop-filter: blur(8px);
 }
 
 /* Container to position the toasts */

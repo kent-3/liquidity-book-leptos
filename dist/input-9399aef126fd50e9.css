@@ -165,10 +165,6 @@
   margin-top: 0.5rem;
 }
 
-.mt-4 {
-  margin-top: 1rem;
-}
-
 .box-border {
   box-sizing: border-box;
 }
@@ -419,6 +415,10 @@
 
 .gap-4 {
   gap: 1rem;
+}
+
+.gap-6 {
+  gap: 1.5rem;
 }
 
 .gap-8 {
@@ -1049,6 +1049,65 @@ body {
   color: rgb(255 255 255 / var(--tw-text-opacity));
 }
 
+/* First N children */
+
+/* ._chartistry svg g g rect:nth-child(-n+5) { */
+
+/*     fill: blue; */
+
+/* } */
+
+/* Last N children */
+
+/* ._chartistry svg g g rect:nth-last-child(-n+5) { */
+
+/*     fill: red; */
+
+/* } */
+
+/* ._chartistry aside table tbody tr td:first-child { */
+
+/*     display: none; */
+
+/* } */
+
+/* doesn't actually work / the gaps are still there */
+
+/* ._chartistry svg g g rect[height="0"]{ */
+
+/*     display: none; */
+
+/* } */
+
+._chartistry svg g g rect {
+  rx: 2px;
+}
+
+._chartistry svg g g rect:hover {
+  --tw-brightness: brightness(1.5);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+
+._chartistry aside table tbody tr td ._chartistry_snippet ._chartistry_taster {
+  display: none;
+}
+
+._chartistry_tick_label {
+  fill: #737373;
+  stroke: #737373;
+  --tw-text-opacity: 1;
+  color: rgb(229 229 229 / var(--tw-text-opacity));
+}
+
+._chartistry_tooltip {
+  border-radius: 0.25rem !important;
+  border-style: none !important;
+  background-color: rgb(64 64 64 / 0.4) !important;
+  padding: 0.75rem !important;
+  -webkit-backdrop-filter: blur(8px);
+          backdrop-filter: blur(8px);
+}
+
 /* Container to position the toasts */
 
 .toast-container {
@@ -1427,7 +1486,7 @@ ul {
 
   to {
     opacity: 0;
-    transform: translate(-25vw, 0);
+    transform: translate(-100px, 0);
   }
 }
 
@@ -1459,7 +1518,7 @@ ul {
 
   to {
     opacity: 0;
-    transform: translate(25vw, 0);
+    transform: translate(100px, 0);
   }
 }
 
