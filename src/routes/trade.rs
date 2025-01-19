@@ -11,9 +11,10 @@ use ammber_sdk::contract_interfaces::{
 };
 use cosmwasm_std::{to_binary, Addr, Uint128, Uint64};
 use keplr::Keplr;
-use leptos::{html, logging::*, prelude::*};
+use leptos::{ev::MouseEvent, html, logging::*, prelude::*};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use liquidity_book::core::{TokenAmount, TokenType};
+use lucide_leptos::{ArrowUpDown, Settings2};
 use rsecret::tx::compute::MsgExecuteContractRaw;
 use rsecret::{secret_client::CreateTxSenderOptions, tx::ComputeServiceClient, TxOptions};
 use secretrs::proto::cosmos::tx::v1beta1::BroadcastMode;
@@ -256,114 +257,167 @@ pub fn Trade() -> impl IntoView {
 
     view! {
         <LoadingModal when=swap.pending() message="Preparing Transaction... (watch the console)" />
-        <div class="grid gap-4 sm:grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)] grid-cols-1 grid-rows-2 sm:grid-rows-1">
-            <div class="container block align-middle sm:row-auto row-start-2 outline outline-2 outline-neutral-700 rounded">
-                // <p class="text-center italic text-neutral-500">"what should go here?"</p>
-                <pre class="px-2 text-xs whitespace-pre-wrap text-neutral-300">{current_quote}</pre>
-            </div>
-            <div class="container space-y-6 sm:row-auto row-start-1">
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <label class="block mb-1 text-base" for="from-token">
-                            "From"
-                        </label>
-                        // <div>"From"</div>
-                        <Secret20Balance token_address=token_x.into() />
+        <div class="flex mt-10 justify-center">
+            // <div class="grid gap-4 sm:grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)] grid-cols-1 grid-rows-2 sm:grid-rows-1">
+            <div class="grid gap-4 grid-cols-1 max-w-[550px] w-full">
+                <div class="flex flex-col space-y-3 w-full">
+                // buttons above the main swap box
+                <div class="w-full flex items-center justify-between">
+                    <div class="h-10 px-4 py-2 font-semibold text-white box-border inline-flex items-center justify-center rounded border border-solid border-neutral-700">
+                        "Swap"
                     </div>
-                    <div class="flex justify-between space-x-2">
-                        <input
-                            id="from-token"
-                            class="p-1 w-full"
-                            type="number"
-                            placeholder="0.0"
-                            bind:value=amount_in
-                            prop:value=move || amount_x.get()
-                            on:change=move |ev| {
-                                let new_value = event_target_value(&ev);
-                                set_amount_x.set(new_value.parse().unwrap_or_default());
-                                set_amount_y.set("".to_string());
-                                set_swap_for_y.set(true);
-                            }
-                        />
-                        <select
-                            node_ref=select_x_node_ref
-                            class="p-1 w-28"
-                            title="Select Token X"
-                            on:input=move |ev| {
-                                let token_x = event_target_value(&ev);
-                                set_token_x.set(None);
-                                set_token_x.set(Some(token_x));
-                            }
-                            prop:value=move || token_x.get().unwrap_or_default()
+                    <div class="ml-auto w-10 h-10 box-border inline-flex items-center justify-center rounded border border-solid border-neutral-700 hover:bg-neutral-700 transition-colors ease-standard duration-200">
+                        <Settings2 size=20 color="#fff" absolute_stroke_width=true />
+                            //     <SettingsMenu
+                            //         dialog_ref=swap_dialog_ref
+                            //         toggle_menu=toggle_swap_settings
+                            //     />
+                    </div>
+                            // <div class="relative inline-block">
+                            //
+                            //     <button
+                            //         on:click=toggle_wallet_menu
+                            //         class="min-w-24 text-sm font-semibold leading-none py-[5px] px-[12px] inline-flex justify-center items-center align-middle"
+                            //     >
+                            //         // class="min-w-24 transition-shadow active:bg-neutral-900 active:border-neutral-600 hover:bg-neutral-700 hover:border-neutral-500 ease-standard duration-100 box-border font-semibold leading-5 inline-flex items-center justify-center rounded border border-solid border-neutral-600 bg-neutral-800 text-sm py-[5px] px-[12px]"
+                            //         "Wallet Menu"
+                            //     // {move || key_address().map(shorten_address)}
+                            //     </button>
+                            //     <WalletMenu
+                            //         dialog_ref=wallet_dialog_ref
+                            //         toggle_menu=toggle_options_menu
+                            //     />
+                            // </div>
+                </div>
+            // TODO: toggle button to show chart or something else. when that's on, switch to grid
+            // layout with grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)]
+                    // <div class="container block align-middle sm:row-auto row-start-2 outline outline-2 outline-neutral-700 rounded">
+                    //     <pre class="px-2 text-xs whitespace-pre-wrap text-neutral-300">{current_quote}</pre>
+                    // </div>
+                    <div class="p-8 box-border space-y-6 rounded bg-neutral-800 border border-solid border-neutral-700 sm:row-auto row-start-1">
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <label class="block mb-1 text-base font-semibold" for="from-token">
+                                    "From"
+                                </label>
+                                <Secret20Balance token_address=token_x.into() />
+                            </div>
+                            <div class="flex justify-between space-x-2">
+                                <input
+                                    id="from-token"
+                                    class="p-1 w-full text-xl font-semibold"
+                                    type="number"
+                                    placeholder="0.0"
+                                    bind:value=amount_in
+                                    prop:value=move || amount_x.get()
+                                    on:change=move |ev| {
+                                        let new_value = event_target_value(&ev);
+                                        set_amount_x.set(new_value.parse().unwrap_or_default());
+                                        set_amount_y.set("".to_string());
+                                        set_swap_for_y.set(true);
+                                    }
+                                />
+                                <select
+                                    node_ref=select_x_node_ref
+                                    class="p-1 w-28"
+                                    title="Select Token X"
+                                    on:input=move |ev| {
+                                        let token_x = event_target_value(&ev);
+                                        set_token_x.set(None);
+                                        set_token_x.set(Some(token_x));
+                                    }
+                                    prop:value=move || token_x.get().unwrap_or_default()
+                                >
+                                    <option value="" disabled selected>
+                                        "Select Token"
+                                    </option>
+                                    <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
+                                    <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
+                                    <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
+                                    <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <label class="block mb-1 text-base font-semibold" for="to-token">
+                                    "To"
+                                </label>
+                                <Secret20Balance token_address=token_y.into() />
+                            </div>
+                            <div class="flex justify-between space-x-2">
+                                <input
+                                    id="to-token"
+                                    class="p-1 w-full text-xl font-semibold"
+                                    type="number"
+                                    placeholder="0.0"
+                                    prop:value=move || amount_y.get()
+                                    on:change=move |ev| {
+                                        let new_value = event_target_value(&ev);
+                                        set_amount_y.set(new_value.parse().unwrap_or_default());
+                                        set_amount_x.set("".to_string());
+                                        set_swap_for_y.set(false);
+                                    }
+                                />
+                                <select
+                                    node_ref=select_y_node_ref
+                                    class="p-1 w-28"
+                                    title="Select Token Y"
+                                    on:change=move |ev| {
+                                        let token_y = event_target_value(&ev);
+                                        set_token_y.set(None);
+                                        set_token_y.set(Some(token_y));
+                                    }
+                                    prop:value=move || token_y.get().unwrap_or_default()
+                                >
+                                    <option value="" disabled selected>
+                                        "Select Token"
+                                    </option>
+                                    <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
+                                    <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
+                                    <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
+                                    <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button
+                            class="p-1 block"
+                            disabled=move || amount_in.get().is_empty()
+                            on:click=move |_| _ = get_quote.dispatch(())
                         >
-                            <option value="" disabled selected>
-                                "Select Token"
-                            </option>
-                            <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
-                            <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
-                            <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
-                            <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
-                        </select>
+                            "Estimate Swap"
+                        </button>
+                        <Show when=move || amount_out().is_some() fallback=|| ()>
+                            <p>"Amount out: " {amount_out}</p>
+                        </Show>
+                        <button
+                            class="p-1 block"
+                            disabled=move || !keplr.enabled.get()
+                            on:click=move |_| _ = swap.dispatch(())
+                        >
+                            "Swap"
+                        </button>
+                    // <span class="text-xs">"(This will send 1 micro sSCRT to yourself)"</span>
                     </div>
                 </div>
-                <div class="space-y-2">
-                    <div class="flex justify-between">
-                        <div>"To"</div>
-                        <Secret20Balance token_address=token_y.into() />
-                    </div>
-                    <div class="flex justify-between space-x-2">
-                        <input
-                            class="p-1 w-full"
-                            type="number"
-                            placeholder="0.0"
-                            prop:value=move || amount_y.get()
-                            on:change=move |ev| {
-                                let new_value = event_target_value(&ev);
-                                set_amount_y.set(new_value.parse().unwrap_or_default());
-                                set_amount_x.set("".to_string());
-                                set_swap_for_y.set(false);
-                            }
-                        />
-                        <select
-                            node_ref=select_y_node_ref
-                            class="p-1 w-28"
-                            title="Select Token Y"
-                            on:change=move |ev| {
-                                let token_y = event_target_value(&ev);
-                                set_token_y.set(None);
-                                set_token_y.set(Some(token_y));
-                            }
-                            prop:value=move || token_y.get().unwrap_or_default()
-                        >
-                            <option value="" disabled selected>
-                                "Select Token"
-                            </option>
-                            <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
-                            <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
-                            <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
-                            <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
-                        </select>
-                    </div>
-                </div>
-                <button
-                    class="p-1 block"
-                    disabled=move || amount_in.get().is_empty()
-                    on:click=move |_| _ = get_quote.dispatch(())
-                >
-                    "Estimate Swap"
-                </button>
-                <Show when=move || amount_out().is_some() fallback=|| ()>
-                    <p>"Amount out: " {amount_out}</p>
-                </Show>
-                <button
-                    class="p-1 block"
-                    disabled=move || !keplr.enabled.get()
-                    on:click=move |_| _ = swap.dispatch(())
-                >
-                    "Swap"
-                </button>
-            // <span class="text-xs">"(This will send 1 micro sSCRT to yourself)"</span>
             </div>
         </div>
+    }
+}
+
+#[component]
+fn SettingsMenu(
+    dialog_ref: NodeRef<html::Dialog>,
+    toggle_menu: impl Fn(MouseEvent) + 'static,
+) -> impl IntoView {
+    info!("rendering <SettingsMenu/>");
+
+    view! {
+        <dialog
+            node_ref=dialog_ref
+            class="mt-2 w-60 h-40 px-0 py-3 shadow-lg bg-neutral-800 rounded border border-neutral-600"
+        >
+
+        </dialog>
     }
 }

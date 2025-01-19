@@ -60,7 +60,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                                         on:click=|_: MouseEvent| ()
                                         class="py-0 px-2 hover:bg-violet-500/20 text-ellipsis text-sm"
                                     >
-                                        {amount}
+                                       <span class="text-neutral-500">"Balance: "</span>{amount}
                                     </div>
                                 },
                             )
