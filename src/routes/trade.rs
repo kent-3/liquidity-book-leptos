@@ -47,6 +47,20 @@ pub fn Trade() -> impl IntoView {
     let (amount_y, set_amount_y) = signal(String::default());
     let (swap_for_y, set_swap_for_y) = signal(true);
 
+    let settings_dialog_ref = NodeRef::<html::Dialog>::new();
+
+    let toggle_swap_settings = move |_: MouseEvent| match settings_dialog_ref.get() {
+        Some(dialog) => match dialog.open() {
+            false => {
+                let _ = dialog.show();
+            }
+            true => dialog.close(),
+        },
+        None => {
+            let _ = window().alert_with_message("Something is wrong!");
+        }
+    };
+
     let select_x_node_ref = NodeRef::<html::Select>::new();
     let select_y_node_ref = NodeRef::<html::Select>::new();
 
@@ -266,12 +280,14 @@ pub fn Trade() -> impl IntoView {
                     <div class="h-10 px-4 py-2 font-semibold text-white box-border inline-flex items-center justify-center rounded border border-solid border-neutral-700">
                         "Swap"
                     </div>
-                    <div class="ml-auto w-10 h-10 box-border inline-flex items-center justify-center rounded border border-solid border-neutral-700 hover:bg-neutral-700 transition-colors ease-standard duration-200">
-                        <Settings2 size=20 color="#fff" absolute_stroke_width=true />
-                            //     <SettingsMenu
-                            //         dialog_ref=swap_dialog_ref
-                            //         toggle_menu=toggle_swap_settings
-                            //     />
+                    <div class="relative">
+                        <div on:click=toggle_swap_settings class="ml-auto w-10 h-10 box-border inline-flex items-center justify-center rounded border border-solid border-neutral-700 hover:bg-neutral-700 transition-colors ease-standard duration-200">
+                            <Settings2 size=20 color="#fff" absolute_stroke_width=true />
+                        </div>
+                        <SettingsMenu
+                            dialog_ref=settings_dialog_ref
+                            toggle_menu=toggle_swap_settings
+                        />
                     </div>
                             // <div class="relative inline-block">
                             //
@@ -413,11 +429,18 @@ fn SettingsMenu(
     info!("rendering <SettingsMenu/>");
 
     view! {
-        <dialog
-            node_ref=dialog_ref
-            class="mt-2 w-60 h-40 px-0 py-3 shadow-lg bg-neutral-800 rounded border border-neutral-600"
-        >
-
-        </dialog>
+        // TODO: better dialog positioning, different dialog[open] styles
+        <div class="floating-menu">
+            <dialog
+                node_ref=dialog_ref
+                class="z-40 mt-1.5 -mr-[124px] w-72 h-52 px-0 py-3 shadow-lg bg-neutral-800 rounded border border-solid border-neutral-700"
+            >
+                <div class="flex flex-col z-auto">
+                    <div class="px-3 py-2 border-b border-neutral-700">
+                        "Settings"
+                    </div>
+                </div>
+            </dialog>
+        </div>
     }
 }

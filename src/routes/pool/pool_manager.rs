@@ -435,6 +435,7 @@ pub fn PoolManager() -> impl IntoView {
                         <div class="w-full">
                             <h2 class="m-0 mb-2 text-xl">My Liquidity</h2>
                             <div class="flex justify-center items-center h-48">
+                                <Outlet />
                                 // <LiquidityChart debug=debug.into() data=my_data.into() />
                                 // <p class="text-neutral-500">"You have no liquidity in this pool"</p>
                             </div>

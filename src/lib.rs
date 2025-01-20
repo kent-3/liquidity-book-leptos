@@ -524,7 +524,7 @@ pub fn WalletMenu(
     view! {
         <dialog
             node_ref=dialog_ref
-            class="mr-0 mt-2 px-0 py-3 shadow-lg bg-neutral-800 rounded border border-neutral-600"
+            class="z-50 mr-0 mt-2 px-0 py-3 shadow-lg bg-neutral-800 rounded border border-neutral-600"
         >
             // <!-- Header -->
             <div class="flex items-center justify-between w-72 px-6 pb-3">

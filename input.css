@@ -298,6 +298,24 @@ nav a:hover {
   --tw-contain-style: ;
 }
 
+/* .floating-menu dialog[open] { */
+/*   opacity: 1; */
+/*   transform: scale(1); */
+/* } */
+
+.floating-menu dialog {
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 300ms cubic-bezier(0, 0, 0, 1) allow-discrete;
+}
+
+@starting-style {
+  .floating-menu dialog[open] {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Open state of the dialog */
 dialog[open] {
   opacity: 1;
