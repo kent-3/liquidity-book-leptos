@@ -275,40 +275,44 @@ pub fn Trade() -> impl IntoView {
             // <div class="grid gap-4 sm:grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)] grid-cols-1 grid-rows-2 sm:grid-rows-1">
             <div class="grid gap-4 grid-cols-1 max-w-[550px] w-full">
                 <div class="flex flex-col space-y-3 w-full">
-                // buttons above the main swap box
-                <div class="w-full flex items-center justify-between">
-                    <div class="h-10 px-4 py-2 font-semibold text-white box-border inline-flex items-center justify-center rounded border border-solid border-neutral-700">
-                        "Swap"
-                    </div>
-                    <div class="relative">
-                        <div on:click=toggle_swap_settings class="ml-auto w-10 h-10 box-border inline-flex items-center justify-center rounded border border-solid border-neutral-700 hover:bg-neutral-700 transition-colors ease-standard duration-200">
-                            <Settings2 size=20 color="#fff" absolute_stroke_width=true />
+                    // buttons above the main swap box
+                    <div class="w-full flex items-center justify-between">
+                        <div class="
+                        h-10 px-4 py-2 font-semibold text-white box-border inline-flex items-center justify-center rounded border border-solid border-neutral-700
+                        hover:bg-neutral-700 transition-colors ease-standard duration-200 cursor-default
+                        ">"Swap"</div>
+                        <div class="relative">
+                            <div
+                                on:click=toggle_swap_settings
+                                class="ml-auto w-10 h-10 box-border inline-flex items-center justify-center rounded border border-solid border-neutral-700 hover:bg-neutral-700 transition-colors ease-standard duration-200"
+                            >
+                                <Settings2 size=20 color="#fff" absolute_stroke_width=true />
+                            </div>
+                            <SettingsMenu
+                                dialog_ref=settings_dialog_ref
+                                toggle_menu=toggle_swap_settings
+                            />
                         </div>
-                        <SettingsMenu
-                            dialog_ref=settings_dialog_ref
-                            toggle_menu=toggle_swap_settings
-                        />
+                    // <div class="relative inline-block">
+                    // 
+                    // <button
+                    // on:click=toggle_wallet_menu
+                    // class="min-w-24 text-sm font-semibold leading-none py-[5px] px-[12px] inline-flex justify-center items-center align-middle"
+                    // >
+                    // // class="min-w-24 transition-shadow active:bg-neutral-900 active:border-neutral-600 hover:bg-neutral-700 hover:border-neutral-500 ease-standard duration-100 box-border font-semibold leading-5 inline-flex items-center justify-center rounded border border-solid border-neutral-600 bg-neutral-800 text-sm py-[5px] px-[12px]"
+                    // "Wallet Menu"
+                    // // {move || key_address().map(shorten_address)}
+                    // </button>
+                    // <WalletMenu
+                    // dialog_ref=wallet_dialog_ref
+                    // toggle_menu=toggle_options_menu
+                    // />
+                    // </div>
                     </div>
-                            // <div class="relative inline-block">
-                            //
-                            //     <button
-                            //         on:click=toggle_wallet_menu
-                            //         class="min-w-24 text-sm font-semibold leading-none py-[5px] px-[12px] inline-flex justify-center items-center align-middle"
-                            //     >
-                            //         // class="min-w-24 transition-shadow active:bg-neutral-900 active:border-neutral-600 hover:bg-neutral-700 hover:border-neutral-500 ease-standard duration-100 box-border font-semibold leading-5 inline-flex items-center justify-center rounded border border-solid border-neutral-600 bg-neutral-800 text-sm py-[5px] px-[12px]"
-                            //         "Wallet Menu"
-                            //     // {move || key_address().map(shorten_address)}
-                            //     </button>
-                            //     <WalletMenu
-                            //         dialog_ref=wallet_dialog_ref
-                            //         toggle_menu=toggle_options_menu
-                            //     />
-                            // </div>
-                </div>
-            // TODO: toggle button to show chart or something else. when that's on, switch to grid
-            // layout with grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)]
+                    // TODO: toggle button to show chart or something else. when that's on, switch to grid
+                    // layout with grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)]
                     // <div class="container block align-middle sm:row-auto row-start-2 outline outline-2 outline-neutral-700 rounded">
-                    //     <pre class="px-2 text-xs whitespace-pre-wrap text-neutral-300">{current_quote}</pre>
+                    // <pre class="px-2 text-xs whitespace-pre-wrap text-neutral-300">{current_quote}</pre>
                     // </div>
                     <div class="p-8 box-border space-y-6 rounded bg-neutral-800 border border-solid border-neutral-700 sm:row-auto row-start-1">
                         <div class="space-y-2">
@@ -348,7 +352,8 @@ pub fn Trade() -> impl IntoView {
                                         "Select Token"
                                     </option>
                                     <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
-                                    <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
+                                    <option value=SYMBOL_TO_ADDR
+                                        .get("STKDSCRT")>"stkd-SCRT"</option>
                                     <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
                                     <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
                                 </select>
@@ -390,7 +395,8 @@ pub fn Trade() -> impl IntoView {
                                         "Select Token"
                                     </option>
                                     <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
-                                    <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
+                                    <option value=SYMBOL_TO_ADDR
+                                        .get("STKDSCRT")>"stkd-SCRT"</option>
                                     <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
                                     <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
                                 </select>
@@ -408,7 +414,10 @@ pub fn Trade() -> impl IntoView {
                         </Show>
                         <button
                             class="p-1 block"
-                            disabled=move || !keplr.enabled.get()
+                            disabled=move || {
+                                !keplr.enabled.get()
+                                    || get_quote.value().get().and_then(Result::ok).is_none()
+                            }
                             on:click=move |_| _ = swap.dispatch(())
                         >
                             "Swap"
@@ -429,16 +438,13 @@ fn SettingsMenu(
     info!("rendering <SettingsMenu/>");
 
     view! {
-        // TODO: better dialog positioning, different dialog[open] styles
         <div class="floating-menu">
             <dialog
                 node_ref=dialog_ref
-                class="z-40 mt-1.5 -mr-[124px] w-72 h-52 px-0 py-3 shadow-lg bg-neutral-800 rounded border border-solid border-neutral-700"
+                class="z-40 mt-1.5 -mr-[124px] w-80 h-52 px-0 py-3 shadow-lg bg-[#303030] rounded border border-solid border-neutral-700"
             >
                 <div class="flex flex-col z-auto">
-                    <div class="px-3 py-2 border-b border-neutral-700">
-                        "Settings"
-                    </div>
+                    <div class="px-3 py-2 border-b border-neutral-700">"Settings"</div>
                 </div>
             </dialog>
         </div>

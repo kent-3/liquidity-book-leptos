@@ -118,6 +118,7 @@ impl AsRef<HashMap<String, Token>> for TokenMap {
     }
 }
 
+// TODO: probably should change this. I'm not sure the derived signal works as intended
 #[derive(Copy, Clone)]
 pub struct KeplrSignals {
     pub enabled: RwSignal<bool>,

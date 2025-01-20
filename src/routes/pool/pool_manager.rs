@@ -412,7 +412,7 @@ pub fn PoolManager() -> impl IntoView {
                                     lb_pair.get().map(|x| shorten_address(x.contract.address))
                                 }}
                             </div>
-                            <ExternalLink size=14 color="white"/>
+                            <ExternalLink size=14 color="white" />
                         </div>
                     </a>
                 </span>
@@ -434,11 +434,9 @@ pub fn PoolManager() -> impl IntoView {
                     <div class="px-6 py-4">
                         <div class="w-full">
                             <h2 class="m-0 mb-2 text-xl">My Liquidity</h2>
-                            <div class="flex justify-center items-center h-48">
-                                <Outlet />
-                                // <LiquidityChart debug=debug.into() data=my_data.into() />
-                                // <p class="text-neutral-500">"You have no liquidity in this pool"</p>
-                            </div>
+                            // <LiquidityChart debug=debug.into() data=my_data.into() />
+                            // <p class="text-neutral-500">"You have no liquidity in this pool"</p>
+                            <div class="flex justify-center items-center h-48"></div>
                         </div>
                     </div>
                     <hr class="m-0 border-2 border-neutral-700" />
@@ -461,7 +459,7 @@ pub fn PoolManager() -> impl IntoView {
                                             </div>
                                         </div>
                                     </div>
-                                    <Plus size=14 color="white"/>
+                                    <Plus size=14 color="white" />
                                     // token y deposit balance
                                     <div class="flex items-center box-border px-4 py-3 h-16 bg-neutral-800 rounded">
                                         <div class="flex items-center flex-row flex-1 gap-2">

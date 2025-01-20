@@ -56,7 +56,9 @@ pub fn PoolBrowser() -> impl IntoView {
         // </table>
 
         <div class="flex items-center justify-between">
-            <h3 class="mb-3">"All Pools - " {move || number_of_lb_pairs.get().as_deref().cloned()}</h3>
+            <h3 class="mb-3">
+                "All Pools - " {move || number_of_lb_pairs.get().as_deref().cloned()}
+            </h3>
 
             <div class="">
                 <A href="/liquidity-book-leptos/pool/create">

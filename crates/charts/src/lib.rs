@@ -129,9 +129,7 @@ pub fn LiquidityChart(debug: Signal<bool>, data: Signal<Vec<MyData>>) -> impl In
             font_height=14.0
 
             // left=TickLabels::aligned_floats()
-            inner=[
-                // AxisMarker::bottom_edge().with_arrow(false).into_inner(),
-            ]
+            inner=[]
             bottom=TickLabels::aligned_floats()
             tooltip=Tooltip::left_cursor()
         />
