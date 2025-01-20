@@ -1,0 +1,8 @@
+[package]
+name = "ammber-charts"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+leptos = { version = "0.7.3", features = ["csr"] }
+leptos-chartistry = { version = "0.2.1" }

@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = ["crates/ammber_sdk", "crates/batch_query", "crates/keplr"]
+members = ["crates/ammber_sdk", "crates/batch_query", "crates/keplr", "crates/charts"]
 resolver = "2"
 
 [workspace.lints.clippy]
@@ -30,15 +30,19 @@ git2 = "0.20"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 
+[workspace.dependencies]
+leptos = { version = "0.7.3", features = ["csr"] }
+
 [dependencies]
 
 # workspace crates
 ammber-sdk = { path = "./crates/ammber_sdk" }
 batch-query = { path = "./crates/batch_query", package = "secret-batch-query" }
 keplr = { path = "./crates/keplr" }
+ammber-charts = { path = "./crates/charts" }
 
 # Leptos official
-leptos = { version = "0.7.3", features = ["csr"] }
+leptos = { workspace = true }
 leptos_router = { version = "0.7.3", features = [] }
 leptos_router_macro = { version = "0.7.3" }
 leptos_meta = { version = "0.7.3" }
@@ -52,7 +56,6 @@ reactive_stores = { version = "0.1.3" }
 leptos-use = { version = "0.15.3", default-features = false, features = ["storage"] }
 codee = { version = "0.2", features = ["json_serde", "json_serde_wasm", "base64", "prost"] }
 # leptonic = { git = "https://github.com/lpotthast/leptonic.git", branch = "migrate-to-leptos-0.7" }
-leptos-chartistry = { version = "0.2.1" }
 lucide-leptos = "1.1.0"
 
 # gRPC

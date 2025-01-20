@@ -75,6 +75,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "ammber-charts"
+version = "0.1.0"
+dependencies = [
+ "leptos",
+ "leptos-chartistry",
+]
+
+[[package]]
 name = "ammber-sdk"
 version = "0.1.0"
 dependencies = [
@@ -4532,6 +4540,7 @@ dependencies = [
 name = "trader-leptos"
 version = "0.1.0"
 dependencies = [
+ "ammber-charts",
  "ammber-sdk",
  "async-trait",
  "base64 0.22.1",
@@ -4544,7 +4553,6 @@ dependencies = [
  "keplr",
  "keplr-sys",
  "leptos",
- "leptos-chartistry",
  "leptos-use",
  "leptos_meta",
  "leptos_router",
