@@ -212,11 +212,29 @@ pub fn Pool() -> impl IntoView {
                 let token_y = addr_2_contract(token_b).await.unwrap();
                 let bin_step = basis_points;
 
-                LB_FACTORY
-                    .get_lb_pair_information(token_x, token_y, bin_step)
-                    .await
-                    .map(|lb_pair_information| lb_pair_information.lb_pair)
-                    .unwrap()
+                let storage = window()
+                    .local_storage()
+                    .expect("local storage not available?")
+                    .expect("local storage returned none?");
+
+                let storage_key = format!("{}_{}_{}", token_x.address, token_y.address, bin_step);
+
+                match storage.get_item(&storage_key) {
+                    Ok(None) => {
+                        let lb_pair = LB_FACTORY
+                            .get_lb_pair_information(token_x, token_y, bin_step)
+                            .await
+                            .map(|lb_pair_information| lb_pair_information.lb_pair)
+                            .unwrap();
+
+                        let _ = storage
+                            .set_item(&storage_key, &serde_json::to_string(&lb_pair).unwrap());
+
+                        lb_pair
+                    }
+                    Ok(Some(lb_pair)) => serde_json::from_str(&lb_pair).unwrap(),
+                    _ => todo!(),
+                }
             })
         },
     );
@@ -231,8 +249,6 @@ pub fn Pool() -> impl IntoView {
             async move {
                 if let Some(lb_pair) = lb_pair {
                     ILbPair(lb_pair.contract).get_active_id().await
-                    // This will set a URL query param "active_id" for nested routes to use
-                    // .inspect(|id| set_active_id.set(Some(id.to_string())))
                 } else {
                     Err(Error::generic("lb_pair resource is not available yet"))
                 }
@@ -261,7 +277,7 @@ pub fn Pool() -> impl IntoView {
         </a>
 
         // page title with the token symbols
-        <div class="flex flex-wrap py-2 items-center gap-x-4 gap-y-2">
+        <div class="flex flex-col md:flex-row py-2 items-start md:items-center gap-x-4 gap-y-2">
             <Suspense fallback=move || {
                 view! { <div class="text-3xl font-bold">{token_a}" / "{token_b}</div> }
             }>
@@ -272,7 +288,7 @@ pub fn Pool() -> impl IntoView {
                 </div>
             </Suspense>
 
-            <div class="flex items-center gap-x-2 sm:pl-4">
+            <div class="flex items-center gap-x-2 md:pl-4">
                 <span class="text-sm text-white inline-flex font-bold px-2 py-1 rounded-full border border-solid border-neutral-700">
                     {basis_points}" bps"
                 </span>

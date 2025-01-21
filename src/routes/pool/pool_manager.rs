@@ -283,24 +283,6 @@ pub fn PoolManager() -> impl IntoView {
             .collect()
     }
 
-    // // SendWrapper required due to addr_2_contract function
-    // let lb_pair: Resource<LbPair> = Resource::new(
-    //     move || (token_a(), token_b(), basis_points()),
-    //     move |(token_a, token_b, basis_points)| {
-    //         SendWrapper::new(async move {
-    //             let token_x = addr_2_contract(token_a).await.unwrap();
-    //             let token_y = addr_2_contract(token_b).await.unwrap();
-    //             let bin_step = basis_points;
-    //
-    //             LB_FACTORY
-    //                 .get_lb_pair_information(token_x, token_y, bin_step)
-    //                 .await
-    //                 .map(|lb_pair_information| lb_pair_information.lb_pair)
-    //                 .unwrap()
-    //         })
-    //     },
-    // );
-
     let lb_pair = use_context::<Resource<LbPair>>().expect("missing the LbPair resource context");
     let active_id = use_context::<Resource<Result<u32, Error>>>()
         .expect("missing the active_id resource context");
@@ -310,22 +292,6 @@ pub fn PoolManager() -> impl IntoView {
         scroll: false,
         ..Default::default()
     };
-
-    // // This component only needs to write to the signal
-    // let (_, set_active_id) = query_signal_with_options::<String>("active_id", nav_options.clone());
-    //
-    // let active_id = Resource::new(
-    //     move || lb_pair.track(),
-    //     move |_| {
-    //         async move {
-    //             ILbPair(lb_pair.await.contract)
-    //                 .get_active_id()
-    //                 .await
-    //                 // This will set a URL query param "active_id" for nested routes to use
-    //                 .inspect(|id| set_active_id.set(Some(id.to_string())))
-    //         }
-    //     },
-    // );
 
     // NOTE: We have a lot of Resources depending on other Resources.
     //       It works, but I wonder if there is a better way.
@@ -379,7 +345,7 @@ pub fn PoolManager() -> impl IntoView {
     let my_data = load_data();
 
     view! {
-        <div class="grid auto-rows-min grid-cols-1 sm:grid-cols-2 gap-8">
+        <div class="grid auto-rows-min grid-cols-1 md:grid-cols-2 gap-8">
 
             // left side of the screen
             <div class="flex flex-col items-center gap-6">
@@ -521,7 +487,7 @@ pub fn PoolManager() -> impl IntoView {
             // </ul>
             // </details>
 
-            // right side of screen
+            // right side of screen, moves to bottom on medium screens
             <div class="block px-5 py-4 w-full box-border space-y-5 mx-auto outline outline-2 outline-neutral-700 rounded max-h-max">
                 // "Tab Group"
                 <div class="flex gap-4 w-full">
@@ -531,6 +497,7 @@ pub fn PoolManager() -> impl IntoView {
                         class="w-full"
                         on:click={
                             let navigate_ = navigate.clone();
+                            let nav_options_ = nav_options.clone();
                             move |_| {
                                 let mut pathname = location.pathname.get();
                                 let query_params = location.search.get();
@@ -545,7 +512,7 @@ pub fn PoolManager() -> impl IntoView {
                                         .to_string();
                                 }
                                 let new_route = format!("{pathname}/add/?{query_params}");
-                                navigate_(&new_route, Default::default());
+                                navigate_(&new_route, nav_options_.clone());
                             }
                         }
                     >
@@ -555,6 +522,7 @@ pub fn PoolManager() -> impl IntoView {
                         class="w-full"
                         on:click={
                             let navigate_ = navigate.clone();
+                            let nav_options_ = nav_options.clone();
                             move |_| {
                                 let mut pathname = location.pathname.get();
                                 let query_params = location.search.get();
@@ -569,7 +537,7 @@ pub fn PoolManager() -> impl IntoView {
                                         .to_string();
                                 }
                                 let new_route = format!("{pathname}/remove/?{query_params}");
-                                navigate_(&new_route, Default::default());
+                                navigate_(&new_route, nav_options_.clone());
                             }
                         }
                     >

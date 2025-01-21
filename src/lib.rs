@@ -165,28 +165,30 @@ pub fn App() -> impl IntoView {
     //     }
     // });
 
+    let time_since_last_query = RwSignal::new(std::time::Duration::from_secs(5));
+
     let all_lb_pairs: LocalResource<Vec<LbPair>> = LocalResource::new(move || async move {
         let storage = window()
             .local_storage()
             .expect("local storage not available?")
             .expect("local storage returned none?");
 
-        let i = number_of_lb_pairs.await;
-        let mut queries = Vec::new();
-
-        for index in 0..i {
-            queries.push(BatchQueryParams {
-                id: index.to_string(),
-                contract: LB_FACTORY.0.clone(),
-                query_msg: lb_factory::QueryMsg::GetLbPairAtIndex { index },
-            });
-        }
-
-        let batch_query_message = msg_batch_query(queries);
-
         match storage.get_item("all_lb_pairs") {
-            // TODO: change BATCH_QUERY_ROUTER to automatically know the current chain_id
             Ok(None) => {
+                let i = number_of_lb_pairs.await;
+                let mut queries = Vec::new();
+
+                for index in 0..i {
+                    queries.push(BatchQueryParams {
+                        id: index.to_string(),
+                        contract: LB_FACTORY.0.clone(),
+                        query_msg: lb_factory::QueryMsg::GetLbPairAtIndex { index },
+                    });
+                }
+
+                let batch_query_message = msg_batch_query(queries);
+
+                // TODO: change BATCH_QUERY_ROUTER to automatically know the current chain_id
                 let pairs = chain_query::<BatchQueryResponse>(
                     BATCH_QUERY_ROUTER.pulsar.code_hash.clone(),
                     BATCH_QUERY_ROUTER.pulsar.address.to_string(),
