@@ -1653,13 +1653,13 @@ ul {
 ::view-transition-old(outlet-1) {
   animation:
     90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
-    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both scale-out;
 }
 
 ::view-transition-new(outlet-1) {
   animation:
     210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
-    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both scale-in;
 }
 
 ::view-transition-old(outlet-2) {
@@ -1749,6 +1749,18 @@ ul {
 @keyframes slide-from-left {
   from {
     transform: translateX(-30px);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(80%);
+  }
+}
+
+@keyframes scale-out {
+  to {
+    transform: scale(110%);
   }
 }
 
