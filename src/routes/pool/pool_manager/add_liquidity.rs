@@ -7,6 +7,7 @@ use ammber_sdk::{
     },
     contract_interfaces::{
         lb_factory::{self, LbPairInformation},
+        lb_pair::LbPair,
         lb_router::{self, AddLiquidityResponse, LiquidityParameters},
     },
     utils::*,
@@ -94,6 +95,7 @@ pub fn AddLiquidity() -> impl IntoView {
         .unwrap_or(address)
     }
 
+    // TODO: pass this info from parent with context
     let token_a_symbol =
         AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_a()).await });
 
@@ -115,38 +117,7 @@ pub fn AddLiquidity() -> impl IntoView {
     // NOTE: By using the information returned by lb-factory query, we can be sure it is correct.
     // In theory, we could have an off-chain database of (token_x, token_y, bin_step) -> LbPairInformation
     // to reduce the number of chain queries.
-    // TODO: Figure out how to obtain the token code hashes efficiently.
-    let lb_pair_information = Resource::new(
-        move || (token_a(), token_b(), bin_step()), // when any of these values change, the Resource is reloaded
-        move |(token_a, token_b, bin_step)| {
-            SendWrapper::new(async move {
-                // Assume token_x has the code_hash from the current deployment.
-                let token_x = ContractInfo {
-                    address: Addr::unchecked(token_a),
-                    code_hash: LB_AMBER.code_hash.clone(),
-                };
-                // Assume token_y is sSCRT
-                let token_y = ContractInfo {
-                    address: Addr::unchecked(token_b),
-                    code_hash: LB_SSCRT.code_hash.clone(),
-                };
-
-                lb_factory::QueryMsg::GetLbPairInformation {
-                    token_x: token_x.into(),
-                    token_y: token_y.into(),
-                    bin_step,
-                }
-                .do_query(&LB_FACTORY)
-                .await
-                .inspect(|response| trace!("{:?}", response))
-                .and_then(|response| {
-                    Ok(serde_json::from_str::<lb_factory::LbPairInformationResponse>(&response)?)
-                })
-                .map(|x| x.lb_pair_information)
-                .unwrap_or_default()
-            })
-        },
-    );
+    let lb_pair = use_context::<Resource<LbPair>>().expect("missing the LbPair resource context");
 
     let price_by = move || price_by.get().unwrap_or("radius".to_string());
 
@@ -155,6 +126,8 @@ pub fn AddLiquidity() -> impl IntoView {
     let (liquidity_shape, set_liquidity_shape) = signal(LiquidityShape::SpotUniform);
     let (liquidity_configuration, set_liquidity_configuration) = signal(SPOT_UNIFORM.clone());
 
+    // FIXME: the target price is being truncated, causing the get_id_from_price function to return
+    // the wrong bin id
     let (target_price, set_target_price) = signal("Loading...".to_string());
 
     // TODO: I think we need to go straight to 128x128 fixed point number from the float input
@@ -211,6 +184,8 @@ pub fn AddLiquidity() -> impl IntoView {
             .and_then(Result::ok)
             .and_then(|id| PriceHelper::get_price_from_id(id, bin_step()).ok())
             .and_then(|price| PriceHelper::convert128x128_price_to_decimal(price).ok())
+            // FIXME: the target price is being truncated, causing the get_id_from_price
+            // function to return the wrong bin id
             .map(|price| u128_to_string_with_precision(price.as_u128()))
             .map(|price| set_target_price.set(price));
     });
@@ -247,15 +222,15 @@ pub fn AddLiquidity() -> impl IntoView {
 
         let target_bin = target_bin();
 
-        let Some(lb_pair_information) = lb_pair_information.get() else {
+        let Some(lb_pair) = lb_pair.get() else {
             return Err(Error::generic("lb pair information is missing!"));
         };
 
         // end of signal getting
 
-        let token_x = lb_pair_information.lb_pair.token_x;
-        let token_y = lb_pair_information.lb_pair.token_y;
-        let bin_step = lb_pair_information.bin_step;
+        let token_x = lb_pair.token_x;
+        let token_y = lb_pair.token_y;
+        let bin_step = lb_pair.bin_step;
 
         let decimals_x = get_token_decimals(token_x.address().as_str())?;
         let decimals_y = get_token_decimals(token_y.address().as_str())?;

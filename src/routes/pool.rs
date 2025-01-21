@@ -218,7 +218,8 @@ pub fn Pool() -> impl IntoView {
     );
 
     // NOTE: For some reason, this always runs twice. To avoid double querying, do nothing if
-    //       lb_pair is None, instead of await-ing it.
+    //       lb_pair is None, instead of await-ing it. I wonder if it has something to do with all
+    //       the SendWrappers involved...
     let active_id = Resource::new(
         move || lb_pair.get(),
         |lb_pair| {
