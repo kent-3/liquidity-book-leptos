@@ -441,7 +441,7 @@ fn SettingsMenu(
         <div class="floating-menu">
             <dialog
                 node_ref=dialog_ref
-                class="z-40 mt-1.5 -mr-[124px] w-80 h-52 px-0 py-3 shadow-lg bg-[#303030] rounded border border-solid border-neutral-700"
+                class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 px-0 py-3 shadow-lg bg-[#303030] rounded border border-solid border-neutral-700"
             >
                 <div class="flex flex-col z-auto">
                     <div class="px-3 py-2 border-b border-neutral-700">"Settings"</div>
