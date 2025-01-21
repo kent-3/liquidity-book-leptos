@@ -578,7 +578,9 @@ pub fn PoolManager() -> impl IntoView {
                 </div>
                 // TODO: I think add/remove liquidity should not be separate routes, and instead toggle
                 // visibility with a tab-group-like thing
-                <Outlet />
+                <div class="liquidity-group">
+                    <Outlet />
+                </div>
             </div>
         </div>
     }

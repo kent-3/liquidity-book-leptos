@@ -1628,6 +1628,8 @@ ul {
   }
 }
 
+/* View Transitions CSS */
+
 .router-outlet-0 main {
   view-transition-name: main;
 }
@@ -1636,42 +1638,199 @@ ul {
   view-transition-name: main-back;
 }
 
-.router-outlet-1 .contact-list {
-  view-transition-name: contact;
+.router-outlet-1 .pools-group {
+  view-transition-name: outlet-1;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  ::view-transition-old(contact) {
-    animation: 150ms fadeOut cubic-bezier(0.3, 0.1, 1, 1);
-    /* Hold final state of animation */
-    animation-fill-mode: forwards;
-  }
+.router-outlet-2 .pool-tab-group {
+  view-transition-name: outlet-2;
+}
 
-  ::view-transition-new(contact) {
-    animation: 300ms fadeIn cubic-bezier(0.2, 0, 0, 1);
-    animation-fill-mode: forwards;
-  }
+.router-outlet-3 .liquidity-group {
+  view-transition-name: outlet-3;
+}
 
-  ::view-transition-old(main) {
-    animation: 200ms slideOut cubic-bezier(0.2, 0, 0, 1);
-    animation-fill-mode: forwards;
-  }
+::view-transition-old(outlet-1) {
+  animation:
+    90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+}
 
-  ::view-transition-new(main) {
-    animation: 450ms slideIn cubic-bezier(0.2, 0, 0, 1);
-    animation-fill-mode: forwards;
-  }
+::view-transition-new(outlet-1) {
+  animation:
+    210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+}
 
-  ::view-transition-old(main-back) {
-    color: red;
-    animation: 200ms slideOutBack cubic-bezier(0.2, 0, 0, 1);
-    animation-fill-mode: forwards;
-  }
+::view-transition-old(outlet-2) {
+  animation:
+    90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+}
 
-  ::view-transition-new(main-back) {
-    color: blue;
-    animation: 450ms slideInBack cubic-bezier(0.2, 0, 0, 1);
-    animation-fill-mode: forwards;
+::view-transition-new(outlet-2) {
+  animation:
+    210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+}
+
+/* ::view-transition-old(main) { */
+
+/*   animation: 200ms slideOut cubic-bezier(0.2, 0, 0, 1); */
+
+/*   animation-fill-mode: forwards; */
+
+/* } */
+
+/**/
+
+/* ::view-transition-new(main) { */
+
+/*   animation: 450ms slideIn cubic-bezier(0.2, 0, 0, 1); */
+
+/*   animation-fill-mode: forwards; */
+
+/* } */
+
+/**/
+
+/* ::view-transition-old(main-back) { */
+
+/*   color: red; */
+
+/*   animation: 200ms slideOutBack cubic-bezier(0.2, 0, 0, 1); */
+
+/*   animation-fill-mode: forwards; */
+
+/* } */
+
+/**/
+
+/* ::view-transition-new(main-back) { */
+
+/*   color: blue; */
+
+/*   animation: 450ms slideInBack cubic-bezier(0.2, 0, 0, 1); */
+
+/*   animation-fill-mode: forwards; */
+
+/* } */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-from-right {
+  from {
+    transform: translateX(30px);
+  }
+}
+
+@keyframes slide-to-left {
+  to {
+    transform: translateX(-30px);
+  }
+}
+
+@keyframes slide-to-right {
+  to {
+    transform: translateX(30px);
+  }
+}
+
+@keyframes slide-from-left {
+  from {
+    transform: translateX(-30px);
+  }
+}
+
+::view-transition-old(main) {
+  animation:
+    90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+}
+
+::view-transition-new(main) {
+  animation:
+    210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+}
+
+::view-transition-old(main-back) {
+  animation:
+    90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-right;
+}
+
+::view-transition-new(main-back) {
+  animation:
+    210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-left;
+}
+
+::view-transition-old(outlet-3) {
+  animation:
+    90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+}
+
+::view-transition-new(outlet-3) {
+  animation:
+    210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+}
+
+/* ::view-transition-old(main), */
+
+/* ::view-transition-new(main) { */
+
+/*   animation-duration: 1s; */
+
+/* } */
+
+/**/
+
+/* ::view-transition-old(outlet-1), */
+
+/* ::view-transition-new(outlet-1) { */
+
+/*   animation-duration: 0.5s; */
+
+/* } */
+
+/**/
+
+/* ::view-transition-old(outlet-2), */
+
+/* ::view-transition-new(outlet-2) { */
+
+/*   animation-duration: 0.25s; */
+
+/* } */
+
+/**/
+
+/* ::view-transition-old(outlet-3), */
+
+/* ::view-transition-new(outlet-3) { */
+
+/*   animation-duration: 0.15s; */
+
+/* } */
+
+@media (prefers-reduced-motion) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }
 
