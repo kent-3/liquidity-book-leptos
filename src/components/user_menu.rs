@@ -43,22 +43,27 @@ pub fn WalletMenu(
             .map(|key| key.bech32_address)
     };
 
+    // Note: this resource is running twice for some reason! at least here I can imagine it's due
+    // to the AsyncDerived signal of keplr.key
     let user_balance = Resource::new(
-        move || keplr.key.track(),
-        move |_| {
+        move || keplr.key.get(),
+        move |key| {
             let client = Client::new(endpoint.get());
             SendWrapper::new(async move {
-                let bank = BankQuerier::new(client);
-                let key = keplr.key.await?;
+                if let Some(Ok(key)) = key {
+                    let bank = BankQuerier::new(client);
 
-                bank.balance(key.bech32_address, "uscrt")
-                    .await
-                    .map(|balance| Coin::from(balance.balance.unwrap()))
-                    .map_err(Error::from)
-                    .inspect(|coin| debug!("{coin:?}"))
-                    .inspect_err(|err| error!("{err:?}"))
-                    .map(|coin| coin.amount.parse::<u128>().unwrap_or_default())
-                    .map(|amount| display_token_amount(amount, 6u8))
+                    bank.balance(key.bech32_address, "uscrt")
+                        .await
+                        .map(|balance| Coin::from(balance.balance.unwrap()))
+                        .map_err(Error::from)
+                        .inspect(|coin| debug!("{coin:?}"))
+                        .inspect_err(|err| error!("{err:?}"))
+                        .map(|coin| coin.amount.parse::<u128>().unwrap_or_default())
+                        .map(|amount| display_token_amount(amount, 6u8))
+                } else {
+                    Ok(0.to_string())
+                }
             })
         },
     );
