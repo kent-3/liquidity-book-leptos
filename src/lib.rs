@@ -138,25 +138,30 @@ pub fn App() -> impl IntoView {
     // because we do want it to re-run if the user refreshes the page (to load any new pairs).
 
     let number_of_lb_pairs: LocalResource<u32> = LocalResource::new(move || async move {
-        let storage = window()
-            .local_storage()
-            .expect("local storage not available?")
-            .expect("local storage returned none?");
+        // let storage = window()
+        //     .local_storage()
+        //     .expect("local storage not available?")
+        //     .expect("local storage returned none?");
+        //
+        // match storage.get_item("number_of_lb_pairs") {
+        //     Ok(None) => {
+        //         let number = LB_FACTORY
+        //             .get_number_of_lb_pairs()
+        //             .await
+        //             .unwrap_or_default();
+        //
+        //         let _ = storage.set_item("number_of_lb_pairs", &number.to_string());
+        //
+        //         number
+        //     }
+        //     Ok(Some(number)) => number.parse::<u32>().unwrap(),
+        //     _ => 0,
+        // }
 
-        match storage.get_item("number_of_lb_pairs") {
-            Ok(None) => {
-                let number = LB_FACTORY
-                    .get_number_of_lb_pairs()
-                    .await
-                    .unwrap_or_default();
-
-                let _ = storage.set_item("number_of_lb_pairs", &number.to_string());
-
-                number
-            }
-            Ok(Some(number)) => number.parse::<u32>().unwrap(),
-            _ => 0,
-        }
+        LB_FACTORY
+            .get_number_of_lb_pairs()
+            .await
+            .unwrap_or_default()
     });
 
     // Effect::new(move || {
@@ -165,46 +170,81 @@ pub fn App() -> impl IntoView {
     //     }
     // });
 
-    let time_since_last_query = RwSignal::new(std::time::Duration::from_secs(5));
+    async fn batch_query_all_lb_pairs(number: u32) -> Vec<LbPair> {
+        let i = number;
+        let mut queries = Vec::new();
 
+        for index in 0..i {
+            queries.push(BatchQueryParams {
+                id: index.to_string(),
+                contract: LB_FACTORY.0.clone(),
+                query_msg: lb_factory::QueryMsg::GetLbPairAtIndex { index },
+            });
+        }
+
+        let batch_query_message = msg_batch_query(queries);
+
+        // TODO: change BATCH_QUERY_ROUTER to automatically know the current chain_id
+        let pairs = chain_query::<BatchQueryResponse>(
+            BATCH_QUERY_ROUTER.pulsar.code_hash.clone(),
+            BATCH_QUERY_ROUTER.pulsar.address.to_string(),
+            batch_query_message,
+        )
+        .await
+        .map(parse_batch_query)
+        .map(extract_pairs_from_batch)
+        .unwrap();
+
+        pairs
+    }
+
+    // TODO: how to do time in wasm? "time not implemented on this platform"
+    // however, the time thing is really not necessary because the query only runs once per site
+    // load, so a user can simply refresh the page to re-run the query.
+    // use std::time::{Duration, Instant};
+
+    // let time_of_last_query = RwSignal::new(Instant::now());
+
+    // TODO: currently running this query every time a user visits the site / refreshes the page.
+    // makes sense for now but need to think of something else eventually
     let all_lb_pairs: LocalResource<Vec<LbPair>> = LocalResource::new(move || async move {
-        let storage = window()
-            .local_storage()
-            .expect("local storage not available?")
-            .expect("local storage returned none?");
+        // let storage = window()
+        //     .local_storage()
+        //     .expect("local storage not available?")
+        //     .expect("local storage returned none?");
 
-        match storage.get_item("all_lb_pairs") {
-            Ok(None) => {
-                let i = number_of_lb_pairs.await;
-                let mut queries = Vec::new();
+        // let time_since_last_query = Instant::now() - time_of_last_query.get();
 
-                for index in 0..i {
-                    queries.push(BatchQueryParams {
-                        id: index.to_string(),
-                        contract: LB_FACTORY.0.clone(),
-                        query_msg: lb_factory::QueryMsg::GetLbPairAtIndex { index },
-                    });
-                }
+        // match storage.get_item("all_lb_pairs") {
+        //     Ok(None) => {
+        //         let number = number_of_lb_pairs.await;
+        //         let pairs = batch_query_all_lb_pairs(number).await;
+        //
+        //         let _ = storage.set_item("all_lb_pairs", &serde_json::to_string(&pairs).unwrap());
+        //
+        //         pairs
+        //     }
+        //     Ok(Some(pairs)) => {
+        //         // if time_since_last_query > Duration::from_secs(5) {
+        //         //     let number = number_of_lb_pairs.await;
+        //         //     let pairs = batch_query_all_lb_pairs(number).await;
+        //         //
+        //         //     let _ =
+        //         //         storage.set_item("all_lb_pairs", &serde_json::to_string(&pairs).unwrap());
+        //         //     time_of_last_query.set(Instant::now());
+        //         //
+        //         //     pairs
+        //         // } else {
+        //         serde_json::from_str(&pairs).unwrap()
+        //     }
+        //     _ => vec![],
+        // }
 
-                let batch_query_message = msg_batch_query(queries);
-
-                // TODO: change BATCH_QUERY_ROUTER to automatically know the current chain_id
-                let pairs = chain_query::<BatchQueryResponse>(
-                    BATCH_QUERY_ROUTER.pulsar.code_hash.clone(),
-                    BATCH_QUERY_ROUTER.pulsar.address.to_string(),
-                    batch_query_message,
-                )
-                .await
-                .map(parse_batch_query)
-                .map(extract_pairs_from_batch)
-                .unwrap();
-
-                let _ = storage.set_item("all_lb_pairs", &serde_json::to_string(&pairs).unwrap());
-
-                pairs
-            }
-            Ok(Some(pairs)) => serde_json::from_str(&pairs).unwrap(),
-            _ => vec![],
+        if let Some(number) = number_of_lb_pairs.get() {
+            let pairs = batch_query_all_lb_pairs(*number).await;
+            pairs
+        } else {
+            vec![]
         }
     });
 
