@@ -496,6 +496,7 @@ ul {
   }
 }
 
+/*
 .router-outlet-0 main {
   view-transition-name: main;
 }
@@ -504,19 +505,26 @@ ul {
   view-transition-name: main-back;
 }
 
-.router-outlet-1 .contact-list {
-  view-transition-name: contact;
+.router-outlet-1 {
+  view-transition-name: nested;
+}
+
+.router-outlet-2 {
+  view-transition-name: nested;
+}
+
+.router-outlet-3 {
+  view-transition-name: nested;
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  ::view-transition-old(contact) {
-    animation: 150ms fadeOut cubic-bezier(0.3, 0.1, 1, 1);
-    /* Hold final state of animation */
+  ::view-transition-old(nested) {
+    animation: 200ms fadeOut cubic-bezier(0.3, 0.1, 1, 1);
     animation-fill-mode: forwards;
   }
 
-  ::view-transition-new(contact) {
-    animation: 300ms fadeIn cubic-bezier(0.2, 0, 0, 1);
+  ::view-transition-new(nested) {
+    animation: 200ms fadeIn cubic-bezier(0.2, 0, 0, 1);
     animation-fill-mode: forwards;
   }
 
@@ -542,3 +550,4 @@ ul {
     animation-fill-mode: forwards;
   }
 }
+*/
