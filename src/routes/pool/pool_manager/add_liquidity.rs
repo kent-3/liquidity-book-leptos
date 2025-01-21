@@ -106,7 +106,9 @@ pub fn AddLiquidity() -> impl IntoView {
         ..Default::default()
     };
 
-    let (active_id, _) = query_signal::<u32>("active_id");
+    // let (active_id, _) = query_signal::<u32>("active_id");
+    let active_id = use_context::<Resource<Result<u32, Error>>>()
+        .expect("missing the active_id resource context");
     let (price_by, set_price_by) =
         query_signal_with_options::<String>("price_by", nav_options.clone());
 
@@ -206,6 +208,7 @@ pub fn AddLiquidity() -> impl IntoView {
     Effect::new(move || {
         active_id
             .get()
+            .and_then(Result::ok)
             .and_then(|id| PriceHelper::get_price_from_id(id, bin_step()).ok())
             .and_then(|price| PriceHelper::convert128x128_price_to_decimal(price).ok())
             .map(|price| u128_to_string_with_precision(price.as_u128()))
