@@ -86,16 +86,12 @@ pub fn Trade() -> impl IntoView {
         let amount_in = amount_in.get();
 
         async move {
-            // TODO: token y is the quote asset, right?
-
             let Some(token_x_address) = token_x else {
                 return Err(Error::generic("No token X selected!"));
             };
             let Some(token_y_address) = token_y else {
                 return Err(Error::generic("No token Y selected!"));
             };
-
-            debug!("YO");
 
             let token_x_code_hash = TOKEN_MAP
                 .get(&token_x_address)
@@ -228,11 +224,6 @@ pub fn Trade() -> impl IntoView {
                 error!("{}", tx.raw_log);
             }
 
-            // match tx {
-            //     Ok(ok) => info!("{:?}", ok),
-            //     Err(error) => error!("{}", error),
-            // }
-
             Ok(())
         }
     });
@@ -245,7 +236,6 @@ pub fn Trade() -> impl IntoView {
             .get()
             .and_then(Result::ok)
             .map(|quote| serde_json::to_string_pretty(&quote).unwrap())
-        // .map(|quote| format!("{:#?}", quote))
     };
 
     // returns the final amount (the output token)
@@ -258,16 +248,6 @@ pub fn Trade() -> impl IntoView {
             .flatten()
             .map(|amount| amount.to_string())
     };
-
-    // pub struct Quote {
-    //     pub route: Vec<TokenType>,
-    //     pub pairs: Vec<ContractInfo>,
-    //     pub bin_steps: Vec<u16>,
-    //     pub versions: Vec<Version>,
-    //     pub amounts: Vec<Uint128>,
-    //     pub virtual_amounts_without_slippage: Vec<Uint128>,
-    //     pub fees: Vec<Uint128>,
-    // }
 
     view! {
         <LoadingModal when=swap.pending() message="Preparing Transaction... (watch the console)" />
@@ -293,21 +273,6 @@ pub fn Trade() -> impl IntoView {
                                 toggle_menu=toggle_swap_settings
                             />
                         </div>
-                    // <div class="relative inline-block">
-                    // 
-                    // <button
-                    // on:click=toggle_wallet_menu
-                    // class="min-w-24 text-sm font-semibold leading-none py-[5px] px-[12px] inline-flex justify-center items-center align-middle"
-                    // >
-                    // // class="min-w-24 transition-shadow active:bg-neutral-900 active:border-neutral-600 hover:bg-neutral-700 hover:border-neutral-500 ease-standard duration-100 box-border font-semibold leading-5 inline-flex items-center justify-center rounded border border-solid border-neutral-600 bg-neutral-800 text-sm py-[5px] px-[12px]"
-                    // "Wallet Menu"
-                    // // {move || key_address().map(shorten_address)}
-                    // </button>
-                    // <WalletMenu
-                    // dialog_ref=wallet_dialog_ref
-                    // toggle_menu=toggle_options_menu
-                    // />
-                    // </div>
                     </div>
                     // TODO: toggle button to show chart or something else. when that's on, switch to grid
                     // layout with grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)]
@@ -422,7 +387,6 @@ pub fn Trade() -> impl IntoView {
                         >
                             "Swap"
                         </button>
-                    // <span class="text-xs">"(This will send 1 micro sSCRT to yourself)"</span>
                     </div>
                 </div>
             </div>

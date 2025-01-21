@@ -70,37 +70,21 @@ pub fn Pool() -> impl IntoView {
     use crate::{
         error::Error,
         prelude::*,
-        state::*,
         support::{chain_query, ILbPair, Querier, COMPUTE_QUERIER},
     };
-    use ammber_sdk::contract_interfaces::lb_pair::{self, BinResponse, LbPair};
+    use ammber_sdk::contract_interfaces::lb_pair::{BinResponse, LbPair};
     use batch_query::{
-        msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
+        msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQueryParams,
         BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
     };
     use cosmwasm_std::{Addr, ContractInfo};
     use leptos::prelude::*;
-    use leptos_router::{
-        components::A,
-        hooks::{
-            query_signal_with_options, use_location, use_navigate, use_params, use_params_map,
-            use_query_map,
-        },
-        nested_router::Outlet,
-        NavigateOptions,
-    };
-    use lucide_leptos::{ArrowLeft, ExternalLink, Plus};
+    use leptos_router::{components::A, hooks::use_params_map, nested_router::Outlet};
+    use lucide_leptos::{ArrowLeft, ExternalLink};
     use secret_toolkit_snip20::TokenInfoResponse;
     use send_wrapper::SendWrapper;
     use serde::Serialize;
     use tracing::{debug, info, trace};
-
-    let navigate = use_navigate();
-    let location = use_location();
-
-    let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
-    let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
-    let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
     // TODO: I should provide a context here with all the pool information. that way child
     // components like the Add/Remove liquidity ones can access it. I don't think putting the
@@ -171,6 +155,8 @@ pub fn Pool() -> impl IntoView {
 
     let token_b_symbol =
         AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_b()).await });
+
+    provide_context((token_a_symbol, token_b_symbol));
 
     // TODO: how about instead, we have a contract query that can return the nearby liquidity, so
     // we don't have to mess with the complicated batch query router? That might be the purpose of
@@ -258,15 +244,6 @@ pub fn Pool() -> impl IntoView {
     provide_context(active_id);
     provide_context(lb_pair);
 
-    let nav_options = NavigateOptions {
-        // prevents scrolling to the top of the page each time a query param changes
-        scroll: false,
-        ..Default::default()
-    };
-
-    // This component only needs to write to the signal
-    // let (_, set_active_id) = query_signal_with_options::<String>("active_id", nav_options.clone());
-
     view! {
         <a
             href="/liquidity-book-leptos/pool"
@@ -312,7 +289,7 @@ pub fn Pool() -> impl IntoView {
             </div>
         </div>
 
-        <div class="flex gap-4 items-center mt-2 mb-4">
+        <div class="flex gap-4 items-center mt-2 mb-6">
             <A href="manage">
                 <button>"Manage"</button>
             </A>
