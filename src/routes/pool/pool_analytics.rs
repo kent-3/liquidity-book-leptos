@@ -127,14 +127,15 @@ pub fn PoolAnalytics() -> impl IntoView {
         format!("{} {}", amount, denom)
     });
 
+    // 8.7 kb
     let nearby_bins = LocalResource::new(move || {
+        debug!("getting nearby bins");
         async move {
-            let lb_pair_contract = lb_pair.await.contract;
-            // TODO: don't bother doing any queries if active_id is not Ok
-            let id = active_id.await.unwrap_or_default();
-            let mut queries = Vec::new();
+            let lb_pair_contract = lb_pair.await?.contract;
+            let id = active_id.await?;
+            let mut ids = Vec::new();
 
-            let radius = 49;
+            let radius = 50;
 
             for i in 0..(radius * 2 + 1) {
                 let offset_id = if i < radius {
@@ -143,29 +144,58 @@ pub fn PoolAnalytics() -> impl IntoView {
                     id + (i - radius) as u32 // Add for the second half
                 };
 
-                queries.push(BatchQueryParams {
-                    id: offset_id.to_string(),
-                    contract: lb_pair_contract.clone(),
-                    query_msg: lb_pair::QueryMsg::GetBin { id: offset_id },
-                });
+                ids.push(offset_id);
             }
 
-            let batch_query_message = msg_batch_query(queries);
-
-            // TODO: change BATCH_QUERY_ROUTER to automatically know the current chain_id
-            let bins = chain_query::<BatchQueryResponse>(
-                BATCH_QUERY_ROUTER.pulsar.code_hash.clone(),
-                BATCH_QUERY_ROUTER.pulsar.address.to_string(),
-                batch_query_message,
+            let bins = chain_query::<BinsResponse>(
+                lb_pair_contract.code_hash.clone(),
+                lb_pair_contract.address.to_string(),
+                lb_pair::QueryMsg::GetBins { ids },
             )
             .await
-            .map(parse_batch_query)
-            .map(extract_bins_from_batch)
-            .unwrap();
+            .map(|response| response.0);
 
             bins
         }
     });
+
+    // 38.4 kb
+    // let nearby_bins = LocalResource::new(move || {
+    //     async move {
+    //         let lb_pair_contract = lb_pair.await?.contract;
+    //         let id = active_id.await?;
+    //         let mut queries = Vec::new();
+    //
+    //         let radius = 50;
+    //
+    //         for i in 0..(radius * 2 + 1) {
+    //             let offset_id = if i < radius {
+    //                 id - (radius - i) as u32 // Subtract for the first half
+    //             } else {
+    //                 id + (i - radius) as u32 // Add for the second half
+    //             };
+    //
+    //             queries.push(BatchQueryParams {
+    //                 id: offset_id.to_string(),
+    //                 contract: lb_pair_contract.clone(),
+    //                 query_msg: lb_pair::QueryMsg::GetBin { id: offset_id },
+    //             });
+    //         }
+    //
+    //         let batch_query_message = msg_batch_query(queries);
+    //
+    //         let bins = chain_query::<BatchQueryResponse>(
+    //             BATCH_QUERY_ROUTER.pulsar.code_hash.clone(),
+    //             BATCH_QUERY_ROUTER.pulsar.address.to_string(),
+    //             batch_query_message,
+    //         )
+    //         .await
+    //         .map(parse_batch_query)
+    //         .map(extract_bins_from_batch);
+    //
+    //         bins
+    //     }
+    // });
 
     fn extract_bins_from_batch(batch_response: BatchQueryParsedResponse) -> Vec<BinResponse> {
         batch_response
@@ -198,8 +228,8 @@ pub fn PoolAnalytics() -> impl IntoView {
 
     // FIXME: prevent this from running twice
     let chart_data = AsyncDerived::new(move || async move {
-        let bins = nearby_bins.await;
         debug!("gathering chart data");
+        let bins = nearby_bins.await.unwrap_or_default();
 
         let data: Vec<MyData> = bins
             .iter()
