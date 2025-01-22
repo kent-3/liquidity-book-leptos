@@ -241,8 +241,25 @@ pub fn Pool() -> impl IntoView {
             }
         },
     );
+
     provide_context(active_id);
     provide_context(lb_pair);
+
+    // TODO: decide if these queries should go here or in the analytics component
+    let total_reserves = Resource::new(
+        move || lb_pair.get(),
+        move |_| async move { ILbPair(lb_pair.await.contract).get_reserves().await },
+    );
+    let static_fee_parameters = Resource::new(
+        move || lb_pair.get(),
+        move |_| async move {
+            ILbPair(lb_pair.await.contract)
+                .get_static_fee_parameters()
+                .await
+        },
+    );
+    provide_context(total_reserves);
+    provide_context(static_fee_parameters);
 
     view! {
         <a

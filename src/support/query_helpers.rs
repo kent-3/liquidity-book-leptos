@@ -191,6 +191,14 @@ impl ILbPair {
         )
         .await
     }
+    pub async fn get_static_fee_parameters(&self) -> Result<StaticFeeParametersResponse, Error> {
+        chain_query::<StaticFeeParametersResponse>(
+            self.0.code_hash.clone(),
+            self.0.address.to_string(),
+            lb_pair::QueryMsg::GetStaticFeeParameters {},
+        )
+        .await
+    }
     pub async fn get_bin(&self, id: u32) -> Result<BinResponse, Error> {
         chain_query::<BinResponse>(
             self.0.code_hash.clone(),
