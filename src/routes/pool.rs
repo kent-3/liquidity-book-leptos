@@ -189,7 +189,7 @@ pub fn Pool() -> impl IntoView {
     }
 
     // SendWrapper required due to addr_2_contract function
-    let lb_pair: Resource<LbPair> = Resource::new(
+    let lb_pair: Resource<Result<LbPair, Error>> = Resource::new(
         move || (token_a(), token_b(), basis_points()),
         |(token_a, token_b, basis_points)| {
             debug!("run lb_pair resource");
@@ -211,14 +211,19 @@ pub fn Pool() -> impl IntoView {
                             .get_lb_pair_information(token_x, token_y, bin_step)
                             .await
                             .map(|lb_pair_information| lb_pair_information.lb_pair)
-                            .unwrap();
+                            .inspect(|lb_pair| {
+                                _ = storage.set_item(
+                                    &storage_key,
+                                    &serde_json::to_string(&lb_pair).unwrap(),
+                                )
+                            });
 
-                        let _ = storage
-                            .set_item(&storage_key, &serde_json::to_string(&lb_pair).unwrap());
+                        // let _ = storage
+                        //     .set_item(&storage_key, &serde_json::to_string(&lb_pair).unwrap());
 
                         lb_pair
                     }
-                    Ok(Some(lb_pair)) => serde_json::from_str(&lb_pair).unwrap(),
+                    Ok(Some(lb_pair)) => Ok(serde_json::from_str(&lb_pair).unwrap()),
                     _ => todo!(),
                 }
             })
@@ -233,7 +238,7 @@ pub fn Pool() -> impl IntoView {
         |lb_pair| {
             debug!("run active_id resource");
             async move {
-                if let Some(lb_pair) = lb_pair {
+                if let Some(Ok(lb_pair)) = lb_pair {
                     ILbPair(lb_pair.contract).get_active_id().await
                 } else {
                     Err(Error::generic("lb_pair resource is not available yet"))
@@ -248,12 +253,12 @@ pub fn Pool() -> impl IntoView {
     // TODO: decide if these queries should go here or in the analytics component
     let total_reserves = Resource::new(
         move || lb_pair.get(),
-        move |_| async move { ILbPair(lb_pair.await.contract).get_reserves().await },
+        move |_| async move { ILbPair(lb_pair.await?.contract).get_reserves().await },
     );
     let static_fee_parameters = Resource::new(
         move || lb_pair.get(),
         move |_| async move {
-            ILbPair(lb_pair.await.contract)
+            ILbPair(lb_pair.await?.contract)
                 .get_static_fee_parameters()
                 .await
         },
@@ -296,7 +301,10 @@ pub fn Pool() -> impl IntoView {
                         <div class="flex gap-1 items-center">
                             <div>
                                 {move || {
-                                    lb_pair.get().map(|x| shorten_address(x.contract.address))
+                                    lb_pair
+                                        .get()
+                                        .and_then(Result::ok)
+                                        .map(|x| shorten_address(x.contract.address))
                                 }}
                             </div>
                             <ExternalLink size=14 color="white" />

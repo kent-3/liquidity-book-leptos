@@ -9,6 +9,7 @@ use batch_query::{
 };
 use leptos::prelude::*;
 use leptos_use::use_clipboard;
+use liquidity_book::interfaces::lb_pair::BinsResponse;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
 
@@ -21,48 +22,47 @@ pub fn PoolAnalytics() -> impl IntoView {
 
     let UseClipboardReturn { copy, .. } = use_clipboard();
 
-    let lb_pair = use_context::<Resource<LbPair>>().expect("missing the LbPair resource context");
     let (token_x_symbol, token_y_symbol) = use_context::<(
         AsyncDerived<String, LocalStorage>,
         AsyncDerived<String, LocalStorage>,
     )>()
     .expect("missing token symbols context");
+    let lb_pair = use_context::<Resource<Result<LbPair, Error>>>()
+        .expect("missing the LbPair resource context");
     let active_id = use_context::<Resource<Result<u32, Error>>>()
         .expect("missing the active_id resource context");
+    let static_fee_parameters =
+        use_context::<Resource<Result<StaticFeeParametersResponse, Error>>>()
+            .expect("missing the static fee parameters resource context");
 
     let bin_step = move || {
         lb_pair
             .get_untracked()
+            .and_then(Result::ok)
             .map(|pair| pair.bin_step)
             .unwrap_or_default()
     };
     let pool_address = move || {
         lb_pair
             .get_untracked()
+            .and_then(Result::ok)
             .map(|pair| pair.contract.address.to_string())
             .unwrap_or_default()
     };
     let token_x_address = move || {
         lb_pair
             .get_untracked()
+            .and_then(Result::ok)
             .map(|pair| pair.token_x.address().to_string())
             .unwrap_or_default()
     };
     let token_y_address = move || {
         lb_pair
             .get_untracked()
+            .and_then(Result::ok)
             .map(|pair| pair.token_y.address().to_string())
             .unwrap_or_default()
     };
-
-    // let total_reserves = Resource::new(
-    //     move || lb_pair.get(),
-    //     move |_| async move { ILbPair(lb_pair.await.contract).get_reserves().await },
-    // );
-
-    let static_fee_parameters =
-        use_context::<Resource<Result<StaticFeeParametersResponse, Error>>>()
-            .expect("missing the static fee parameters resource context");
 
     let base_fee = AsyncDerived::new(move || async move {
         let base_factor = static_fee_parameters
@@ -199,6 +199,7 @@ pub fn PoolAnalytics() -> impl IntoView {
     // FIXME: prevent this from running twice
     let chart_data = AsyncDerived::new(move || async move {
         let bins = nearby_bins.await;
+        debug!("gathering chart data");
 
         let data: Vec<MyData> = bins
             .iter()

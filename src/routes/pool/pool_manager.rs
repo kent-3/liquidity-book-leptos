@@ -283,7 +283,8 @@ pub fn PoolManager() -> impl IntoView {
             .collect()
     }
 
-    let lb_pair = use_context::<Resource<LbPair>>().expect("missing the LbPair resource context");
+    let lb_pair = use_context::<Resource<Result<LbPair, Error>>>()
+        .expect("missing the LbPair resource context");
     let active_id = use_context::<Resource<Result<u32, Error>>>()
         .expect("missing the active_id resource context");
 
