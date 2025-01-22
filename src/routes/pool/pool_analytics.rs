@@ -342,7 +342,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                         let copy = copy.clone();
                                         move |_| copy(pool_address().as_str())
                                     }
-                                    class="hover:brightness-75 transition-all"
+                                    class="hover:brightness-75 transition-all active:brightness-150"
                                 >
                                     <Copy size=20 stroke_width=3 color="#a3a3a3" />
                                 </div>
@@ -353,7 +353,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                     )
                                     target="_blank"
                                     rel="noopener"
-                                    class="appearance-none"
+                                    class="hover:brightness-75 transition-all"
                                 >
                                     <Link size=20 stroke_width=3 color="#a3a3a3" />
                                 </a>
@@ -370,7 +370,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                         let copy = copy.clone();
                                         move |_| copy(token_x_address().as_str())
                                     }
-                                    class="hover:brightness-75 transition-all"
+                                    class="hover:brightness-75 transition-all active:brightness-150"
                                 >
                                     <Copy size=20 stroke_width=3 color="#a3a3a3" />
                                 </div>
@@ -381,7 +381,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                     )
                                     target="_blank"
                                     rel="noopener"
-                                    class="appearance-none"
+                                    class="hover:brightness-75 transition-all"
                                 >
                                     <Link size=20 stroke_width=3 color="#a3a3a3" />
                                 </a>
@@ -398,7 +398,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                         let copy = copy.clone();
                                         move |_| copy(token_y_address().as_str())
                                     }
-                                    class="hover:brightness-75 transition-all"
+                                    class="hover:brightness-75 transition-all active:brightness-150"
                                 >
                                     <Copy size=20 stroke_width=3 color="#a3a3a3" />
                                 </div>
@@ -409,7 +409,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                     )
                                     target="_blank"
                                     rel="noopener"
-                                    class="appearance-none"
+                                    class="hover:brightness-75 transition-all"
                                 >
                                     <Link size=20 stroke_width=3 color="#a3a3a3" />
                                 </a>

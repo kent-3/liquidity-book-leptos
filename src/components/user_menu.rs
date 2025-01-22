@@ -118,25 +118,21 @@ pub fn WalletMenu(
                 <p class="m-0 py-4 px-5 text-sm">"Most recent transactions will appear here..."</p>
                 <hr class="m-0 border-neutral-600" />
                 <div class="px-2 pt-3">
-                    <div class="menu-button">
-                        <a
-                            href=move || {
-                                key_address()
-                                    .map(|address| {
-                                        format!(
-                                            "https://www.mintscan.io/secret/address/{}",
-                                            address,
-                                        )
-                                    })
-                            }
-                            target="_blank"
-                            rel="noopener"
-                            class="!text-sm !text-neutral-400 no-underline"
-                        >
-                            "View more on explorer"
-                        </a>
-                        <ChevronRight size=20 absolute_stroke_width=true />
-                    </div>
+                    <a
+                        href=move || {
+                            key_address()
+                                .map(|address| {
+                                    format!("https://www.mintscan.io/secret/address/{}", address)
+                                })
+                        }
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        <div class="menu-button">
+                            <span class="text-sm text-neutral-400">"View more on explorer"</span>
+                            <ChevronRight size=20 absolute_stroke_width=true />
+                        </div>
+                    </a>
                 </div>
             </Show>
             <Show when=move || contents.get() == "settings">
