@@ -117,7 +117,8 @@ pub fn AddLiquidity() -> impl IntoView {
     // NOTE: By using the information returned by lb-factory query, we can be sure it is correct.
     // In theory, we could have an off-chain database of (token_x, token_y, bin_step) -> LbPairInformation
     // to reduce the number of chain queries.
-    let lb_pair = use_context::<Resource<LbPair>>().expect("missing the LbPair resource context");
+    let lb_pair = use_context::<Resource<Result<LbPair, Error>>>()
+        .expect("missing the LbPair resource context");
 
     let price_by = move || price_by.get().unwrap_or("radius".to_string());
 
@@ -222,7 +223,7 @@ pub fn AddLiquidity() -> impl IntoView {
 
         let target_bin = target_bin();
 
-        let Some(lb_pair) = lb_pair.get() else {
+        let Some(Ok(lb_pair)) = lb_pair.get() else {
             return Err(Error::generic("lb pair information is missing!"));
         };
 

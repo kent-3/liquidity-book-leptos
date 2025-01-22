@@ -291,7 +291,7 @@ pub fn Trade() -> impl IntoView {
                                 <input
                                     id="from-token"
                                     class="p-1 w-full text-xl font-semibold"
-                                    type="number"
+                                    type="decimal"
                                     placeholder="0.0"
                                     bind:value=amount_in
                                     prop:value=move || amount_x.get()
@@ -335,7 +335,7 @@ pub fn Trade() -> impl IntoView {
                                 <input
                                     id="to-token"
                                     class="p-1 w-full text-xl font-semibold"
-                                    type="number"
+                                    type="decimal"
                                     placeholder="0.0"
                                     prop:value=move || amount_y.get()
                                     on:change=move |ev| {

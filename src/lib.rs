@@ -431,15 +431,7 @@ pub fn App() -> impl IntoView {
             </header>
             <main class="p-2 overflow-x-auto">
                 <Routes transition=true fallback=|| "This page could not be found.">
-                    // we need both, annoyingly
-                    <Route
-                        path=path!("liquidity-book-leptos/")
-                        view=|| view! { <Redirect path="/liquidity-book-leptos/pool" /> }
-                    />
-                    <Route
-                        path=path!("liquidity-book-leptos")
-                        view=|| view! { <Redirect path="pool" /> }
-                    />
+                    <Route path=path!("liquidity-book-leptos") view=Trade />
                     <ParentRoute path=path!("/liquidity-book-leptos/pool") view=Pools>
                         <Route path=path!("") view=PoolBrowser />
                         <Route path=path!("create") view=PoolCreator />
@@ -455,7 +447,6 @@ pub fn App() -> impl IntoView {
                             <Route path=path!("analytics") view=PoolAnalytics />
                         </ParentRoute>
                     </ParentRoute>
-                    <Route path=path!("/liquidity-book-leptos/trade") view=Trade />
                 </Routes>
             </main>
             <LoadingModal when=enable_keplr_action.pending() message="Requesting Connection" />

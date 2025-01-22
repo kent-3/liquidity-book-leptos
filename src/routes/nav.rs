@@ -5,7 +5,7 @@ use leptos_router::components::A;
 pub fn Nav() -> impl IntoView {
     view! {
         <nav>
-            <A href="/liquidity-book-leptos/trade">"Trade"</A>
+            <A href="/liquidity-book-leptos">"Trade"</A>
             <A href="/liquidity-book-leptos/pool">"Pool"</A>
         </nav>
     }
