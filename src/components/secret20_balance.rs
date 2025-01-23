@@ -4,7 +4,7 @@ use crate::{
 };
 use cosmwasm_std::Uint128;
 use keplr::Keplr;
-use leptos::{either::Either, logging::*, prelude::*};
+use leptos::{either::EitherOf4, logging::*, prelude::*};
 use rsecret::query::compute::ComputeQuerier;
 use send_wrapper::SendWrapper;
 use serde::{Deserialize, Serialize};
@@ -12,11 +12,22 @@ use tonic_web_wasm_client::Client as WebWasmClient;
 use tracing::{debug, trace};
 use web_sys::MouseEvent;
 
+// TODO: add a way to "suggest_token" if "there is no matched secret20"
+
 #[component]
+// TODO: make the input something like `impl Into<Signal<String>>`
 pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let chain_id = use_context::<ChainId>().expect("chain_id context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr context missing!");
+
+    let token_symbol = move || {
+        token_address
+            .get()
+            .and_then(|address| TOKEN_MAP.get(&address).cloned())
+            .map(|t| t.symbol)
+    };
+
     let token_balance = Resource::new(
         move || (keplr.enabled.get(), keplr.key.get(), token_address.get()),
         move |(enabled, maybe_key, maybe_contract_address)| {
@@ -27,7 +38,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                     if !enabled {
                         return Err(Error::KeplrDisabled);
                     }
-                    let key = maybe_key.and_then(|res| res.ok()).ok_or(Error::KeplrKey)?;
+                    let key = maybe_key.and_then(Result::ok).ok_or(Error::KeplrKey)?;
                     let contract_address = maybe_contract_address.ok_or(Error::NoToken)?;
                     // TODO: if missing, query token info (and add it to the map?)
                     let token = TOKEN_MAP
@@ -37,12 +48,20 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                         .await
                         .inspect_err(|err| error!("{err:?}"))
                         .map_err(|err| Error::Generic(err.to_string()))?;
-                    trace!("Found viewing key for {}: {}", token.symbol, vk);
+                    debug!("Found viewing key for {}: {}", token.symbol, vk);
                     query_snip20_balance(key, token.clone(), vk, endpoint).await
                 }
             })
         },
     );
+
+    let suggest_token = Action::new_local(move |contract_address: &String| {
+        let chain_id = chain_id.chain_id.get();
+        let contract_address = contract_address.clone();
+        let viewing_key = Some("hola");
+
+        async move { Keplr::suggest_token(&chain_id, &contract_address, viewing_key).await }
+    });
 
     // The middle error types are mild enough that it's not worth showing an error
     // TODO: copy balance on click
@@ -54,20 +73,20 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                 {move || Suspend::new(async move {
                     match token_balance.await.clone() {
                         Ok(amount) => {
-                            Either::Left(
+                            EitherOf4::A(
                                 view! {
                                     <div
                                         on:click=|_: MouseEvent| ()
-                                        class="py-0 px-2 hover:bg-violet-500/20 text-ellipsis text-sm"
+                                        class="py-0 px-2 text-sm rounded hover:bg-gold/20"
                                     >
                                         <span class="text-neutral-500">"Balance: "</span>
-                                        {amount}
+                                       <span class="text-white font-semibold"> {amount} </span>
                                     </div>
                                 },
                             )
                         }
                         Err(error @ (Error::KeplrDisabled | Error::KeplrKey | Error::NoToken)) => {
-                            Either::Right(
+                            EitherOf4::B(
                                 view! {
                                     <div
                                         title=error.to_string()
@@ -79,16 +98,41 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                             )
                         }
                         Err(error) => {
-                            Either::Right(
-                                view! {
-                                    <div
-                                        title=error.to_string()
-                                        class="py-0 px-2 text-gold text-bold text-sm cursor-default hover:bg-gold/20 text-ellipsis"
-                                    >
-                                        "Error 🛈"
-                                    </div>
-                                },
-                            )
+                            if error.to_string() == "There is no matched secret20!" {
+                                EitherOf4::C(
+                                    view! {
+                                        <div
+                                            on:click=move |_| _=suggest_token.dispatch_local(token_address.get().unwrap_or_default())
+                                            class="group relative py-0 px-2 text-sm cursor-pointer rounded"
+                                        >
+                                            <span class="brightness-50">
+                                                "Balance: "<span class="text-white font-semibold">"0"</span>
+                                            </span>
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible group-hover:visible
+                                            bg-neutral-500 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                                                "Add " {token_symbol()} " to wallet"
+                                                <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
+                                            </div>
+                                        </div>
+                                    },
+                                )
+                            } else {
+                                EitherOf4::D(
+                                    view! {
+                                        <div
+                                            title=error.to_string()
+                                            class="group relative py-0 px-2 text-gold font-semibold text-sm cursor-default hover:bg-gold/20 text-ellipsis"
+                                        >
+                                            "Error 🛈"
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible group-hover:visible
+                                            bg-neutral-500 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                                                {error.to_string()}
+                                                <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
+                                            </div>
+                                        </div>
+                                    },
+                                )
+                            }
                         }
                     }
                 })}
