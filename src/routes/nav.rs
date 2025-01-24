@@ -7,6 +7,9 @@ pub fn Nav() -> impl IntoView {
         <nav>
             <A href="/liquidity-book-leptos">"Trade"</A>
             <A href="/liquidity-book-leptos/pool">"Pool"</A>
+            <a href="https://kent-3.github.io/liquidity-book/docs/" target="_blank" rel="noopener">
+                "Docs"
+            </a>
         </nav>
     }
 }
