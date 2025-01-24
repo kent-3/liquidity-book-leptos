@@ -77,10 +77,10 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                                 view! {
                                     <div
                                         on:click=|_: MouseEvent| ()
-                                        class="py-0 px-2 text-sm rounded hover:bg-gold/20"
+                                        class="py-0 px-2 text-sm text-neutral-500 hover:text-neutral-400 rounded cursor-default hovetext-neutral-700 transition-all duration-200 ease-standard"
                                     >
-                                        <span class="text-neutral-500">"Balance: "</span>
-                                       <span class="text-white font-semibold"> {amount} </span>
+                                        <span class="">"Balance: "</span>
+                                        <span class="text-white font-medium">{amount}</span>
                                     </div>
                                 },
                             )
@@ -102,16 +102,19 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                                 EitherOf4::C(
                                     view! {
                                         <div
-                                            on:click=move |_| _=suggest_token.dispatch_local(token_address.get().unwrap_or_default())
+                                            on:click=move |_| {
+                                                _ = suggest_token
+                                                    .dispatch_local(token_address.get().unwrap_or_default());
+                                            }
                                             class="group relative py-0 px-2 text-sm cursor-pointer rounded"
                                         >
                                             <span class="brightness-50">
                                                 "Balance: "<span class="text-white font-semibold">"0"</span>
                                             </span>
-                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible group-hover:visible
-                                            bg-neutral-500 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-100 ease-in
+                                            bg-neutral-500 text-white text-xs font-semibold px-2 py-1 rounded-md whitespace-nowrap">
                                                 "Add " {token_symbol()} " to wallet"
-                                                <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
+                                                // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                             </div>
                                         </div>
                                     },
