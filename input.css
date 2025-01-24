@@ -1,5 +1,9 @@
 /* @import "style/leptonic/leptonic-themes"; */
 
+/* @tailwind base; */
+@tailwind components;
+@tailwind utilities;
+
 :root {
   /* Filters */
   --tw-blur: blur(0);
@@ -47,10 +51,6 @@
   /* --tw-text-opacity: 1; */
 }
 
-/* @tailwind base; */
-@tailwind components;
-@tailwind utilities;
-
 /* Base styles */
 html {
   -webkit-font-smoothing: antialiased;
@@ -74,7 +74,6 @@ html {
 /*   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
 /* } */
 
-/* Light mode default */
 body {
   @apply max-w-5xl mx-auto sm:px-4 px-2;
   @apply bg-neutral-900 text-neutral-200;
