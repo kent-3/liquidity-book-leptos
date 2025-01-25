@@ -9,16 +9,20 @@ use ammber_sdk::contract_interfaces::{
     lb_router::{Path, Version},
     *,
 };
+use codee::string::FromToStringCodec;
 use cosmwasm_std::{to_binary, Addr, Uint128, Uint64};
 use keplr::Keplr;
 use leptos::{ev::MouseEvent, html, logging::*, prelude::*};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
+use leptos_use::storage::use_local_storage;
 use liquidity_book::core::{TokenAmount, TokenType};
-use lucide_leptos::{ArrowUpDown, Settings2};
-use rsecret::tx::compute::MsgExecuteContractRaw;
-use rsecret::{secret_client::CreateTxSenderOptions, tx::ComputeServiceClient, TxOptions};
-use secretrs::proto::cosmos::tx::v1beta1::BroadcastMode;
-use secretrs::AccountId;
+use lucide_leptos::{ArrowUpDown, Info, Settings2, X};
+use rsecret::{
+    secret_client::CreateTxSenderOptions,
+    tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
+    TxOptions,
+};
+use secretrs::{proto::cosmos::tx::v1beta1::BroadcastMode, AccountId};
 use std::str::FromStr;
 use tracing::{debug, info};
 
@@ -46,6 +50,18 @@ pub fn Trade() -> impl IntoView {
     let (amount_x, set_amount_x) = signal(String::default());
     let (amount_y, set_amount_y) = signal(String::default());
     let (swap_for_y, set_swap_for_y) = signal(true);
+
+    let (slippage, set_slippage, _) =
+        use_local_storage::<String, FromToStringCodec>("swap_slippage");
+    let (deadline, set_deadline, _) =
+        use_local_storage::<String, FromToStringCodec>("swap_deadline");
+
+    if slippage.get().is_empty() {
+        set_slippage.set("0.5".to_string());
+    }
+    if deadline.get().is_empty() {
+        set_deadline.set("5".to_string());
+    }
 
     let settings_dialog_ref = NodeRef::<html::Dialog>::new();
 
@@ -268,9 +284,11 @@ pub fn Trade() -> impl IntoView {
                             >
                                 <Settings2 size=20 color="#fff" absolute_stroke_width=true />
                             </div>
-                            <SettingsMenu
+                            <SwapSettings
                                 dialog_ref=settings_dialog_ref
                                 toggle_menu=toggle_swap_settings
+                                slippage=(slippage, set_slippage)
+                                deadline=(deadline, set_deadline)
                             />
                         </div>
                     </div>
@@ -395,9 +413,11 @@ pub fn Trade() -> impl IntoView {
 }
 
 #[component]
-fn SettingsMenu(
+fn SwapSettings(
     dialog_ref: NodeRef<html::Dialog>,
     toggle_menu: impl Fn(MouseEvent) + 'static,
+    slippage: (Signal<String>, WriteSignal<String>),
+    deadline: (Signal<String>, WriteSignal<String>),
 ) -> impl IntoView {
     info!("rendering <SettingsMenu/>");
 
@@ -405,10 +425,95 @@ fn SettingsMenu(
         <div class="floating-menu">
             <dialog
                 node_ref=dialog_ref
-                class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 px-0 py-3 shadow-lg bg-[#303030] rounded border border-solid border-neutral-700"
+                class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 p-0 shadow-lg bg-[#303030] rounded-md border border-solid border-neutral-600"
             >
-                <div class="flex flex-col z-auto">
-                    <div class="px-3 py-2 border-b border-neutral-700">"Settings"</div>
+                <div class="relative flex flex-col z-auto">
+                    // <div class="absolute right-1.5 top-1.5 flex shrink-0 items-center justify-center w-6 h-6 p-1 box-border rounded-md hover:bg-neutral-700">
+                    // <X size=16 />
+                    // </div>
+                    <div class="flex justify-between items-center p-2 pl-3 text-neutral-200 border-0 border-b border-solid border-neutral-600">
+                        <p class="m-0">"Settings"</p>
+                        <div
+                            on:click=toggle_menu
+                            class="
+                            flex shrink-0 items-center justify-center w-6 h-6 p-1 box-border rounded-md
+                            hover:bg-neutral-700 transition-colors duration-200 ease-standard
+                            "
+                        >
+                            <X size=16 />
+                        </div>
+                    </div>
+                    <div class="px-3 py-4 box-border">
+                        <div class="flex flex-col items-start gap-4 w-full">
+                            <div class="flex flex-col items-start gap-2 w-full">
+                                <div class="flex flex-row items-center justify-between gap-2 w-full">
+                                    <p class="text-neutral-400 text-sm m-0">"Slippage tolerance"</p>
+                                    <div class="relative group">
+                                        <Info size=16 color="#a3a3a3" />
+                                        <div class="absolute bottom-full right-0 translate-x-0 md:translate-x-1/2 md:right-1/2 z-50 mb-1 w-52 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-100 ease-in
+                                        bg-neutral-500 text-white text-sm font-medium px-2 py-1 rounded-md">
+                                            "Your transaction will revert if the price changes unfavorably by more than this percentage."
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-row items-center gap-2">
+                                    <div class="flex flex-row items-center gap-1">
+                                        <button
+                                            on:click=move |_| slippage.1.set("0.1".to_string())
+                                            class="h-8 min-w-8 w-14 text-sm font-semibold"
+                                        >
+                                            "0.1%"
+                                        </button>
+                                        <button
+                                            on:click=move |_| slippage.1.set("0.5".to_string())
+                                            class="h-8 min-w-8 w-14 text-sm font-semibold"
+                                        >
+                                            "0.5%"
+                                        </button>
+                                        <button
+                                            on:click=move |_| slippage.1.set("1".to_string())
+                                            class="h-8 min-w-8 w-14 text-sm font-semibold"
+                                        >
+                                            "1%"
+                                        </button>
+                                    </div>
+                                    <div class="w-full relative flex items-center isolate box-border">
+                                        <input
+                                            inputmode="decimal"
+                                            minlength="1"
+                                            maxlength="79"
+                                            type="text"
+                                            pattern="^[0-9]*[.,]?[0-9]*$"
+                                            placeholder="0.5"
+                                            bind:value=slippage
+                                            class="w-full box-border px-3 h-8 text-sm font-semibold"
+                                        />
+                                        <div class="absolute right-0 top-0 w-8 h-8 z-[2] flex items-center justify-center">
+                                            "%"
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-start gap-2">
+                                <p class="text-neutral-400 text-sm m-0">"Transaction deadline"</p>
+                                <div class="w-full relative flex items-center isolate box-border">
+                                    <input
+                                        inputmode="decimal"
+                                        minlength="1"
+                                        maxlength="79"
+                                        type="text"
+                                        pattern="^[0-9]*[.,]?[0-9]*$"
+                                        placeholder="10"
+                                        bind:value=deadline
+                                        class="w-full box-border px-3 h-8 text-sm font-semibold"
+                                    />
+                                    <div class="absolute right-0 top-0 min-w-fit h-8 mr-4 z-[2] flex items-center justify-center text-sm">
+                                        "minutes"
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </dialog>
         </div>
