@@ -200,8 +200,8 @@ pub fn PoolCreator() -> impl IntoView {
                     on:input=move |ev| set_token_y.set(event_target_value(&ev))
                 >
                     <option value="SSCRT">"sSCRT"</option>
-                // <option value="stkd-SCRT">stkd-SCRT</option>
-                // <option value="USDC">USDC</option>
+                    <option value="STKDSCRT">"stkd-SCRT"</option>
+                    <option value="SNOBLEUSDC">"sUSDC"</option>
                 </select>
             </label>
             <label class="block">
@@ -212,36 +212,36 @@ pub fn PoolCreator() -> impl IntoView {
                             class=""
                             type="radio"
                             name="binStep"
-                            value=25
+                            value=1
                             on:input=move |ev| {
                                 set_bin_step.set(event_target_value(&ev).parse().unwrap())
                             }
                         />
-                        "0.25%"
+                        "0.01%"
                     </label>
                     <label class="cursor-pointer">
                         <input
                             class=""
                             type="radio"
                             name="binStep"
-                            value=50
+                            value=10
                             on:input=move |ev| {
                                 set_bin_step.set(event_target_value(&ev).parse().unwrap())
                             }
                         />
-                        "0.5%"
+                        "0.10%"
                     </label>
                     <label class="cursor-pointer">
                         <input
                             class=""
                             type="radio"
                             name="binStep"
-                            value=100
+                            value=20
                             on:input=move |ev| {
                                 set_bin_step.set(event_target_value(&ev).parse().unwrap())
                             }
                         />
-                        "1%"
+                        "0.20%"
                     </label>
                 </div>
             </label>
