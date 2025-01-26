@@ -55,12 +55,14 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
         },
     );
 
+    // TODO: figure out a way to re-check for the viewing key after it's been set
     let suggest_token = Action::new_local(move |contract_address: &String| {
         let chain_id = chain_id.chain_id.get();
         let contract_address = contract_address.clone();
-        let viewing_key = Some("hola");
+        // This still doesn't work right. It only works if the user already has the token in their wallet
+        // let viewing_key = Some("hola");
 
-        async move { Keplr::suggest_token(&chain_id, &contract_address, viewing_key).await }
+        async move { Keplr::suggest_token(&chain_id, &contract_address, None).await }
     });
 
     // The middle error types are mild enough that it's not worth showing an error
@@ -77,7 +79,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                                 view! {
                                     <div
                                         on:click=|_: MouseEvent| ()
-                                        class="py-0 px-2 text-sm text-neutral-500 hover:text-neutral-400 rounded cursor-default hovetext-neutral-700 transition-all duration-200 ease-standard"
+                                        class="py-0 px-2 text-sm text-neutral-500 hover:text-neutral-400 rounded cursor-default hover:bg-neutral-700 transition-all duration-200 ease-standard"
                                     >
                                         <span class="">"Balance: "</span>
                                         <span class="text-white font-medium">{amount}</span>
@@ -122,6 +124,9 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                             } else {
                                 EitherOf4::D(
                                     view! {
+                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
+                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
+                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                         // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                         <div
                                             title=error.to_string()

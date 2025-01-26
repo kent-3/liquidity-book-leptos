@@ -44,6 +44,24 @@ impl From<String> for Error {
     }
 }
 
+impl From<std::num::ParseIntError> for Error {
+    fn from(error: std::num::ParseIntError) -> Self {
+        Self::Generic(error.to_string())
+    }
+}
+
+impl From<std::num::ParseFloatError> for Error {
+    fn from(error: std::num::ParseFloatError) -> Self {
+        Self::Generic(error.to_string())
+    }
+}
+
+impl From<cosmwasm_std::StdError> for Error {
+    fn from(error: cosmwasm_std::StdError) -> Self {
+        Error::Secret(error.to_string())
+    }
+}
+
 impl From<rsecret::Error> for Error {
     fn from(error: rsecret::Error) -> Self {
         Error::Secret(error.to_string())

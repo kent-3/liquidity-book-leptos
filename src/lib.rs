@@ -74,6 +74,21 @@ pub fn App() -> impl IntoView {
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
+    let (keplr_enabled, set_keplr_enabled, _) =
+        use_local_storage::<bool, FromToStringCodec>("is_keplr_enabled");
+
+    // TODO: Enable this later. I keep it off during development to prevent needless queries.
+    // if keplr_enabled.get() {
+    //     keplr.enabled.set(true)
+    // }
+
+    // NOTE: For any method on Keplr that returns a promise (almost all of them), if it's Ok,
+    // that means keplr is enabled. We can use this fact to update any UI that needs to
+    // know if Keplr is enabled. Modifying this signal will cause everything subscribed
+    // to react.
+    //
+    // keplr.enabled.set(true);
+
     // debug!("{} Keplr tokens", token_map.len());
     // debug!(
     //     "{:#?}",
@@ -305,6 +320,7 @@ pub fn App() -> impl IntoView {
                 match Keplr::enable(vec![CHAIN_ID.to_string()]).await {
                     Ok(_) => {
                         keplr.enabled.set(true);
+                        set_keplr_enabled.set(true);
                         debug!("Keplr is enabled");
                         true
                     }

@@ -3,28 +3,27 @@ use crate::{
     constants::{contracts::*, CHAIN_ID, NODE, SYMBOL_TO_ADDR, TOKEN_MAP},
     error::Error,
     state::*,
+    utils::{display_token_amount, parse_token_amount},
     LoadingModal,
 };
-use ammber_sdk::contract_interfaces::{
-    lb_router::{Path, Version},
-    *,
-};
+use ammber_sdk::contract_interfaces::{lb_quoter::Quote, lb_router::Path, *};
 use codee::string::FromToStringCodec;
 use cosmwasm_std::{to_binary, Addr, Uint128, Uint64};
 use keplr::Keplr;
-use leptos::{ev::MouseEvent, html, logging::*, prelude::*};
+use leptos::{ev::MouseEvent, html, logging::*, prelude::*, tachys::dom::window};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use leptos_use::storage::use_local_storage;
-use liquidity_book::core::{TokenAmount, TokenType};
+use liquidity_book::core::TokenType;
 use lucide_leptos::{ArrowUpDown, Info, Settings2, X};
 use rsecret::{
     secret_client::CreateTxSenderOptions,
     tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
     TxOptions,
 };
-use secretrs::{proto::cosmos::tx::v1beta1::BroadcastMode, AccountId};
+use secretrs::AccountId;
 use std::str::FromStr;
 use tracing::{debug, info};
+use web_sys::js_sys::Date;
 
 #[component]
 pub fn Trade() -> impl IntoView {
@@ -47,6 +46,9 @@ pub fn Trade() -> impl IntoView {
     let (token_x, set_token_x) = query_signal_with_options::<String>("from", nav_options.clone());
     let (token_y, set_token_y) = query_signal_with_options::<String>("to", nav_options.clone());
 
+    let token_x_info = move || token_x.get().and_then(|address| TOKEN_MAP.get(&address));
+    let token_y_info = move || token_y.get().and_then(|address| TOKEN_MAP.get(&address));
+
     let (amount_x, set_amount_x) = signal(String::default());
     let (amount_y, set_amount_y) = signal(String::default());
     let (swap_for_y, set_swap_for_y) = signal(true);
@@ -64,16 +66,15 @@ pub fn Trade() -> impl IntoView {
     }
 
     let settings_dialog_ref = NodeRef::<html::Dialog>::new();
-
     let toggle_swap_settings = move |_: MouseEvent| match settings_dialog_ref.get() {
         Some(dialog) => match dialog.open() {
             false => {
-                let _ = dialog.show();
+                _ = dialog.show();
             }
             true => dialog.close(),
         },
         None => {
-            let _ = window().alert_with_message("Something is wrong!");
+            _ = window().alert_with_message("Something is wrong!");
         }
     };
 
@@ -81,98 +82,143 @@ pub fn Trade() -> impl IntoView {
     let select_y_node_ref = NodeRef::<html::Select>::new();
 
     Effect::new(move || {
-        let token_x = token_x.get().unwrap_or_default();
-        if let Some(select_x) = select_x_node_ref.get() {
-            select_x.set_value(&token_x)
+        if let Some(token_x) = token_x.get() {
+            if let Some(select_x) = select_x_node_ref.get() {
+                select_x.set_value(&token_x)
+            }
         }
     });
+    Effect::new(move || {
+        if let Some(token_y) = token_y.get() {
+            if let Some(select_y) = select_y_node_ref.get() {
+                select_y.set_value(&token_y)
+            }
+        }
+    });
+
+    // TODO: handle the tokens_for_exact_tokens scenario. possibly use a separate Action
+    let get_quote: Action<(String, String, String), Result<Quote, Error>> = Action::new(
+        move |(token_x, token_y, amount_in): &(String, String, String)| {
+            let token_x = token_x.to_owned();
+            let token_y = token_y.to_owned();
+            let amount_in = amount_in.to_owned();
+
+            async move {
+                let Some(token_x) = TOKEN_MAP.get(&token_x) else {
+                    return Err(Error::generic("No token X selected!"));
+                };
+                let Some(token_y) = TOKEN_MAP.get(&token_y) else {
+                    return Err(Error::generic("No token Y selected!"));
+                };
+
+                let amount_in = parse_token_amount(amount_in, token_x.decimals);
+
+                // let token_x_code_hash = TOKEN_MAP
+                //     .get(&token_x_address)
+                //     .map(|t| t.code_hash.clone())
+                //     .ok_or(Error::UnknownToken)
+                //     .inspect_err(|error| error!("{:?}", error))?;
+                // let token_y_code_hash = TOKEN_MAP
+                //     .get(&token_y_address)
+                //     .map(|t| t.code_hash.clone())
+                //     .ok_or(Error::UnknownToken)
+                //     .inspect_err(|error| error!("{:?}", error))?;
+
+                let token_x = TokenType::CustomToken {
+                    contract_addr: Addr::unchecked(token_x.contract_address.to_owned()),
+                    token_code_hash: token_x.code_hash.to_owned(),
+                };
+                let token_y = TokenType::CustomToken {
+                    contract_addr: Addr::unchecked(token_y.contract_address.to_owned()),
+                    token_code_hash: token_y.code_hash.to_owned(),
+                };
+
+                let route = vec![token_x, token_y];
+                let amount_in = Uint128::from(amount_in);
+
+                LB_QUOTER
+                    .find_best_path_from_amount_in(route, amount_in)
+                    .await
+            }
+        },
+    );
+
+    let handle_quote = move |_| {
+        _ = get_quote.dispatch((
+            token_x.get().unwrap(),
+            token_y.get().unwrap(),
+            amount_x.get(),
+        ))
+    };
 
     Effect::new(move || {
-        let token_y = token_y.get().unwrap_or_default();
-        if let Some(select_y) = select_y_node_ref.get() {
-            select_y.set_value(&token_y)
+        if let Some(Ok(quote)) = get_quote.value().get() {
+            if let Some(amount_out) = quote.amounts.last() {
+                set_amount_y.set(display_token_amount(
+                    amount_out.u128(),
+                    token_y_info().unwrap().decimals,
+                ))
+            }
         }
     });
 
-    let amount_in = RwSignal::new(String::new());
-
-    let get_quote: Action<(), Result<Quote, Error>> = Action::new(move |_: &()| {
-        let token_x = token_x.get();
-        let token_y = token_y.get();
-        let amount_in = amount_in.get();
-
-        async move {
-            let Some(token_x_address) = token_x else {
-                return Err(Error::generic("No token X selected!"));
-            };
-            let Some(token_y_address) = token_y else {
-                return Err(Error::generic("No token Y selected!"));
-            };
-
-            let token_x_code_hash = TOKEN_MAP
-                .get(&token_x_address)
-                .map(|t| t.code_hash.clone())
-                .ok_or(Error::UnknownToken)
-                .inspect_err(|error| error!("{:?}", error))?;
-            let token_y_code_hash = TOKEN_MAP
-                .get(&token_y_address)
-                .map(|t| t.code_hash.clone())
-                .ok_or(Error::UnknownToken)
-                .inspect_err(|error| error!("{:?}", error))?;
-
-            let token_x = TokenType::CustomToken {
-                contract_addr: Addr::unchecked(token_x_address),
-                token_code_hash: token_x_code_hash,
-            };
-            let token_y = TokenType::CustomToken {
-                contract_addr: Addr::unchecked(token_y_address),
-                token_code_hash: token_y_code_hash,
-            };
-
-            let route = vec![token_x, token_y];
-            let amount_in = Uint128::from_str(&amount_in).unwrap();
-
-            LB_QUOTER
-                .find_best_path_from_amount_in(route, amount_in)
-                .await
-        }
-    });
+    let current_quote = move || {
+        get_quote
+            .value()
+            .get()
+            .and_then(Result::ok)
+            .map(|quote| serde_json::to_string_pretty(&quote).unwrap())
+    };
 
     let path = move || {
-        if let Some(Ok(quote)) = get_quote.value().get() {
-            Some(Path {
+        get_quote
+            .value()
+            .get()
+            .and_then(Result::ok)
+            .map(|quote| Path {
                 pair_bin_steps: quote.bin_steps,
                 versions: quote.versions,
                 token_path: quote.route,
             })
-        } else {
-            None
-        }
     };
 
-    // TODO: input should be the quote!
-    let swap = Action::new_local(move |_: &()| {
+    // TODO: how will we recheck the balances after a successful swap?
+    let swap = Action::new_local(move |quote: &Quote| {
         // TODO: Use the dynamic versions instead.
         // let url = endpoint.get();
         // let chain_id = chain_id.get();
         let url = NODE;
         let chain_id = CHAIN_ID;
 
-        async move {
-            let amount_in =
-                Uint128::from_str(amount_in.get().as_str()).expect("Uint128 parse from_str error");
+        let quote = quote.clone();
 
+        async move {
             let Ok(key) = Keplr::get_key(CHAIN_ID).await else {
                 return Err(Error::generic("Could not get key from Keplr"));
             };
 
-            // NOTE: For any method on Keplr that returns a promise (almost all of them), if it's Ok,
-            // that means keplr is enabled. We can use this fact to update any UI that needs to
-            // know if Keplr is enabled. Modifying this signal will cause everything subscribed
-            // to react. I don't want to trigger that reaction every single time though... which it
-            // currently does. This will trigger the AsyncDerived signal to get the key. Maybe
-            // that's fine since it's trivial.
-            keplr.enabled.set(true);
+            // smallest supported slippage = 0.01%
+            let slippage = ((1.0 - slippage.get().parse::<f64>()?) * 10_000.0).round() as u16;
+
+            // FIXME: account for token decimals
+            // let amount_in = amount_x.get().parse::<u128>()?;
+            let amount_in = quote
+                .amounts
+                .first()
+                .cloned()
+                .expect("quote is missing amount!");
+            let amount_out_min = quote
+                .amounts
+                .last()
+                .expect("quote is missing amount!")
+                .multiply_ratio(slippage, 10_000u16);
+            let path = Path {
+                pair_bin_steps: quote.bin_steps,
+                versions: quote.versions,
+                token_path: quote.route,
+            };
+            let to = key.bech32_address.clone();
+            let deadline = deadline.get().parse::<u64>()? * 60 + (Date::now() / 1000.0) as u64;
 
             // let wallet = Keplr::get_offline_signer_only_amino(CHAIN_ID);
             let wallet = Keplr::get_offline_signer(chain_id);
@@ -190,15 +236,12 @@ pub fn Trade() -> impl IntoView {
             let wasm_web_client = tonic_web_wasm_client::Client::new(url.to_string());
             let compute_service_client = ComputeServiceClient::new(wasm_web_client, options);
 
-            let sender = AccountId::new("secret", &key.address)?;
-            let contract = AccountId::from_str(path().unwrap().token_path[0].address().as_str())?;
-
             let swap_msg = lb_router::ExecuteMsg::SwapExactTokensForTokens {
-                amount_in,
-                amount_out_min: Uint128::from_str("1").expect("Uint128 parse from_str error"),
-                path: path().unwrap(),
-                to: key.bech32_address.clone(),
-                deadline: Uint64::from(2736132325u64),
+                amount_in: Uint128::from(amount_in),
+                amount_out_min: Uint128::from(amount_out_min),
+                path: path.clone(),
+                to: to.clone(),
+                deadline: Uint64::from(deadline),
             };
 
             debug!("{swap_msg:#?}");
@@ -206,32 +249,29 @@ pub fn Trade() -> impl IntoView {
             let send_msg = secret_toolkit_snip20::HandleMsg::Send {
                 recipient: LB_ROUTER.address.to_string(),
                 recipient_code_hash: Some(LB_ROUTER.code_hash.clone()),
-                amount: amount_in,
-                msg: Some(to_binary(&swap_msg).unwrap()),
+                amount: Uint128::from(amount_in),
+                msg: Some(to_binary(&swap_msg)?),
                 memo: None,
                 padding: None,
             };
 
+            let sender = AccountId::new("secret", &key.address)?;
+            let contract = AccountId::from_str(path.token_path[0].address().as_str())?;
+
             let msg = MsgExecuteContractRaw {
                 sender,
-                contract,
+                contract: contract.clone(),
                 msg: send_msg,
                 sent_funds: vec![],
             };
 
             let tx_options = TxOptions {
                 gas_limit: 500_000,
-                broadcast_mode: BroadcastMode::Sync,
-                wait_for_commit: true,
                 ..Default::default()
             };
 
             let tx = compute_service_client
-                .execute_contract(
-                    msg,
-                    path().unwrap().token_path[0].address().as_str(),
-                    tx_options,
-                )
+                .execute_contract(msg, path.token_path[0].code_hash(), tx_options)
                 .await
                 .inspect(|tx_response| info!("{tx_response:?}"))
                 .inspect_err(|error| error!("{error}"))?;
@@ -240,18 +280,20 @@ pub fn Trade() -> impl IntoView {
                 error!("{}", tx.raw_log);
             }
 
+            // TODO: trigger rechecking of balances here somehow
+
             Ok(())
         }
     });
 
-    use liquidity_book::interfaces::lb_quoter::Quote;
-
-    let current_quote = move || {
-        get_quote
-            .value()
-            .get()
-            .and_then(Result::ok)
-            .map(|quote| serde_json::to_string_pretty(&quote).unwrap())
+    let handle_swap = move |_| {
+        _ = swap.dispatch(
+            get_quote
+                .value()
+                .get()
+                .and_then(Result::ok)
+                .expect("you need to get a quote first!"),
+        );
     };
 
     // returns the final amount (the output token)
@@ -262,7 +304,7 @@ pub fn Trade() -> impl IntoView {
             .and_then(Result::ok)
             .map(|mut quote| quote.amounts.pop())
             .flatten()
-            .map(|amount| amount.to_string())
+            .map(|amount| display_token_amount(amount, token_y_info().unwrap().decimals.to_owned()))
     };
 
     view! {
@@ -309,13 +351,12 @@ pub fn Trade() -> impl IntoView {
                                 <input
                                     id="from-token"
                                     class="p-1 w-full text-xl font-semibold"
-                                    type="decimal"
+                                    inputmode="decimal"
+                                    type="text"
                                     placeholder="0.0"
-                                    bind:value=amount_in
                                     prop:value=move || amount_x.get()
-                                    on:change=move |ev| {
-                                        let new_value = event_target_value(&ev);
-                                        set_amount_x.set(new_value.parse().unwrap_or_default());
+                                    on:input=move |ev| {
+                                        set_amount_x.set(event_target_value(&ev));
                                         set_amount_y.set("".to_string());
                                         set_swap_for_y.set(true);
                                     }
@@ -342,6 +383,19 @@ pub fn Trade() -> impl IntoView {
                                 </select>
                             </div>
                         </div>
+                        // TODO: switch tokens separator
+                        // <div class="flex items-center gap-1 w-full">
+                        //     <div class="h-0.5 bg-neutral-700 w-full"></div>
+                        //     <button
+                        //         type="button"
+                        //         aria-label="change swap direction"
+                        //         class="inline-flex items-center justify-center rounded-full border-0 min-w-[2.5rem] h-10 p-0 bg-transparent
+                        //         hover:bg-neutral-700 transition-colors duration-200 active:bg-transparent"
+                        //     >
+                        //         <ArrowUpDown size=18 />
+                        //     </button>
+                        //     <div class="h-0.5 bg-neutral-700 w-full"></div>
+                        // </div>
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <label class="block mb-1 text-base font-semibold" for="to-token">
@@ -353,12 +407,13 @@ pub fn Trade() -> impl IntoView {
                                 <input
                                     id="to-token"
                                     class="p-1 w-full text-xl font-semibold"
-                                    type="decimal"
+                                    inputmode="decimal"
+                                    type="text"
                                     placeholder="0.0"
+                                    disabled
                                     prop:value=move || amount_y.get()
                                     on:change=move |ev| {
-                                        let new_value = event_target_value(&ev);
-                                        set_amount_y.set(new_value.parse().unwrap_or_default());
+                                        set_amount_y.set(event_target_value(&ev));
                                         set_amount_x.set("".to_string());
                                         set_swap_for_y.set(false);
                                     }
@@ -387,21 +442,21 @@ pub fn Trade() -> impl IntoView {
                         </div>
                         <button
                             class="p-1 block"
-                            disabled=move || amount_in.get().is_empty()
-                            on:click=move |_| _ = get_quote.dispatch(())
+                            disabled=move || token_x.get().is_none() || token_y.get().is_none() || amount_x.get().is_empty()
+                            on:click=handle_quote
                         >
                             "Estimate Swap"
                         </button>
-                        <Show when=move || amount_out().is_some() fallback=|| ()>
-                            <p>"Amount out: " {amount_out}</p>
-                        </Show>
+                        // <Show when=move || amount_out().is_some() fallback=|| ()>
+                        //     <p>"Amount out: " {amount_out}</p>
+                        // </Show>
                         <button
                             class="p-1 block"
                             disabled=move || {
                                 !keplr.enabled.get()
                                     || get_quote.value().get().and_then(Result::ok).is_none()
                             }
-                            on:click=move |_| _ = swap.dispatch(())
+                            on:click=handle_swap
                         >
                             "Swap"
                         </button>
