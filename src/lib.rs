@@ -304,6 +304,9 @@ pub fn App() -> impl IntoView {
 
     // Actions
 
+    // NOTE: If a user has already allowed the site to connect, it still opens the extension (at
+    // least the sidebar version) as though to ask for approval, but it just opens normally. Kind
+    // of an odd behavior.
     let enable_keplr_action: Action<(), bool, SyncStorage> =
         Action::new_unsync_with_value(Some(false), move |_: &()| async move {
             let keplr_extension = js_sys::Reflect::get(&window(), &JsValue::from_str("keplr"))

@@ -10,7 +10,7 @@ use ammber_sdk::contract_interfaces::{lb_quoter::Quote, lb_router::Path, *};
 use codee::string::FromToStringCodec;
 use cosmwasm_std::{to_binary, Addr, Uint128, Uint64};
 use keplr::Keplr;
-use leptos::{ev::MouseEvent, html, logging::*, prelude::*, tachys::dom::window};
+use leptos::{ev, html, logging::*, prelude::*, tachys::dom::window};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use leptos_use::storage::use_local_storage;
 use liquidity_book::core::TokenType;
@@ -24,6 +24,38 @@ use secretrs::AccountId;
 use std::str::FromStr;
 use tracing::{debug, info};
 use web_sys::js_sys::Date;
+use web_sys::wasm_bindgen::JsCast;
+
+#[component]
+fn KeyboardShortcuts() -> impl IntoView {
+    let handle_shortcut = move |ev: web_sys::KeyboardEvent| {
+        let target = ev.target();
+
+        // Check if the event is coming from an input field
+        if let Some(target) = target.and_then(|t| t.dyn_into::<web_sys::HtmlElement>().ok()) {
+            let tag = target.tag_name().to_lowercase();
+            if tag == "input" || tag == "textarea" || target.is_content_editable() {
+                return; // Don't trigger shortcut inside input fields
+            }
+        }
+        if ev.ctrl_key() {
+            // Check if Ctrl is held
+            match ev.code().as_str() {
+                "Digit1" => log!("Ctrl + 1 pressed → Action 1"),
+                "Digit2" => log!("Ctrl + 2 pressed → Action 2"),
+                "Digit3" => log!("Ctrl + 3 pressed → Action 3"),
+                _ => {}
+            }
+        }
+    };
+
+    // Attach a global keydown listener
+    window_event_listener(ev::keydown, handle_shortcut);
+
+    view! {
+        <p>"Keyboard shortcuts: Press "<kbd>"1"</kbd>", "<kbd>"2"</kbd>", or "<kbd>"3"</kbd>" to trigger actions."</p>
+    }
+}
 
 #[component]
 pub fn Trade() -> impl IntoView {
@@ -65,18 +97,44 @@ pub fn Trade() -> impl IntoView {
         set_deadline.set("5".to_string());
     }
 
+    // TODO: come up with cool keyboard shortcuts
+    // let handle = window_event_listener(ev::keypress, |ev| {
+    //     // ev is typed as KeyboardEvent automatically,
+    //     // so .code() can be called
+    //     let code = ev.code();
+    //     log!("code = {code:?}");
+    // });
+    // on_cleanup(move || handle.remove());
+
+    // TODO: all this settings stuff can probably go in the setting component itself?
+
     let settings_dialog_ref = NodeRef::<html::Dialog>::new();
-    let toggle_swap_settings = move |_: MouseEvent| match settings_dialog_ref.get() {
+
+    // let handle = window_event_listener(ev::keydown, move |ev| {
+    //     if let Some(dialog) = settings_dialog_ref.get() {
+    //         if ev.key() == "Escape" {
+    //             dialog.close();
+    //         }
+    //     }
+    // });
+    //
+    // on_cleanup(move || handle.remove());
+
+    let toggle_swap_settings = move |_: ev::MouseEvent| match settings_dialog_ref.get() {
         Some(dialog) => match dialog.open() {
             false => {
                 _ = dialog.show();
             }
-            true => dialog.close(),
+            true => {
+                dialog.close();
+            }
         },
         None => {
             _ = window().alert_with_message("Something is wrong!");
         }
     };
+
+    // --
 
     let select_x_node_ref = NodeRef::<html::Select>::new();
     let select_y_node_ref = NodeRef::<html::Select>::new();
@@ -317,15 +375,17 @@ pub fn Trade() -> impl IntoView {
                     <div class="w-full flex items-center justify-between">
                         <div class="
                         h-10 px-4 py-2 font-semibold text-white box-border inline-flex items-center justify-center rounded border border-solid border-neutral-700
-                        hover:bg-neutral-700 transition-colors ease-standard duration-200 cursor-default
+                        bg-transparent hover:bg-neutral-700 transition-colors ease-standard duration-200 cursor-default
                         ">"Swap"</div>
                         <div class="relative">
-                            <div
+                            <button
                                 on:click=toggle_swap_settings
-                                class="ml-auto w-10 h-10 box-border inline-flex items-center justify-center rounded border border-solid border-neutral-700 hover:bg-neutral-700 transition-colors ease-standard duration-200"
+                                class="appearance-none box-border inline-flex items-center justify-center
+                                ml-auto w-10 h-10 rounded border border-solid border-neutral-700
+                                bg-transparent hover:bg-neutral-700 transition-colors ease-standard duration-200"
                             >
                                 <Settings2 size=20 color="#fff" absolute_stroke_width=true />
-                            </div>
+                            </button>
                             <SwapSettings
                                 dialog_ref=settings_dialog_ref
                                 toggle_menu=toggle_swap_settings
@@ -470,7 +530,7 @@ pub fn Trade() -> impl IntoView {
 #[component]
 fn SwapSettings(
     dialog_ref: NodeRef<html::Dialog>,
-    toggle_menu: impl Fn(MouseEvent) + 'static,
+    toggle_menu: impl Fn(ev::MouseEvent) + 'static,
     slippage: (Signal<String>, WriteSignal<String>),
     deadline: (Signal<String>, WriteSignal<String>),
 ) -> impl IntoView {
@@ -482,31 +542,37 @@ fn SwapSettings(
                 node_ref=dialog_ref
                 class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 p-0 shadow-lg bg-[#303030] rounded-md border border-solid border-neutral-600"
             >
+                <div tabindex="0"></div>
                 <div class="relative flex flex-col z-auto">
                     // <div class="absolute right-1.5 top-1.5 flex shrink-0 items-center justify-center w-6 h-6 p-1 box-border rounded-md hover:bg-neutral-700">
                     // <X size=16 />
                     // </div>
                     <div class="flex justify-between items-center p-2 pl-3 text-neutral-200 border-0 border-b border-solid border-neutral-600">
                         <p class="m-0">"Settings"</p>
-                        <div
+                        <button
                             on:click=toggle_menu
-                            class="
+                            class="appearance-none border-0
                             flex shrink-0 items-center justify-center w-6 h-6 p-1 box-border rounded-md
-                            hover:bg-neutral-700 transition-colors duration-200 ease-standard
+                            bg-transparent hover:bg-neutral-700 transition-colors duration-200 ease-standard
                             "
                         >
                             <X size=16 />
-                        </div>
+                        </button>
                     </div>
                     <div class="px-3 py-4 box-border">
                         <div class="flex flex-col items-start gap-4 w-full">
                             <div class="flex flex-col items-start gap-2 w-full">
                                 <div class="flex flex-row items-center justify-between gap-2 w-full">
                                     <p class="text-neutral-400 text-sm m-0">"Slippage tolerance"</p>
-                                    <div class="relative group">
-                                        <Info size=16 color="#a3a3a3" />
-                                        <div class="absolute bottom-full right-0 translate-x-0 md:translate-x-1/2 md:right-1/2 z-50 mb-1 w-52 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-100 ease-in
-                                        bg-neutral-500 text-white text-sm font-medium px-2 py-1 rounded-md">
+                                    <div class="relative group focus-within:group">
+                                        <div tabindex="0" class="focus:outline-none">
+                                            <Info size=16 color="#a3a3a3" />
+                                        </div>
+                                        <div class="absolute w-52 z-50 bottom-full right-0 md:right-1/2 translate-x-0 md:translate-x-1/2
+                                            text-white text-sm font-medium bg-neutral-500 rounded-md 
+                                            mb-1 px-2 py-1 invisible opacity-0 transition-opacity duration-100 ease-in
+                                            group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
+                                        >
                                             "Your transaction will revert if the price changes unfavorably by more than this percentage."
                                         </div>
                                     </div>
