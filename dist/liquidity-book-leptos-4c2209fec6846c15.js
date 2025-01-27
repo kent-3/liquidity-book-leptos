@@ -1139,6 +1139,10 @@ function __wbg_get_imports() {
     imports.wbg.__wbg_respond_1f279fa9f8edcb1c = function() { return handleError(function (arg0, arg1) {
         getObject(arg0).respond(arg1 >>> 0);
     }, arguments) };
+    imports.wbg.__wbg_scrollHeight_63d2b8dad4baacb9 = function(arg0) {
+        const ret = getObject(arg0).scrollHeight;
+        return ret;
+    };
     imports.wbg.__wbg_scrollIntoView_d13094450218e94b = function(arg0) {
         getObject(arg0).scrollIntoView();
     };
@@ -1168,6 +1172,9 @@ function __wbg_get_imports() {
     }, arguments) };
     imports.wbg.__wbg_setItem_212ecc915942ab0a = function() { return handleError(function (arg0, arg1, arg2, arg3, arg4) {
         getObject(arg0).setItem(getStringFromWasm0(arg1, arg2), getStringFromWasm0(arg3, arg4));
+    }, arguments) };
+    imports.wbg.__wbg_setProperty_f2cf326652b9a713 = function() { return handleError(function (arg0, arg1, arg2, arg3, arg4) {
+        getObject(arg0).setProperty(getStringFromWasm0(arg1, arg2), getStringFromWasm0(arg3, arg4));
     }, arguments) };
     imports.wbg.__wbg_setTimeout_f2fe5af8e3debeb3 = function() { return handleError(function (arg0, arg1, arg2) {
         const ret = getObject(arg0).setTimeout(getObject(arg1), arg2);
@@ -1289,6 +1296,10 @@ function __wbg_get_imports() {
         const ret = getObject(arg0).status;
         return ret;
     };
+    imports.wbg.__wbg_style_fb30c14e5815805c = function(arg0) {
+        const ret = getObject(arg0).style;
+        return addHeapObject(ret);
+    };
     imports.wbg.__wbg_subarray_aa9065fa9dc5df96 = function(arg0, arg1, arg2) {
         const ret = getObject(arg0).subarray(arg1 >>> 0, arg2 >>> 0);
         return addHeapObject(ret);
@@ -1391,32 +1402,32 @@ function __wbg_get_imports() {
         const ret = false;
         return ret;
     };
-    imports.wbg.__wbindgen_closure_wrapper3571 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 216, __wbg_adapter_53);
+    imports.wbg.__wbindgen_closure_wrapper3632 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 217, __wbg_adapter_53);
         return addHeapObject(ret);
     };
     imports.wbg.__wbindgen_closure_wrapper393 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 219, __wbg_adapter_50);
+        const ret = makeMutClosure(arg0, arg1, 220, __wbg_adapter_50);
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_closure_wrapper4476 = function(arg0, arg1, arg2) {
-        const ret = makeClosure(arg0, arg1, 266, __wbg_adapter_58);
+    imports.wbg.__wbindgen_closure_wrapper4545 = function(arg0, arg1, arg2) {
+        const ret = makeClosure(arg0, arg1, 267, __wbg_adapter_58);
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_closure_wrapper4487 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper4554 = function(arg0, arg1, arg2) {
         const ret = makeMutClosure(arg0, arg1, 276, __wbg_adapter_53);
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_closure_wrapper4764 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper4828 = function(arg0, arg1, arg2) {
         const ret = makeMutClosure(arg0, arg1, 276, __wbg_adapter_53);
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_closure_wrapper4768 = function(arg0, arg1, arg2) {
+    imports.wbg.__wbindgen_closure_wrapper4832 = function(arg0, arg1, arg2) {
         const ret = makeMutClosure(arg0, arg1, 276, __wbg_adapter_53);
         return addHeapObject(ret);
     };
-    imports.wbg.__wbindgen_closure_wrapper516 = function(arg0, arg1, arg2) {
-        const ret = makeMutClosure(arg0, arg1, 219, __wbg_adapter_53);
+    imports.wbg.__wbindgen_closure_wrapper510 = function(arg0, arg1, arg2) {
+        const ret = makeMutClosure(arg0, arg1, 220, __wbg_adapter_53);
         return addHeapObject(ret);
     };
     imports.wbg.__wbindgen_debug_string = function(arg0, arg1) {
@@ -1560,7 +1571,7 @@ async function __wbg_init(module_or_path) {
     }
 
     if (typeof module_or_path === 'undefined') {
-        module_or_path = new URL('trader-leptos_bg.wasm', import.meta.url);
+        module_or_path = new URL('liquidity-book-leptos_bg.wasm', import.meta.url);
     }
     const imports = __wbg_get_imports();
 
