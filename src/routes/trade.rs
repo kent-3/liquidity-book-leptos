@@ -1,5 +1,6 @@
 use crate::{
     components::Secret20Balance,
+    components::Spinner2,
     constants::{contracts::*, CHAIN_ID, NODE, SYMBOL_TO_ADDR, TOKEN_MAP},
     error::Error,
     state::*,
@@ -501,17 +502,24 @@ pub fn Trade() -> impl IntoView {
                                 </select>
                             </div>
                         </div>
-                        <button
-                            class="p-1 block"
-                            disabled=move || {
-                                token_x.get().is_none() || token_y.get().is_none()
-                                    || amount_x.get().is_empty()
-                            }
-                            on:click=handle_quote
-                        >
-                            "Estimate Swap"
-                        </button>
-                        <Show when=move||get_quote.value_local().get().is_some_and(|q| q.is_ok())>
+                        <div class="flex flex-row items-center gap-2">
+                            <button
+                                class="p-1 block"
+                                disabled=move || {
+                                    token_x.get().is_none() || token_y.get().is_none()
+                                        || amount_x.get().is_empty() || get_quote.pending().get()
+                                }
+                                on:click=handle_quote
+                            >
+                                "Estimate Swap"
+                            </button>
+                            <Show when=move || get_quote.pending().get()>
+                                <Spinner2 size="h-6 w-6" />
+                            </Show>
+                        </div>
+                        <Show when=move || {
+                            get_quote.value_local().get().is_some_and(|quote| quote.is_ok())
+                        }>
                             <Collapsible />
                         </Show>
                         // <Show when=move || amount_out().is_some() fallback=|| ()>
@@ -580,7 +588,10 @@ fn Collapsible() -> impl IntoView {
                 on:click=toggle_expand
             >
                 <p class="m-0 text-sm text-white font-semibold">"1 AVAX = 35.37513945 USDC"</p>
-                <div class="flex items-center justify-center transition-transform" class=("rotate-180", move || expanded.get())>
+                <div
+                    class="flex items-center justify-center transition-transform"
+                    class=("rotate-180", move || expanded.get())
+                >
                     <ChevronDown size=20 />
                 </div>
             // <svg
