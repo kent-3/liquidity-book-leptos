@@ -258,8 +258,6 @@ pub fn Trade() -> impl IntoView {
             // smallest supported slippage = 0.01%
             let slippage = ((1.0 - slippage.get().parse::<f64>()?) * 10_000.0).round() as u16;
 
-            // FIXME: account for token decimals
-            // let amount_in = amount_x.get().parse::<u128>()?;
             let amount_in = quote
                 .amounts
                 .first()
@@ -507,6 +505,7 @@ pub fn Trade() -> impl IntoView {
                         >
                             "Estimate Swap"
                         </button>
+                        <Collapsible/>
                         // <Show when=move || amount_out().is_some() fallback=|| ()>
                         //     <p>"Amount out: " {amount_out}</p>
                         // </Show>
@@ -522,6 +521,80 @@ pub fn Trade() -> impl IntoView {
                         </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    }
+}
+
+#[component]
+fn Collapsible() -> impl IntoView {
+    let (expanded, set_expanded) = signal(false);
+
+    let content_ref = NodeRef::<html::Div>::new();
+
+    let toggle_expand = move |_: ev::MouseEvent| {
+        if let Some(content) = content_ref.get() {
+            // let full_height = content.get_bounding_client_rect().height();
+            let full_height = content.scroll_height();
+
+            if expanded.get() {
+                // Ensure the content has an explicit height before collapsing
+                content.style(("height", format!("{}px", full_height)));
+                request_animation_frame(move || {
+                    content.style(("height", "0px"));
+                });
+            } else {
+                // First, set the height explicitly (this fixes the first animation issue)
+                content.style(("height", "0px"));
+                request_animation_frame(move || {
+                    content.style(("height", format!("{}px", full_height)));
+                });
+
+                // Reset height to `auto` after transition ends to allow dynamic resizing
+                let expanded_signal = expanded.clone();
+                window_event_listener_untyped("transitionend", move |_| {
+                    if expanded_signal.get() {
+                        if let Some(content) = content_ref.get() {
+                            content.style(("height", "auto"));
+                        }
+                    }
+                });
+            }
+        }
+        set_expanded.update(|e| *e = !*e);
+    };
+
+    view! {
+        <div class="p-2 flex flex-col w-full rounded-md border border-solid border-neutral-500 transition-transform">
+            // <!-- Header (Click to Toggle) -->
+            <div
+                class="flex items-center justify-between cursor-pointer"
+                on:click=toggle_expand
+            >
+                <p class="m-0">"1 AVAX = 35.37513945 USDC"</p>
+                <svg
+                    class="transition-transform"
+                    class=("rotate-180", move || expanded.get())
+                    viewBox="0 0 24 24"
+                    focusable="false"
+                    width="20"
+                    height="20"
+                    fill="currentColor"
+                >
+                    <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
+                </svg>
+            </div>
+
+            // <!-- Expandable Content -->
+            <div
+                node_ref=content_ref
+                class="transition-all duration-300 ease-in-out box-border overflow-hidden"
+                class=(["opacity-0", "invisible", "h-0"], move || !expanded.get())
+                class=(["opacity-100", "visible"], move || expanded.get())
+            >
+                <p>"Expected Output: 2.86545 USDC"</p>
+                <p>"Minimum Received: 2.85112 USDC"</p>
+                <p>"Price Impact: <0.01%"</p>
             </div>
         </div>
     }

@@ -26,7 +26,7 @@ use lucide_leptos::{
     History, KeyRound, Plus, Power, Router as RouterIcon, Settings, Wallet, Waves, WavesLadder,
     Wrench, X,
 };
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 use web_sys::{js_sys, wasm_bindgen::JsValue};
 
 mod components;
