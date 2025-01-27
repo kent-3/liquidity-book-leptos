@@ -14,7 +14,7 @@ use leptos::{ev, html, logging::*, prelude::*, tachys::dom::window};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use leptos_use::storage::use_local_storage;
 use liquidity_book::core::TokenType;
-use lucide_leptos::{ArrowUpDown, Info, Settings2, X};
+use lucide_leptos::{ArrowUpDown, ChevronDown, Info, Settings2, X};
 use rsecret::{
     secret_client::CreateTxSenderOptions,
     tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
@@ -53,7 +53,10 @@ fn KeyboardShortcuts() -> impl IntoView {
     window_event_listener(ev::keydown, handle_shortcut);
 
     view! {
-        <p>"Keyboard shortcuts: Press "<kbd>"1"</kbd>", "<kbd>"2"</kbd>", or "<kbd>"3"</kbd>" to trigger actions."</p>
+        <p>
+            "Keyboard shortcuts: Press "<kbd>"1"</kbd>", "<kbd>"2"</kbd>", or "<kbd>"3"</kbd>
+            " to trigger actions."
+        </p>
     }
 }
 
@@ -443,16 +446,16 @@ pub fn Trade() -> impl IntoView {
                         </div>
                         // TODO: switch tokens separator
                         // <div class="flex items-center gap-1 w-full">
-                        //     <div class="h-0.5 bg-neutral-700 w-full"></div>
-                        //     <button
-                        //         type="button"
-                        //         aria-label="change swap direction"
-                        //         class="inline-flex items-center justify-center rounded-full border-0 min-w-[2.5rem] h-10 p-0 bg-transparent
-                        //         hover:bg-neutral-700 transition-colors duration-200 active:bg-transparent"
-                        //     >
-                        //         <ArrowUpDown size=18 />
-                        //     </button>
-                        //     <div class="h-0.5 bg-neutral-700 w-full"></div>
+                        // <div class="h-0.5 bg-neutral-700 w-full"></div>
+                        // <button
+                        // type="button"
+                        // aria-label="change swap direction"
+                        // class="inline-flex items-center justify-center rounded-full border-0 min-w-[2.5rem] h-10 p-0 bg-transparent
+                        // hover:bg-neutral-700 transition-colors duration-200 active:bg-transparent"
+                        // >
+                        // <ArrowUpDown size=18 />
+                        // </button>
+                        // <div class="h-0.5 bg-neutral-700 w-full"></div>
                         // </div>
                         <div class="space-y-2">
                             <div class="flex justify-between">
@@ -500,17 +503,22 @@ pub fn Trade() -> impl IntoView {
                         </div>
                         <button
                             class="p-1 block"
-                            disabled=move || token_x.get().is_none() || token_y.get().is_none() || amount_x.get().is_empty()
+                            disabled=move || {
+                                token_x.get().is_none() || token_y.get().is_none()
+                                    || amount_x.get().is_empty()
+                            }
                             on:click=handle_quote
                         >
                             "Estimate Swap"
                         </button>
-                        <Collapsible/>
+                        <Show when=move||get_quote.value_local().get().is_some_and(|q| q.is_ok())>
+                            <Collapsible />
+                        </Show>
                         // <Show when=move || amount_out().is_some() fallback=|| ()>
-                        //     <p>"Amount out: " {amount_out}</p>
+                        // <p>"Amount out: " {amount_out}</p>
                         // </Show>
                         <button
-                            class="p-1 block"
+                            class="p-2 text-base font-semibold w-full"
                             disabled=move || {
                                 !keplr.enabled.get()
                                     || get_quote.value().get().and_then(Result::ok).is_none()
@@ -565,36 +573,50 @@ fn Collapsible() -> impl IntoView {
     };
 
     view! {
-        <div class="p-2 flex flex-col w-full rounded-md border border-solid border-neutral-500 transition-transform">
+        <div class="flex flex-col w-full rounded-md box-border border border-solid border-neutral-600">
             // <!-- Header (Click to Toggle) -->
             <div
-                class="flex items-center justify-between cursor-pointer"
+                class="min-h-[40px] px-4 flex items-center justify-between cursor-pointer"
                 on:click=toggle_expand
             >
-                <p class="m-0">"1 AVAX = 35.37513945 USDC"</p>
-                <svg
-                    class="transition-transform"
-                    class=("rotate-180", move || expanded.get())
-                    viewBox="0 0 24 24"
-                    focusable="false"
-                    width="20"
-                    height="20"
-                    fill="currentColor"
-                >
-                    <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
-                </svg>
+                <p class="m-0 text-sm text-white font-semibold">"1 AVAX = 35.37513945 USDC"</p>
+                <div class="flex items-center justify-center transition-transform" class=("rotate-180", move || expanded.get())>
+                    <ChevronDown size=20 />
+                </div>
+            // <svg
+            // class="transition-transform"
+            // class=("rotate-180", move || expanded.get())
+            // viewBox="0 0 24 24"
+            // focusable="false"
+            // width="20"
+            // height="20"
+            // fill="currentColor"
+            // >
+            // <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
+            // </svg>
             </div>
 
             // <!-- Expandable Content -->
             <div
                 node_ref=content_ref
-                class="transition-all duration-300 ease-in-out box-border overflow-hidden"
+                class="transition-all ease-standard box-border overflow-hidden"
                 class=(["opacity-0", "invisible", "h-0"], move || !expanded.get())
                 class=(["opacity-100", "visible"], move || expanded.get())
             >
-                <p>"Expected Output: 2.86545 USDC"</p>
-                <p>"Minimum Received: 2.85112 USDC"</p>
-                <p>"Price Impact: <0.01%"</p>
+                <div class="w-full box-border p-4 pt-2 flex flex-col gap-2 items-center">
+                    <div class="w-full flex flex-row justify-between text-sm">
+                        <p class="m-0 text-neutral-400">"Expected Output:"</p>
+                        <p class="m-0 text-white font-semibold">"2.86545 USDC"</p>
+                    </div>
+                    <div class="w-full flex flex-row justify-between text-sm">
+                        <p class="m-0 text-neutral-400">"Minimum Received:"</p>
+                        <p class="m-0 text-white font-semibold">"2.85112 USDC"</p>
+                    </div>
+                    <div class="w-full flex flex-row justify-between text-sm">
+                        <p class="m-0 text-neutral-400">"Price Impact:"</p>
+                        <p class="m-0 text-white font-semibold">"<0.01%"</p>
+                    </div>
+                </div>
             </div>
         </div>
     }
@@ -642,10 +664,9 @@ fn SwapSettings(
                                             <Info size=16 color="#a3a3a3" />
                                         </div>
                                         <div class="absolute w-52 z-50 bottom-full right-0 md:right-1/2 translate-x-0 md:translate-x-1/2
-                                            text-white text-sm font-medium bg-neutral-500 rounded-md 
-                                            mb-1 px-2 py-1 invisible opacity-0 transition-opacity duration-100 ease-in
-                                            group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100"
-                                        >
+                                        text-white text-sm font-medium bg-neutral-500 rounded-md 
+                                        mb-1 px-2 py-1 invisible opacity-0 transition-opacity duration-100 ease-in
+                                        group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
                                             "Your transaction will revert if the price changes unfavorably by more than this percentage."
                                         </div>
                                     </div>
