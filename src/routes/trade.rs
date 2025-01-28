@@ -15,7 +15,7 @@ use leptos::{ev, html, logging::*, prelude::*, tachys::dom::window};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use leptos_use::storage::use_local_storage;
 use liquidity_book::core::TokenType;
-use lucide_leptos::{ArrowUpDown, ChevronDown, Info, Settings2, X};
+use lucide_leptos::{ArrowUpDown, ChevronDown, Info, Settings2, TriangleAlert, X};
 use rsecret::{
     secret_client::CreateTxSenderOptions,
     tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
@@ -82,20 +82,19 @@ pub fn Trade() -> impl IntoView {
     let (token_x, set_token_x) = query_signal_with_options::<String>("from", nav_options.clone());
     let (token_y, set_token_y) = query_signal_with_options::<String>("to", nav_options.clone());
 
-    let token_x_info = move || token_x.get().and_then(|address| TOKEN_MAP.get(&address));
-    let token_y_info = move || token_y.get().and_then(|address| TOKEN_MAP.get(&address));
+    let token_x_info = move || token_x.get().and_then(|ref address| TOKEN_MAP.get(address));
+    let token_y_info = move || token_y.get().and_then(|ref address| TOKEN_MAP.get(address));
 
     let (amount_x, set_amount_x) = signal(String::default());
     let (amount_y, set_amount_y) = signal(String::default());
     let (swap_for_y, set_swap_for_y) = signal(true);
 
-    let (slippage, set_slippage, _) =
-        use_local_storage::<String, FromToStringCodec>("swap_slippage");
+    let (slippage, set_slippage, _) = use_local_storage::<u16, FromToStringCodec>("swap_slippage");
     let (deadline, set_deadline, _) =
         use_local_storage::<String, FromToStringCodec>("swap_deadline");
 
-    if slippage.get().is_empty() {
-        set_slippage.set("0.5".to_string());
+    if slippage.get() == 0 {
+        set_slippage.set(50);
     }
     if deadline.get().is_empty() {
         set_deadline.set("5".to_string());
@@ -114,15 +113,15 @@ pub fn Trade() -> impl IntoView {
 
     let settings_dialog_ref = NodeRef::<html::Dialog>::new();
 
-    // let handle = window_event_listener(ev::keydown, move |ev| {
-    //     if let Some(dialog) = settings_dialog_ref.get() {
-    //         if ev.key() == "Escape" {
-    //             dialog.close();
-    //         }
-    //     }
-    // });
-    //
-    // on_cleanup(move || handle.remove());
+    let handle = window_event_listener(ev::keydown, move |ev| {
+        if let Some(dialog) = settings_dialog_ref.get() {
+            if ev.key() == "Escape" {
+                dialog.close();
+            }
+        }
+    });
+
+    on_cleanup(move || handle.remove());
 
     let toggle_swap_settings = move |_: ev::MouseEvent| match settings_dialog_ref.get() {
         Some(dialog) => match dialog.open() {
@@ -260,7 +259,8 @@ pub fn Trade() -> impl IntoView {
             };
 
             // smallest supported slippage = 0.01%
-            let slippage = ((1.0 - slippage.get().parse::<f64>()?) * 10_000.0).round() as u16;
+            // let slippage = ((1.0 - slippage.get().parse::<f64>()?) * 10_000.0).round() as u16;
+            let slippage = 10_000 - slippage.get();
 
             let amount_in = quote
                 .amounts
@@ -357,18 +357,64 @@ pub fn Trade() -> impl IntoView {
     };
 
     // returns the final amount (the output token)
-    let amount_out = move || {
+    let amount_out = Signal::derive(move || {
         get_quote
             .value()
             .get()
             .and_then(Result::ok)
-            .map(|mut quote| quote.amounts.pop())
-            .flatten()
-            .map(|amount| display_token_amount(amount, token_y_info().unwrap().decimals.to_owned()))
-    };
+            .and_then(|quote| quote.amounts.last().cloned())
+        // .map(|amount| {
+        //     display_token_amount(
+        //         amount,
+        //         token_y_info().map(|info| info.decimals).unwrap_or(0u8),
+        //     )
+        // })
+    });
+
+    // returns the minimum amount out, adjusted for slippage
+    let amount_out_min = Signal::derive(move || {
+        get_quote
+            .value()
+            .get()
+            .and_then(Result::ok)
+            .and_then(|quote| quote.amounts.last().cloned())
+            .map(|amount_out| amount_out.multiply_ratio(10_000 - slippage.get(), 10_000u16))
+        // .map(|amount| {
+        //     display_token_amount(
+        //         amount,
+        //         token_y_info().map(|info| info.decimals).unwrap_or(0u8),
+        //     )
+        // })
+    });
+
+    // returns the minimum amount out, adjusted for slippage
+    let swap_price_ratio = Signal::derive(move || {
+        get_quote
+            .value()
+            .get()
+            .and_then(Result::ok)
+            .and_then(|quote| {
+                let input_token = quote.amounts.first().cloned();
+                let output_token = quote.amounts.last().cloned();
+
+                debug!("{:?}", input_token);
+                debug!("{:?}", output_token);
+
+                input_token
+                    .zip(output_token)
+                    .map(|(input, output)| output.u128() as f64 / input.u128() as f64)
+                    .inspect(|x| debug!("{:?}", x))
+            })
+    });
+
+    // let expected_output = RwSignal::new("2.86545 USDC".to_string());
+    // let minimum_received = RwSignal::new("2.85112 USDC".to_string());
+
+    // TODO: figure out how to calculate this and enforce 2 decimal places
+    let price_impact = RwSignal::new(2.00);
 
     view! {
-        <LoadingModal when=swap.pending() message="Preparing Transaction... (watch the console)" />
+        <LoadingModal when=swap.pending() message="Processing Transaction... (watch the console)" />
         <div class="flex mt-10 justify-center">
             // <div class="grid gap-4 sm:grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)] grid-cols-1 grid-rows-2 sm:grid-rows-1">
             <div class="grid gap-4 grid-cols-1 max-w-[550px] w-full">
@@ -383,8 +429,8 @@ pub fn Trade() -> impl IntoView {
                             <button
                                 on:click=toggle_swap_settings
                                 class="appearance-none box-border inline-flex items-center justify-center
-                                ml-auto w-10 h-10 rounded border border-solid border-neutral-700
-                                bg-transparent hover:bg-neutral-700 transition-colors ease-standard duration-200"
+                                ml-auto w-10 h-10 rounded-lg border border-solid border-neutral-600
+                                bg-transparent hover:bg-neutral-600 transition-colors ease-standard duration-150"
                             >
                                 <Settings2 size=20 color="#fff" absolute_stroke_width=true />
                             </button>
@@ -502,6 +548,7 @@ pub fn Trade() -> impl IntoView {
                                 </select>
                             </div>
                         </div>
+
                         <div class="flex flex-row items-center gap-2">
                             <button
                                 class="p-1 block"
@@ -517,14 +564,17 @@ pub fn Trade() -> impl IntoView {
                                 <Spinner2 size="h-6 w-6" />
                             </Show>
                         </div>
+
                         <Show when=move || {
-                            get_quote.value_local().get().is_some_and(|quote| quote.is_ok())
+                            get_quote.value().get().is_some_and(|quote| quote.is_ok())
                         }>
-                            <Collapsible />
+                            <SwapDetails price_ratio=swap_price_ratio expected_output=amount_out minimum_received=amount_out_min price_impact />
                         </Show>
+
                         // <Show when=move || amount_out().is_some() fallback=|| ()>
                         // <p>"Amount out: " {amount_out}</p>
                         // </Show>
+
                         <button
                             class="p-2 text-base font-semibold w-full"
                             disabled=move || {
@@ -543,7 +593,12 @@ pub fn Trade() -> impl IntoView {
 }
 
 #[component]
-fn Collapsible() -> impl IntoView {
+fn SwapDetails(
+    #[prop(into)] price_ratio: Signal<Option<f64>>,
+    #[prop(into)] expected_output: Signal<Option<Uint128>>,
+    #[prop(into)] minimum_received: Signal<Option<Uint128>>,
+    #[prop(into)] price_impact: Signal<f64>,
+) -> impl IntoView {
     let (expanded, set_expanded) = signal(false);
 
     let content_ref = NodeRef::<html::Div>::new();
@@ -582,32 +637,28 @@ fn Collapsible() -> impl IntoView {
 
     view! {
         <div class="flex flex-col w-full rounded-md box-border border border-solid border-neutral-600">
-            // <!-- Header (Click to Toggle) -->
+            // Header (Click to Toggle)
             <div
                 class="min-h-[40px] px-4 flex items-center justify-between cursor-pointer"
                 on:click=toggle_expand
             >
-                <p class="m-0 text-sm text-white font-semibold">"1 AVAX = 35.37513945 USDC"</p>
+                // TODO: toggle between price ratio on click. somehow make this take precedence
+                // over the toggle_expand for the whole header.
+                // NOTE: This price ratio is based on the expected output (amount_out).
+                // TODO: add token symbols to this string.
+                <p on:click=move |_| () class="m-0 text-sm text-white font-semibold">
+                    {move || price_ratio.get().map(|uint128| uint128.to_string())}
+                    // "1 AVAX = 35.37513945 USDC"
+                </p>
                 <div
                     class="flex items-center justify-center transition-transform"
                     class=("rotate-180", move || expanded.get())
                 >
                     <ChevronDown size=20 />
                 </div>
-            // <svg
-            // class="transition-transform"
-            // class=("rotate-180", move || expanded.get())
-            // viewBox="0 0 24 24"
-            // focusable="false"
-            // width="20"
-            // height="20"
-            // fill="currentColor"
-            // >
-            // <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
-            // </svg>
             </div>
 
-            // <!-- Expandable Content -->
+            // Expandable Content
             <div
                 node_ref=content_ref
                 class="transition-all ease-standard box-border overflow-hidden"
@@ -617,18 +668,33 @@ fn Collapsible() -> impl IntoView {
                 <div class="w-full box-border p-4 pt-2 flex flex-col gap-2 items-center">
                     <div class="w-full flex flex-row justify-between text-sm">
                         <p class="m-0 text-neutral-400">"Expected Output:"</p>
-                        <p class="m-0 text-white font-semibold">"2.86545 USDC"</p>
+                        <p class="m-0 text-white font-semibold">{move || expected_output.get().map(|uint128| uint128.to_string())}</p>
                     </div>
                     <div class="w-full flex flex-row justify-between text-sm">
                         <p class="m-0 text-neutral-400">"Minimum Received:"</p>
-                        <p class="m-0 text-white font-semibold">"2.85112 USDC"</p>
+                        <p class="m-0 text-white font-semibold">{move || minimum_received.get().map(|uint128| uint128.to_string())}</p>
                     </div>
                     <div class="w-full flex flex-row justify-between text-sm">
                         <p class="m-0 text-neutral-400">"Price Impact:"</p>
-                        <p class="m-0 text-white font-semibold">"<0.01%"</p>
+                        <p class="m-0 text-white font-semibold">{move || price_impact.get()}</p>
                     </div>
                 </div>
             </div>
+
+            // Warning (Price Impact, etc)
+            <Show when=move || price_impact.get().gt(&2.0)>
+                <div class="flex flex-col items-center gap-2 m-2 mt-0">
+                    <div class="flex items-center justify-between box-border w-full px-4 py-2 text-sm text-white font-semibold bg-red-500/90 rounded-md">
+                        // price impact icon and text
+                        <div class="flex flex-row items-center gap-3">
+                            <TriangleAlert size=20 />
+                            <p class="m-0">"Price Impact Warning"</p>
+                        </div>
+                        // price impact percentage
+                        <p class="m-0">{move || price_impact.get()}"%"</p>
+                    </div>
+                </div>
+            </Show>
         </div>
     }
 }
@@ -637,7 +703,7 @@ fn Collapsible() -> impl IntoView {
 fn SwapSettings(
     dialog_ref: NodeRef<html::Dialog>,
     toggle_menu: impl Fn(ev::MouseEvent) + 'static,
-    slippage: (Signal<String>, WriteSignal<String>),
+    slippage: (Signal<u16>, WriteSignal<u16>),
     deadline: (Signal<String>, WriteSignal<String>),
 ) -> impl IntoView {
     info!("rendering <SettingsMenu/>");
@@ -685,19 +751,19 @@ fn SwapSettings(
                                 <div class="flex flex-row items-center gap-2">
                                     <div class="flex flex-row items-center gap-1">
                                         <button
-                                            on:click=move |_| slippage.1.set("0.1".to_string())
+                                            on:click=move |_| slippage.1.set(10)
                                             class="h-8 min-w-8 w-14 text-sm font-semibold"
                                         >
                                             "0.1%"
                                         </button>
                                         <button
-                                            on:click=move |_| slippage.1.set("0.5".to_string())
+                                            on:click=move |_| slippage.1.set(50)
                                             class="h-8 min-w-8 w-14 text-sm font-semibold"
                                         >
                                             "0.5%"
                                         </button>
                                         <button
-                                            on:click=move |_| slippage.1.set("1".to_string())
+                                            on:click=move |_| slippage.1.set(100)
                                             class="h-8 min-w-8 w-14 text-sm font-semibold"
                                         >
                                             "1%"
@@ -711,7 +777,12 @@ fn SwapSettings(
                                             type="text"
                                             pattern="^[0-9]*[.,]?[0-9]*$"
                                             placeholder="0.5"
-                                            bind:value=slippage
+                                            prop:value=move || slippage.0.get()
+                                            on:input=move |ev| {
+                                                let value = event_target_value(&ev).parse::<f64>().unwrap_or_default();
+                                                let value = (value * 100.0).round() as u16;
+                                                slippage.1.set(value)
+                                            }
                                             class="w-full box-border px-3 h-8 text-sm font-semibold"
                                         />
                                         <div class="absolute right-0 top-0 w-8 h-8 z-[2] flex items-center justify-center">

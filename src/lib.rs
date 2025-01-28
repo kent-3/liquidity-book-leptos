@@ -12,7 +12,7 @@ use batch_query::{
 };
 use keplr::{Keplr, Key};
 use leptos::{
-    ev::MouseEvent,
+    ev,
     html::{Dialog, Input},
     logging::*,
     prelude::*,
@@ -338,11 +338,11 @@ pub fn App() -> impl IntoView {
 
     // on:click handlers
 
-    let enable_keplr = move |_: MouseEvent| {
+    let enable_keplr = move |_: ev::MouseEvent| {
         enable_keplr_action.dispatch(());
     };
 
-    let disable_keplr = move |_: MouseEvent| {
+    let disable_keplr = move |_: ev::MouseEvent| {
         Keplr::disable(CHAIN_ID);
         keplr.enabled.set(false);
     };
@@ -506,7 +506,7 @@ pub fn LoadingModal(when: Memo<bool>, #[prop(into)] message: String) -> impl Int
 #[component]
 pub fn SettingsMenu(
     dialog_ref: NodeRef<Dialog>,
-    toggle_menu: impl Fn(MouseEvent) + 'static,
+    toggle_menu: impl Fn(ev::MouseEvent) + 'static,
 ) -> impl IntoView {
     info!("rendering <SettingMenu/>");
 
@@ -517,7 +517,7 @@ pub fn SettingsMenu(
     let chain_id = use_context::<ChainId>().expect("chain id context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
 
-    let disable_keplr = move |_| {
+    let disable_keplr = move |_: ev::MouseEvent| {
         Keplr::disable(CHAIN_ID);
         keplr.enabled.set(false);
         // keplr.key.set(None);
@@ -525,7 +525,7 @@ pub fn SettingsMenu(
 
     // This is an example of using "uncontrolled" inputs. The values are not known by the
     // application until the form is submitted.
-    let on_submit = move |ev: leptos::ev::SubmitEvent| {
+    let on_submit = move |ev: ev::SubmitEvent| {
         // stop the page from reloading!
         ev.prevent_default();
         // here, we'll extract the value from the input
@@ -564,12 +564,12 @@ pub fn SettingsMenu(
                     // <input type="text" value=CHAIN_ID node_ref=chain_id_input />
                     <input type="submit" value="Update" class="" />
                 </form>
-                <button
-                    on:click=disable_keplr
-                    class="border-blue-500 text-blue-500 border-solid hover:bg-neutral-800 rounded-sm bg-[initial]"
-                >
-                    Disconnect Wallet
-                </button>
+            // <button
+            // on:click=disable_keplr
+            // class="border-blue-500 text-blue-500 border-solid hover:bg-neutral-800 rounded-sm bg-[initial]"
+            // >
+            // Disconnect Wallet
+            // </button>
             </div>
         </dialog>
     }
