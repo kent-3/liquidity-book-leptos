@@ -400,7 +400,7 @@ pub fn App() -> impl IntoView {
                         "Liquidity Book"
                     </div>
                     <Show when=move || keplr.key.get().and_then(|key| key.ok()).is_some()>
-                        <p class="hidden m-0 sm:block text-sm outline outline-2 outline-offset-8 outline-neutral-500">
+                        <p class="hidden sm:block text-sm text-muted-foreground leading-none px-4 py-1.5 border border-solid border-muted-foreground rounded-sm">
                             "Connected as "<strong>{key_name}</strong>
                         </p>
                     </Show>
@@ -413,16 +413,19 @@ pub fn App() -> impl IntoView {
                                     <button
                                         on:click=enable_keplr
                                         disabled=enable_keplr_action.pending()
-                                        class="min-w-24 text-sm font-semibold leading-none py-[5px] px-[12px] inline-flex justify-center items-center align-middle"
+                                        class="min-w-24 inline-flex justify-center items-center
+                                        text-sm font-semibold leading-none py-[6px] px-[12px]
+                                        border border-solid border-primary bg-primary text-primary-foreground rounded-[3px]"
                                     >
                                         "Connect Wallet"
                                     </button>
-                                    <button
-                                        on:click=toggle_options_menu
-                                        class="text-xl font-semibold leading-none py-[2px] px-[8px] inline-flex justify-center items-center align-middle"
-                                    >
-                                        <Settings size=20 />
-                                    </button>
+                                    // <button
+                                    //     on:click=toggle_options_menu
+                                    //     class="py-[2px] px-[8px] inline-flex justify-center items-center
+                                    //     border border-solid border-secondary bg-secondary text-secondary-foreground rounded-[3px]"
+                                    // >
+                                    //     <Settings size=20 />
+                                    // </button>
                                 }
                             }
                         >
@@ -430,7 +433,9 @@ pub fn App() -> impl IntoView {
 
                                 <button
                                     on:click=toggle_wallet_menu
-                                    class="min-w-24 text-sm font-semibold leading-none py-[5px] px-[12px] inline-flex justify-center items-center align-middle"
+                                        class="min-w-24 inline-flex justify-center items-center align-middle
+                                        text-sm font-semibold leading-none py-[6px] px-[12px]
+                                        border border-solid border-secondary bg-secondary text-secondary-foreground rounded-[3px]"
                                 >
                                     // class="min-w-24 transition-shadow active:bg-neutral-900 active:border-neutral-600 hover:bg-neutral-700 hover:border-neutral-500 ease-standard duration-100 box-border font-semibold leading-5 inline-flex items-center justify-center rounded border border-solid border-neutral-600 bg-neutral-800 text-sm py-[5px] px-[12px]"
                                     "Wallet Menu"
@@ -444,9 +449,9 @@ pub fn App() -> impl IntoView {
                         </Show>
                     </div>
                 </div>
-                <hr />
+                <hr class="my-1 border-muted-foreground" />
                 <Nav />
-                <hr />
+                <hr class="my-1 border-muted-foreground" />
             </header>
             <main class="p-2 overflow-x-auto">
                 <Routes transition=true fallback=|| "This page could not be found.">
