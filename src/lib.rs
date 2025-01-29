@@ -421,7 +421,7 @@ pub fn App() -> impl IntoView {
                                         on:click=toggle_options_menu
                                         class="text-xl font-semibold leading-none py-[2px] px-[8px] inline-flex justify-center items-center align-middle"
                                     >
-                                        <Settings size=20 color="#fff" />
+                                        <Settings size=20 />
                                     </button>
                                 }
                             }

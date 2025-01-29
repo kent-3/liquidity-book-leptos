@@ -422,15 +422,15 @@ pub fn Trade() -> impl IntoView {
                     // buttons above the main swap box
                     <div class="w-full flex items-center justify-between">
                         <div class="
-                        h-10 px-4 py-2 font-semibold text-white box-border inline-flex items-center justify-center rounded border border-solid border-neutral-700
-                        bg-transparent hover:bg-neutral-700 transition-colors ease-standard duration-200 cursor-default
+                        h-10 px-4 py-2 font-semibold text-white box-border inline-flex items-center justify-center rounded-lg border border-solid border-zinc-700
+                        bg-transparent hover:bg-zinc-700 transition-colors ease-standard duration-200 cursor-default
                         ">"Swap"</div>
                         <div class="relative">
                             <button
                                 on:click=toggle_swap_settings
                                 class="appearance-none box-border inline-flex items-center justify-center
-                                ml-auto w-10 h-10 rounded-lg border border-solid border-neutral-600
-                                bg-transparent hover:bg-neutral-600 transition-colors ease-standard duration-150"
+                                ml-auto w-10 h-10 rounded-lg border border-solid border-zinc-600
+                                bg-transparent hover:bg-zinc-600 transition-colors ease-standard duration-150"
                             >
                                 <Settings2 size=20 color="#fff" absolute_stroke_width=true />
                             </button>
@@ -444,10 +444,10 @@ pub fn Trade() -> impl IntoView {
                     </div>
                     // TODO: toggle button to show chart or something else. when that's on, switch to grid
                     // layout with grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)]
-                    // <div class="container block align-middle sm:row-auto row-start-2 outline outline-2 outline-neutral-700 rounded">
-                    // <pre class="px-2 text-xs whitespace-pre-wrap text-neutral-300">{current_quote}</pre>
+                    // <div class="container block align-middle sm:row-auto row-start-2 outline outline-2 outline-zinc-700 rounded">
+                    // <pre class="px-2 text-xs whitespace-pre-wrap text-zinc-300">{current_quote}</pre>
                     // </div>
-                    <div class="p-8 box-border space-y-6 rounded bg-neutral-800 border border-solid border-neutral-700 sm:row-auto row-start-1">
+                    <div class="p-8 box-border space-y-6 rounded-lg bg-zinc-800 border border-solid border-zinc-700 sm:row-auto row-start-1">
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <label class="block mb-1 text-base font-semibold" for="from-token">
@@ -493,16 +493,16 @@ pub fn Trade() -> impl IntoView {
                         </div>
                         // TODO: switch tokens separator
                         // <div class="flex items-center gap-1 w-full">
-                        // <div class="h-0.5 bg-neutral-700 w-full"></div>
+                        // <div class="h-0.5 bg-zinc-700 w-full"></div>
                         // <button
                         // type="button"
                         // aria-label="change swap direction"
                         // class="inline-flex items-center justify-center rounded-full border-0 min-w-[2.5rem] h-10 p-0 bg-transparent
-                        // hover:bg-neutral-700 transition-colors duration-200 active:bg-transparent"
+                        // hover:bg-zinc-700 transition-colors duration-200 active:bg-transparent"
                         // >
                         // <ArrowUpDown size=18 />
                         // </button>
-                        // <div class="h-0.5 bg-neutral-700 w-full"></div>
+                        // <div class="h-0.5 bg-zinc-700 w-full"></div>
                         // </div>
                         <div class="space-y-2">
                             <div class="flex justify-between">
@@ -636,7 +636,7 @@ fn SwapDetails(
     };
 
     view! {
-        <div class="flex flex-col w-full rounded-md box-border border border-solid border-neutral-600">
+        <div class="flex flex-col w-full rounded-md box-border border border-solid border-zinc-600">
             // Header (Click to Toggle)
             <div
                 class="min-h-[40px] px-4 flex items-center justify-between cursor-pointer"
@@ -667,15 +667,15 @@ fn SwapDetails(
             >
                 <div class="w-full box-border p-4 pt-2 flex flex-col gap-2 items-center">
                     <div class="w-full flex flex-row justify-between text-sm">
-                        <p class="m-0 text-neutral-400">"Expected Output:"</p>
+                        <p class="m-0 text-zinc-400">"Expected Output:"</p>
                         <p class="m-0 text-white font-semibold">{move || expected_output.get().map(|uint128| uint128.to_string())}</p>
                     </div>
                     <div class="w-full flex flex-row justify-between text-sm">
-                        <p class="m-0 text-neutral-400">"Minimum Received:"</p>
+                        <p class="m-0 text-zinc-400">"Minimum Received:"</p>
                         <p class="m-0 text-white font-semibold">{move || minimum_received.get().map(|uint128| uint128.to_string())}</p>
                     </div>
                     <div class="w-full flex flex-row justify-between text-sm">
-                        <p class="m-0 text-neutral-400">"Price Impact:"</p>
+                        <p class="m-0 text-zinc-400">"Price Impact:"</p>
                         <p class="m-0 text-white font-semibold">{move || price_impact.get()}</p>
                     </div>
                 </div>
@@ -712,20 +712,20 @@ fn SwapSettings(
         <div class="floating-menu">
             <dialog
                 node_ref=dialog_ref
-                class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 p-0 shadow-lg bg-[#303030] rounded-md border border-solid border-neutral-600"
+                class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 p-0 shadow-lg bg-[#303030] rounded-md border border-solid border-zinc-600"
             >
                 <div tabindex="0"></div>
                 <div class="relative flex flex-col z-auto">
-                    // <div class="absolute right-1.5 top-1.5 flex shrink-0 items-center justify-center w-6 h-6 p-1 box-border rounded-md hover:bg-neutral-700">
+                    // <div class="absolute right-1.5 top-1.5 flex shrink-0 items-center justify-center w-6 h-6 p-1 box-border rounded-md hover:bg-zinc-700">
                     // <X size=16 />
                     // </div>
-                    <div class="flex justify-between items-center p-2 pl-3 text-neutral-200 border-0 border-b border-solid border-neutral-600">
+                    <div class="flex justify-between items-center p-2 pl-3 text-zinc-200 border-0 border-b border-solid border-zinc-600">
                         <p class="m-0">"Settings"</p>
                         <button
                             on:click=toggle_menu
                             class="appearance-none border-0
                             flex shrink-0 items-center justify-center w-6 h-6 p-1 box-border rounded-md
-                            bg-transparent hover:bg-neutral-700 transition-colors duration-200 ease-standard
+                            bg-transparent hover:bg-zinc-700 transition-colors duration-200 ease-standard
                             "
                         >
                             <X size=16 />
@@ -735,13 +735,13 @@ fn SwapSettings(
                         <div class="flex flex-col items-start gap-4 w-full">
                             <div class="flex flex-col items-start gap-2 w-full">
                                 <div class="flex flex-row items-center justify-between gap-2 w-full">
-                                    <p class="text-neutral-400 text-sm m-0">"Slippage tolerance"</p>
+                                    <p class="text-zinc-400 text-sm m-0">"Slippage tolerance"</p>
                                     <div class="relative group focus-within:group">
                                         <div tabindex="0" class="focus:outline-none">
                                             <Info size=16 color="#a3a3a3" />
                                         </div>
                                         <div class="absolute w-52 z-50 bottom-full right-0 md:right-1/2 translate-x-0 md:translate-x-1/2
-                                        text-white text-sm font-medium bg-neutral-500 rounded-md 
+                                        text-white text-sm font-medium bg-zinc-500 rounded-md 
                                         mb-1 px-2 py-1 invisible opacity-0 transition-opacity duration-100 ease-in
                                         group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
                                             "Your transaction will revert if the price changes unfavorably by more than this percentage."
@@ -792,7 +792,7 @@ fn SwapSettings(
                                 </div>
                             </div>
                             <div class="flex flex-col items-start gap-2">
-                                <p class="text-neutral-400 text-sm m-0">"Transaction deadline"</p>
+                                <p class="text-zinc-400 text-sm m-0">"Transaction deadline"</p>
                                 <div class="w-full relative flex items-center isolate box-border">
                                     <input
                                         inputmode="decimal"
