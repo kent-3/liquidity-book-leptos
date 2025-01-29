@@ -423,7 +423,7 @@ pub fn Trade() -> impl IntoView {
                     <div class="w-full flex items-center justify-between">
                         <div class="inline-flex items-center justify-center
                         h-10 px-4 py-2 font-semibold rounded-md border-2 border-solid border-muted
-                        bg-transparent hover:bg-accent hover:text-accent-foreground 
+                        bg-transparent hover:bg-accent hover:text-accent-zinc-50 
                         transition-colors ease-standard duration-200 cursor-default
                         ">"Swap"</div>
                         <div class="relative">
@@ -431,8 +431,8 @@ pub fn Trade() -> impl IntoView {
                                 on:click=toggle_swap_settings
                                 class="inline-flex items-center justify-center
                                 ml-auto w-10 h-10 rounded-md border-2 border-solid border-muted
-                                bg-transparent hover:bg-accent hover:text-accent-foreground
-                            focus-visible:bg-accent focus-visible:text-accent-foreground
+                                bg-transparent hover:bg-accent hover:text-accent-zinc-50
+                            focus-visible:bg-accent focus-visible:text-accent-zinc-50
                                 transition-colors ease-standard duration-200"
                             >
                                 <Settings2 size=20 color="#fff" absolute_stroke_width=true />
@@ -450,7 +450,7 @@ pub fn Trade() -> impl IntoView {
                     // <div class="container block align-middle sm:row-auto row-start-2 outline outline-2 outline-zinc-700 rounded">
                     // <pre class="px-2 text-xs whitespace-pre-wrap text-zinc-300">{current_quote}</pre>
                     // </div>
-                    <div class="p-8 space-y-6 rounded-lg bg-card text-card-foreground border border-solid sm:row-auto row-start-1">
+                    <div class="p-8 space-y-6 rounded-lg bg-zinc-800 text-zinc-100 border border-solid border-zinc-700 sm:row-auto row-start-1">
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <label class="block mb-1 text-base font-semibold" for="from-token">
@@ -467,7 +467,7 @@ pub fn Trade() -> impl IntoView {
                                     placeholder="0.0"
                                     autocomplete="off"
                                     class="px-3 py-1 w-full text-xl font-semibold bg-transparent rounded-md border border-input
-                                    placeholder:text-muted-foreground disabled:opacity-50
+                                    placeholder:text-zinc-400 disabled:opacity-50
                                     focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     prop:value=move || amount_x.get()
                                     on:input=move |ev| {
@@ -478,8 +478,8 @@ pub fn Trade() -> impl IntoView {
                                 />
                                 <select
                                     node_ref=select_x_node_ref
-                                    class="w-36 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
-                                    border-solid border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground rounded-sm px-3 text-base"
+                                    class="w-28 font-medium transition-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
+                                    border-solid border border-zinc-500 bg-zinc-700 shadow-sm hover:border-zinc-400 rounded-sm px-3 text-sm"
                                     title="Select Token X"
                                     on:input=move |ev| {
                                         let token_x = event_target_value(&ev);
@@ -529,7 +529,7 @@ pub fn Trade() -> impl IntoView {
                                     placeholder="0.0"
                                     autocomplete="off"
                                     class="px-3 py-1 w-full text-xl font-semibold bg-transparent rounded-md border border-input
-                                    placeholder:text-muted-foreground disabled:opacity-50 cursor-not-allowed
+                                    placeholder:text-zinc-400 disabled:opacity-50 cursor-not-allowed
                                     focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     prop:value=move || amount_y.get()
                                     on:change=move |ev| {
@@ -541,8 +541,8 @@ pub fn Trade() -> impl IntoView {
                                 <select
                                     node_ref=select_y_node_ref
                                     title="Select Token Y"
-                                    class="w-36 font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
-                                    border-solid border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground rounded-sm px-3 text-base"
+                                    class="w-28 font-medium transition-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
+                                    border-solid border border-zinc-500 bg-zinc-700 shadow-sm hover:border-zinc-400 rounded-sm px-3 text-sm"
                                     prop:value=move || token_y.get().unwrap_or_default()
                                     on:change=move |ev| {
                                         let token_y = event_target_value(&ev);
@@ -564,7 +564,7 @@ pub fn Trade() -> impl IntoView {
 
                         <div class="flex flex-row items-center gap-2">
                             <button
-                                class="py-1.5 px-6 text-sm font-medium rounded-md bg-secondary text-secondary-foreground"
+                                class="py-1.5 px-6 text-sm font-medium rounded-md bg-secondary text-secondary-zinc-50"
                                 disabled=move || {
                                     token_x.get().is_none() || token_y.get().is_none()
                                         || amount_x.get().is_empty() || get_quote.pending().get()
@@ -589,7 +589,7 @@ pub fn Trade() -> impl IntoView {
                         // </Show>
 
                         <button
-                            class="w-full py-2 px-6 bg-primary text-primary-foreground text-base font-semibold border border-solid rounded-lg"
+                            class="w-full py-2 px-6 bg-primary text-primary-zinc-50 text-base font-semibold border border-solid rounded-lg"
                             disabled=move || {
                                 !keplr.enabled.get()
                                     || get_quote.value().get().and_then(Result::ok).is_none()
@@ -680,16 +680,16 @@ fn SwapDetails(
             >
                 <div class="w-full box-border p-4 pt-2 flex flex-col gap-2 items-center">
                     <div class="w-full flex flex-row justify-between text-sm">
-                        <p class="m-0 text-muted-foreground">"Expected Output:"</p>
-                        <p class="m-0 text-foreground font-semibold">{move || expected_output.get().map(|uint128| uint128.to_string())}</p>
+                        <p class="m-0 text-zinc-400">"Expected Output:"</p>
+                        <p class="m-0 text-zinc-50 font-semibold">{move || expected_output.get().map(|uint128| uint128.to_string())}</p>
                     </div>
                     <div class="w-full flex flex-row justify-between text-sm">
-                        <p class="m-0 text-muted-foreground">"Minimum Received:"</p>
-                        <p class="m-0 text-foreground font-semibold">{move || minimum_received.get().map(|uint128| uint128.to_string())}</p>
+                        <p class="m-0 text-zinc-400">"Minimum Received:"</p>
+                        <p class="m-0 text-zinc-50 font-semibold">{move || minimum_received.get().map(|uint128| uint128.to_string())}</p>
                     </div>
                     <div class="w-full flex flex-row justify-between text-sm">
-                        <p class="m-0 text-muted-foreground">"Price Impact:"</p>
-                        <p class="m-0 text-foreground font-semibold">{move || price_impact.get()}</p>
+                        <p class="m-0 text-zinc-400">"Price Impact:"</p>
+                        <p class="m-0 text-zinc-50 font-semibold">{move || price_impact.get()}</p>
                     </div>
                 </div>
             </div>

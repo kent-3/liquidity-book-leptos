@@ -63,13 +63,13 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-zinc-800;
   }
 
   body {
-    @apply antialiased;
+    @apply antialiased box-content;
     @apply max-w-5xl mx-auto my-2 px-2 sm:px-4;
-    @apply dark bg-background text-foreground;
+    @apply dark bg-zinc-900 text-zinc-200;
     font-feature-settings: "kern";
   }
 
@@ -248,13 +248,13 @@ select>option {
 
 /* microsoft docs blue */
 nav a {
-  /* color: #75b6e7; */
-  @apply px-2 py-1 no-underline;
+  color: #75b6e7;
+  @apply px-2 py-1 no-underline leading-none;
 }
 
 nav a:hover {
-  /* color: #278cda; */
-  @apply text-foreground/90 underline;
+  color: #278cda;
+  @apply underline;
 }
 
 /* Light mode styles */
@@ -264,18 +264,18 @@ nav a:hover {
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-neutral-900 text-neutral-50;
   }
 
-  /* nav a { */
-  /*   text-decoration: none; */
-  /*   color: #0065b3; */
-  /* } */
-  /**/
-  /* nav a:hover { */
-  /*   color: #0065b3; */
-  /*   text-decoration: underline; */
-  /* } */
+  nav a {
+    @apply px-2 py-1 no-underline;
+    color: #0065b3;
+  }
+
+  nav a:hover {
+    color: #0065b3;
+    @apply underline;
+  }
 }
 
 /* code { */

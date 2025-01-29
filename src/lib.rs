@@ -415,7 +415,7 @@ pub fn App() -> impl IntoView {
                                         disabled=enable_keplr_action.pending()
                                         class="min-w-24 inline-flex justify-center items-center
                                         text-sm font-semibold leading-none py-[6px] px-[12px]
-                                        border border-solid border-primary bg-primary text-primary-foreground rounded-[3px]"
+                                        border border-solid border-zinc-500 bg-zinc-500 text-white rounded-[2px]"
                                     >
                                         "Connect Wallet"
                                     </button>
@@ -449,9 +449,9 @@ pub fn App() -> impl IntoView {
                         </Show>
                     </div>
                 </div>
-                <hr class="my-1 border-muted-foreground" />
+                <hr class="mt-2 mb-1 border border-zinc-400" />
                 <Nav />
-                <hr class="my-1 border-muted-foreground" />
+                <hr class="my-1 border border-zinc-400" />
             </header>
             <main class="p-2 overflow-x-auto">
                 <Routes transition=true fallback=|| "This page could not be found.">
