@@ -360,7 +360,7 @@ pub fn PoolManager() -> impl IntoView {
                             <div class="flex justify-center items-center h-48"></div>
                         </div>
                     </div>
-                    <hr class="m-0 border-2 border-neutral-700" />
+                    <hr class="m-0 border border-neutral-700" />
                     <div class="px-6 py-4">
                         <h2 class="m-0 mb-2 text-xl">Deposit Balance</h2>
                         <div class="flex flex-col gap-2 items-center">
@@ -495,7 +495,9 @@ pub fn PoolManager() -> impl IntoView {
                     // This preserves the query params when navigating to nested routes.
                     // TODO: this is terribly complicated. it works, but there must be a simpler way
                     <button
-                        class="w-full"
+                        class="w-full inline-flex justify-center items-center
+                    font-medium leading-none py-1 px-2
+                    border border-solid border-zinc-500 bg-zinc-500 text-white rounded-xs"
                         on:click={
                             let navigate_ = navigate.clone();
                             let nav_options_ = nav_options.clone();
@@ -520,7 +522,9 @@ pub fn PoolManager() -> impl IntoView {
                         "Add Liquidity"
                     </button>
                     <button
-                        class="w-full"
+                        class="w-full inline-flex justify-center items-center
+                    font-medium leading-none py-1 px-2
+                    border border-solid border-zinc-500 bg-zinc-500 text-white rounded-xs"
                         on:click={
                             let navigate_ = navigate.clone();
                             let nav_options_ = nav_options.clone();

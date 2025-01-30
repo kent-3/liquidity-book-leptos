@@ -387,6 +387,8 @@ pub fn Trade() -> impl IntoView {
         // })
     });
 
+    // TODO: get the active price, so we can calculate price impact
+
     // returns the minimum amount out, adjusted for slippage
     let swap_price_ratio = Signal::derive(move || {
         get_quote
@@ -422,20 +424,21 @@ pub fn Trade() -> impl IntoView {
                     // buttons above the main swap box
                     <div class="w-full flex items-center justify-between">
                         <div class="inline-flex items-center justify-center
-                        h-10 px-4 py-2 font-semibold rounded-md border-2 border-solid border-muted
-                        bg-transparent hover:bg-accent hover:text-accent-zinc-50 
+                        h-10 px-4 py-2 font-semibold
+                        rounded-md border-2 border-solid border-zinc-700
+                        bg-transparent hover:bg-zinc-700 focus-visible:bg-zinc-700
                         transition-colors ease-standard duration-200 cursor-default
                         ">"Swap"</div>
                         <div class="relative">
                             <button
                                 on:click=toggle_swap_settings
                                 class="inline-flex items-center justify-center
-                                ml-auto w-10 h-10 rounded-md border-2 border-solid border-muted
-                                bg-transparent hover:bg-accent hover:text-accent-zinc-50
-                            focus-visible:bg-accent focus-visible:text-accent-zinc-50
+                                ml-auto w-10 h-10
+                                rounded-md border-2 border-solid border-zinc-700
+                                bg-transparent hover:bg-zinc-700 focus-visible:bg-zinc-700
                                 transition-colors ease-standard duration-200"
                             >
-                                <Settings2 size=20 color="#fff" absolute_stroke_width=true />
+                                <Settings2 size=20 absolute_stroke_width=true />
                             </button>
                             <SwapSettings
                                 dialog_ref=settings_dialog_ref
@@ -450,7 +453,9 @@ pub fn Trade() -> impl IntoView {
                     // <div class="container block align-middle sm:row-auto row-start-2 outline outline-2 outline-zinc-700 rounded">
                     // <pre class="px-2 text-xs whitespace-pre-wrap text-zinc-300">{current_quote}</pre>
                     // </div>
-                    <div class="p-8 space-y-6 rounded-lg bg-zinc-800 text-zinc-100 border border-solid border-zinc-700 sm:row-auto row-start-1">
+                    <div class="p-8 space-y-6 row-start-1 sm:row-auto bg-zinc-800 text-zinc-100
+                            rounded-lg border border-solid border-zinc-700"
+                        >
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <label class="block mb-1 text-base font-semibold" for="from-token">
@@ -466,9 +471,8 @@ pub fn Trade() -> impl IntoView {
                                     inputmode="decimal"
                                     placeholder="0.0"
                                     autocomplete="off"
-                                    class="px-3 py-1 w-full text-xl font-semibold bg-transparent rounded-md border border-input
-                                    placeholder:text-zinc-400 disabled:opacity-50
-                                    focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    class="px-3 py-1 w-full text-xl font-semibold bg-zinc-700 rounded-sm border border-solid border-zinc-500 hover:border-zinc-400
+                                    placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     prop:value=move || amount_x.get()
                                     on:input=move |ev| {
                                         set_amount_x.set(event_target_value(&ev));
@@ -479,7 +483,7 @@ pub fn Trade() -> impl IntoView {
                                 <select
                                     node_ref=select_x_node_ref
                                     class="w-28 font-medium transition-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
-                                    border-solid border border-zinc-500 bg-zinc-700 shadow-sm hover:border-zinc-400 rounded-sm px-3 text-sm"
+                                    border-solid border border-zinc-500 bg-zinc-700 shadow-sm hover:border-zinc-400 rounded-sm p-1 text-sm"
                                     title="Select Token X"
                                     on:input=move |ev| {
                                         let token_x = event_target_value(&ev);
@@ -528,8 +532,9 @@ pub fn Trade() -> impl IntoView {
                                     inputmode="decimal"
                                     placeholder="0.0"
                                     autocomplete="off"
-                                    class="px-3 py-1 w-full text-xl font-semibold bg-transparent rounded-md border border-input
-                                    placeholder:text-zinc-400 disabled:opacity-50 cursor-not-allowed
+                                    class="px-3 py-1 w-full text-xl font-semibold rounded-sm
+                                    bg-zinc-700 border border-solid border-zinc-500 hover:border-zinc-400
+                                    placeholder:text-zinc-400 disabled:opacity-50 disabled:cursor-not-allowed
                                     focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     prop:value=move || amount_y.get()
                                     on:change=move |ev| {
@@ -542,7 +547,7 @@ pub fn Trade() -> impl IntoView {
                                     node_ref=select_y_node_ref
                                     title="Select Token Y"
                                     class="w-28 font-medium transition-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
-                                    border-solid border border-zinc-500 bg-zinc-700 shadow-sm hover:border-zinc-400 rounded-sm px-3 text-sm"
+                                    border-solid border border-zinc-500 bg-zinc-700 shadow-sm hover:border-zinc-400 rounded-sm p-1 text-sm"
                                     prop:value=move || token_y.get().unwrap_or_default()
                                     on:change=move |ev| {
                                         let token_y = event_target_value(&ev);
@@ -564,7 +569,7 @@ pub fn Trade() -> impl IntoView {
 
                         <div class="flex flex-row items-center gap-2">
                             <button
-                                class="py-1.5 px-6 text-sm font-medium rounded-md bg-secondary text-secondary-zinc-50"
+                                class="py-1.5 px-6 text-sm font-medium rounded-xs bg-zinc-600 text-secondary-zinc-50"
                                 disabled=move || {
                                     token_x.get().is_none() || token_y.get().is_none()
                                         || amount_x.get().is_empty() || get_quote.pending().get()
@@ -589,7 +594,7 @@ pub fn Trade() -> impl IntoView {
                         // </Show>
 
                         <button
-                            class="w-full py-2 px-6 bg-primary text-primary-zinc-50 text-base font-semibold border border-solid rounded-lg"
+                            class="w-full py-2 px-6 bg-zinc-500 text-zinc-50 text-base font-semibold rounded-xs shadow-lg"
                             disabled=move || {
                                 !keplr.enabled.get()
                                     || get_quote.value().get().and_then(Result::ok).is_none()
@@ -725,7 +730,7 @@ fn SwapSettings(
         <div class="floating-menu">
             <dialog
                 node_ref=dialog_ref
-                class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 p-0 shadow-lg bg-[#303030] rounded-md border border-solid border-zinc-600"
+                class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 p-0 shadow-lg bg-[oklch(0.300_0.006_286.033)] rounded-md border border-solid border-zinc-600"
             >
                 <div tabindex="0"></div>
                 <div class="relative flex flex-col z-auto">
@@ -750,10 +755,10 @@ fn SwapSettings(
                                 <div class="flex flex-row items-center justify-between gap-2 w-full">
                                     <p class="text-zinc-400 text-sm m-0">"Slippage tolerance"</p>
                                     <div class="relative group focus-within:group">
-                                        <div tabindex="0" class="focus:outline-none">
-                                            <Info size=16 color="#a3a3a3" />
+                                        <div tabindex="0" class="text-zinc-400 focus:outline-none">
+                                            <Info size=16 />
                                         </div>
-                                        <div class="absolute w-52 z-50 bottom-full right-0 md:right-1/2 translate-x-0 md:translate-x-1/2
+                                        <div class="absolute w-52 z-50 bottom-full right-0 lg:right-1/2 translate-x-0 lg:translate-x-1/2
                                         text-white text-sm font-medium bg-zinc-500 rounded-md 
                                         mb-1 px-2 py-1 invisible opacity-0 transition-opacity duration-100 ease-in
                                         group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
@@ -765,38 +770,41 @@ fn SwapSettings(
                                     <div class="flex flex-row items-center gap-1">
                                         <button
                                             on:click=move |_| slippage.1.set(10)
-                                            class="h-8 min-w-8 w-14 text-sm font-semibold"
+                                            class="h-8 min-w-8 w-14 text-sm font-semibold bg-zinc-600 rounded-sm"
                                         >
                                             "0.1%"
                                         </button>
                                         <button
                                             on:click=move |_| slippage.1.set(50)
-                                            class="h-8 min-w-8 w-14 text-sm font-semibold"
+                                            class="h-8 min-w-8 w-14 text-sm font-semibold bg-zinc-600 rounded-sm"
                                         >
                                             "0.5%"
                                         </button>
                                         <button
                                             on:click=move |_| slippage.1.set(100)
-                                            class="h-8 min-w-8 w-14 text-sm font-semibold"
+                                            class="h-8 min-w-8 w-14 text-sm font-semibold bg-zinc-600 rounded-sm"
                                         >
                                             "1%"
                                         </button>
                                     </div>
                                     <div class="w-full relative flex items-center isolate box-border">
                                         <input
+                                            class="w-full box-border px-3 h-8 text-sm font-semibold
+                                            bg-zinc-800 border border-solid border-zinc-600 hover:border-zinc-500 rounded-sm"
                                             inputmode="decimal"
                                             minlength="1"
                                             maxlength="79"
                                             type="text"
                                             pattern="^[0-9]*[.,]?[0-9]*$"
                                             placeholder="0.5"
-                                            prop:value=move || slippage.0.get()
+                                            prop:value=move || {
+                                                slippage.0.get() as f64 / 100.0
+                                            }
                                             on:input=move |ev| {
                                                 let value = event_target_value(&ev).parse::<f64>().unwrap_or_default();
                                                 let value = (value * 100.0).round() as u16;
                                                 slippage.1.set(value)
                                             }
-                                            class="w-full box-border px-3 h-8 text-sm font-semibold"
                                         />
                                         <div class="absolute right-0 top-0 w-8 h-8 z-[2] flex items-center justify-center">
                                             "%"
@@ -808,6 +816,8 @@ fn SwapSettings(
                                 <p class="text-zinc-400 text-sm m-0">"Transaction deadline"</p>
                                 <div class="w-full relative flex items-center isolate box-border">
                                     <input
+                                        class="w-full box-border px-3 h-8 text-sm font-semibold
+                                        bg-zinc-800 border border-solid border-zinc-600 hover:border-zinc-500 rounded-sm "
                                         inputmode="decimal"
                                         minlength="1"
                                         maxlength="79"
@@ -815,7 +825,6 @@ fn SwapSettings(
                                         pattern="^[0-9]*[.,]?[0-9]*$"
                                         placeholder="10"
                                         bind:value=deadline
-                                        class="w-full box-border px-3 h-8 text-sm font-semibold"
                                     />
                                     <div class="absolute right-0 top-0 min-w-fit h-8 mr-4 z-[2] flex items-center justify-center text-sm">
                                         "minutes"

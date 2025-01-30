@@ -435,7 +435,7 @@ pub fn App() -> impl IntoView {
                                     on:click=toggle_wallet_menu
                                         class="min-w-24 inline-flex justify-center items-center align-middle
                                         text-sm font-semibold leading-none py-[6px] px-[12px]
-                                        border border-solid border-secondary bg-secondary text-secondary-foreground rounded-[3px]"
+                                        border border-solid border-zinc-600 bg-zinc-600 text-zinc-50 rounded-xs"
                                 >
                                     // class="min-w-24 transition-shadow active:bg-neutral-900 active:border-neutral-600 hover:bg-neutral-700 hover:border-neutral-500 ease-standard duration-100 box-border font-semibold leading-5 inline-flex items-center justify-center rounded border border-solid border-neutral-600 bg-neutral-800 text-sm py-[5px] px-[12px]"
                                     "Wallet Menu"
@@ -449,9 +449,9 @@ pub fn App() -> impl IntoView {
                         </Show>
                     </div>
                 </div>
-                <hr class="mt-2 mb-1 border border-zinc-400" />
+                <hr class="mt-2 mb-1 border border-zinc-500" />
                 <Nav />
-                <hr class="my-1 border border-zinc-400" />
+                <hr class="mt-1 mb-2 border border-zinc-500" />
             </header>
             <main class="p-2 overflow-x-auto">
                 <Routes transition=true fallback=|| "This page could not be found.">

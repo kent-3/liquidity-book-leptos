@@ -63,7 +63,7 @@
 
 @layer base {
   * {
-    @apply border-zinc-800;
+    /* @apply border-zinc-800; */
   }
 
   body {
@@ -74,7 +74,53 @@
   }
 
   button {
+    font-size: 13.3333px;
     @apply disabled:opacity-50;
+    @apply cursor-default;
+    @apply inline-flex justify-center items-center;
+    @apply font-medium leading-none py-1 px-2;
+    @apply bg-zinc-500 text-white rounded-xs;
+    @apply hover:bg-[oklch(0.607_0.016_285.938)];
+    @apply active:bg-[oklch(0.497_0.016_285.938)];
+  }
+
+  input, select {
+    font-size: 13.3333px;
+    @apply disabled:opacity-50;
+    @apply box-content;
+    @apply p-1 leading-tight bg-zinc-700 text-zinc-50 placeholder:text-zinc-500 rounded-xs;
+    @apply border border-solid border-zinc-500 hover:border-zinc-400;
+    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400;
+  }
+
+  /* select { */
+  /*   @apply text-[13.3333px] bg-background text-foreground dark; */
+  /* } */
+  /**/
+  /* select>option { */
+  /*   @apply bg-accent text-accent-foreground dark; */
+  /* } */
+
+  h2 {
+    display: block;
+    font-size: 1.5em;
+    margin-block-start: 0.83em;
+    margin-block-end: 0.83em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    font-weight: bold;
+    unicode-bidi: isolate;
+  }
+
+  h3 {
+    display: block;
+    font-size: 1.17rem;
+    margin-block-start: 1rem;
+    margin-block-end: 1rem;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    font-weight: bold;
+    unicode-bidi: isolate;
   }
 }
 
@@ -224,14 +270,6 @@ a[aria-current] {
 
 a:hover {
   @apply text-foreground/90 underline;
-}
-
-select {
-  @apply text-[13.3333px] bg-background text-foreground dark;
-}
-
-select>option {
-  @apply bg-accent text-accent-foreground dark;
 }
 
 .background-image {
