@@ -49,7 +49,7 @@ pub fn PoolBrowser() -> impl IntoView {
 
     view! {
         <div class="text-3xl font-bold">"Pool"</div>
-        <div class="text-sm text-zinc-400">"Provide liquidity and earn fees."</div>
+        <p class="text-sm text-zinc-400">"Provide liquidity and earn fees."</p>
 
         // <table>
         // <TableContent rows=rows scroll_container="html"/>
@@ -81,7 +81,7 @@ pub fn PoolBrowser() -> impl IntoView {
                         .into_iter()
                         .map(|n| {
                             view! {
-                                <div class="block bg-zinc-800 rounded space-y-4 border border-solid border-zinc-700 p-4">
+                                <div class="block bg-zinc-800 rounded-lg space-y-4 border border-solid border-zinc-700 p-4">
                                     <div class="flex items-center gap-4 text-base font-semibold">
                                         <a
                                             class="no-underline text-white"
@@ -144,7 +144,7 @@ pub fn PoolBrowser() -> impl IntoView {
             </Suspense>
         </div>
 
-        <div class="hidden md:block box-border p-2 min-w-full border border-solid border-zinc-700 rounded bg-zinc-800">
+        <div class="hidden md:block box-border p-2 min-w-full border border-solid border-zinc-700 rounded-sm bg-zinc-800">
             <table class="min-w-full -my-2 leading-tight border-separate border-spacing-x-0 border-spacing-y-2">
                 <thead class="bg-zinc-700 rounded box-border border-0 border-solid border-spacing-x-0 border-spacing-y-2">
                     <tr class="box-content">

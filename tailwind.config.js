@@ -13,7 +13,7 @@ module.exports = {
       },
       boxShadow: {
         "gold-glow":
-          "0 0 8px rgba(246, 193, 119, 0.6), 0 0 16px rgba(246, 193, 119, 0.4), 0 0 32px rgba(246, 193, 119, 0.2)",
+          "0 0 8px rgba(255, 191, 90, 0.6), 0 0 16px rgba(255, 191, 90, 0.4), 0 0 32px rgba(255, 191, 90, 0.2)",
         // "foam-glow":
         //   "0 0 6px rgba(156, 207, 216, 0.6), 0 0 12px rgba(156, 207, 216, 0.4), 0 0 18px rgba(156, 207, 216, 0.2)",
         "foam-glow": "0 0 6px rgba(156, 207, 216, 1)", // Single-layer shadow for glowing effect

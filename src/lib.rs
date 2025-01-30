@@ -392,7 +392,7 @@ pub fn App() -> impl IntoView {
         <Router>
             // <div class="background-image"></div>
             <header>
-                <div class="flex justify-between items-center">
+                <div class="px-1 flex justify-between items-center">
                     <div
                         id="mainTitle"
                         class="my-2 font-bold text-3xl line-clamp-1 transition-transform duration-300"
@@ -446,7 +446,7 @@ pub fn App() -> impl IntoView {
                 <Nav />
                 <hr class="mt-1 mb-2 border border-zinc-500" />
             </header>
-            <main class="p-2 overflow-x-auto">
+            <main class="px-1 py-2 overflow-x-auto">
                 <Routes transition=true fallback=|| "This page could not be found.">
                     <Route path=path!("liquidity-book-leptos") view=Trade />
                     <ParentRoute path=path!("/liquidity-book-leptos/pool") view=Pools>

@@ -99,7 +99,7 @@ pub fn WalletMenu(
     view! {
         <dialog
             node_ref=dialog_ref
-            class="z-50 mr-0 mt-2 px-0 py-3 w-80 shadow-lg bg-[#303030] rounded border border-zinc-600"
+            class="z-50 mr-0 mt-2 px-0 py-3 w-80 shadow-lg bg-[oklch(0.300_0.006_286.033)] rounded border border-zinc-600"
         >
             <Show when=move || contents.get() == "activity">
                 <div class="flex items-center px-2 pb-3">
@@ -170,9 +170,12 @@ pub fn WalletMenu(
                     <button
                         title="Disconnect wallet"
                         on:click=disable_keplr
-                        class="w-10 h-10 p-0 bg-transparent active:bg-zinc-900 hover:bg-zinc-700 hover:outline-gold hover:saturate-150 hover:shadow-gold-glow transition-all ease-standard duration-200 rounded-full inline-flex items-center justify-center outline outline-1 outline-offset-0 outline-transparent border border-solid border-zinc-500"
+                        class="w-10 h-10 p-0 inline-flex items-center justify-center rounded-full bg-transparent text-gold active:bg-zinc-900
+                        hover:bg-zinc-700 hover:text-[#ffbf5a] hover:outline-[#ffbf5a] hover:shadow-gold-glow
+                        outline outline-1 outline-offset-0 outline-transparent border border-solid border-zinc-500
+                        transition-all ease-standard duration-200"
                     >
-                        <Power size=16 color="#f6c177" />
+                        <Power size=16 />
                     </button>
                 </div>
                 <hr class="m-0 border-zinc-600" />
