@@ -351,23 +351,23 @@ pub fn PoolManager() -> impl IntoView {
             // left side of the screen
             <div class="flex flex-col items-center gap-6">
                 // my liquidity box
-                <div class="block w-full outline outline-2 outline-neutral-700 rounded">
+                <div class="block w-full outline outline-2 outline-zinc-700 rounded">
                     <div class="px-6 py-4">
                         <div class="w-full">
                             <h2 class="m-0 mb-2 text-xl">My Liquidity</h2>
                             // <LiquidityChart debug=debug.into() data=my_data.into() />
-                            // <p class="text-neutral-500">"You have no liquidity in this pool"</p>
+                            // <p class="text-zinc-500">"You have no liquidity in this pool"</p>
                             <div class="flex justify-center items-center h-48"></div>
                         </div>
                     </div>
-                    <hr class="m-0 border border-neutral-700" />
+                    <hr class="m-0 border-b-2 border-zinc-700" />
                     <div class="px-6 py-4">
                         <h2 class="m-0 mb-2 text-xl">Deposit Balance</h2>
                         <div class="flex flex-col gap-2 items-center">
                             <div class="grid grid-cols-1 gap-4 w-full">
                                 <div class="grid grid-cols-[1fr_14px_1fr] gap-4 w-full items-center">
                                     // token x deposit balance
-                                    <div class="flex items-center box-border px-4 py-3 h-16 bg-neutral-800 rounded">
+                                    <div class="flex items-center box-border px-4 py-3 h-16 bg-zinc-800 rounded">
                                         <div class="flex items-center flex-row flex-1 gap-2">
                                             // <img class="w-8 h-8 rounded-full" src="" / >
                                             <div class="flex flex-col items-start gap-0">
@@ -382,7 +382,7 @@ pub fn PoolManager() -> impl IntoView {
                                     </div>
                                     <Plus size=14 color="white" />
                                     // token y deposit balance
-                                    <div class="flex items-center box-border px-4 py-3 h-16 bg-neutral-800 rounded">
+                                    <div class="flex items-center box-border px-4 py-3 h-16 bg-zinc-800 rounded">
                                         <div class="flex items-center flex-row flex-1 gap-2">
                                             // <img class="w-8 h-8 rounded-full" src="" / >
                                             <div class="flex flex-col items-start gap-0">
@@ -400,12 +400,12 @@ pub fn PoolManager() -> impl IntoView {
                         </div>
                     </div>
                 </div>
-                <div class="block w-full outline outline-2 outline-neutral-700 rounded">
+                <div class="block w-full outline outline-2 outline-zinc-700 rounded">
                     <div class="px-6 py-4">
                         <div class="w-full">
                             <h2 class="m-0 mb-2 text-xl">"Fees Earned"</h2>
                             <div class="flex justify-center items-center h-48">
-                                <p class="text-neutral-500">"You have no fees earned"</p>
+                                <p class="text-zinc-500">"You have no fees earned"</p>
                             </div>
                         </div>
                     </div>
@@ -413,9 +413,9 @@ pub fn PoolManager() -> impl IntoView {
 
             </div>
 
-            // <details class="text-neutral-300 font-bold">
+            // <details class="text-zinc-300 font-bold">
             // <summary class="text-lg cursor-pointer">Pool Details</summary>
-            // <ul class="my-1 font-normal text-base text-neutral-200 ">
+            // <ul class="my-1 font-normal text-base text-zinc-200 ">
             // <Suspense fallback=|| view! { <div>"Loading Total Reserves..."</div> }>
             // <li>
             // "Total Reserves: "
@@ -489,15 +489,15 @@ pub fn PoolManager() -> impl IntoView {
             // </details>
 
             // right side of screen, moves to bottom on medium screens
-            <div class="block px-5 py-4 w-full box-border space-y-5 mx-auto outline outline-2 outline-neutral-700 rounded max-h-max">
+            <div class="block px-5 py-4 w-full box-border space-y-5 mx-auto outline outline-2 outline-zinc-700 rounded max-h-max">
                 // "Tab Group"
                 <div class="flex gap-4 w-full">
                     // This preserves the query params when navigating to nested routes.
                     // TODO: this is terribly complicated. it works, but there must be a simpler way
                     <button
                         class="w-full inline-flex justify-center items-center
-                    font-medium leading-none py-1 px-2
-                    border border-solid border-zinc-500 bg-zinc-500 text-white rounded-xs"
+                        font-medium leading-none py-1 px-2
+                        border border-solid border-zinc-500 bg-zinc-500 text-white rounded-xs"
                         on:click={
                             let navigate_ = navigate.clone();
                             let nav_options_ = nav_options.clone();
@@ -523,8 +523,8 @@ pub fn PoolManager() -> impl IntoView {
                     </button>
                     <button
                         class="w-full inline-flex justify-center items-center
-                    font-medium leading-none py-1 px-2
-                    border border-solid border-zinc-500 bg-zinc-500 text-white rounded-xs"
+                        font-medium leading-none py-1 px-2
+                        border border-solid border-zinc-500 bg-zinc-500 text-white rounded-xs"
                         on:click={
                             let navigate_ = navigate.clone();
                             let nav_options_ = nav_options.clone();

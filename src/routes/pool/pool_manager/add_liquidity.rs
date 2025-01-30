@@ -596,7 +596,7 @@ pub fn AddLiquidity() -> impl IntoView {
                     </div>
                 </div>
 
-                <button class="w-full p-1 !mt-6" on:click=add_liquidity>
+                <button class="w-full py-2 px-6 !mt-6" on:click=add_liquidity>
                     "Add Liquidity"
                 </button>
             </Show>

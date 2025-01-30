@@ -64,7 +64,9 @@ pub fn PoolBrowser() -> impl IntoView {
                 <A href="/liquidity-book-leptos/pool/create">
                     <button class="min-w-24 inline-flex justify-center items-center
                     font-medium leading-none py-1.5 px-2
-                    border border-solid border-zinc-500 bg-zinc-500 text-white rounded-xs">"Create New Pool"</button>
+                    border border-solid border-zinc-500 bg-zinc-500 text-white rounded-xs">
+                        "Create New Pool"
+                    </button>
                 </A>
             </div>
         </div>

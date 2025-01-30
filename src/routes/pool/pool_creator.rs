@@ -168,7 +168,7 @@ pub fn PoolCreator() -> impl IntoView {
     view! {
         <a
             href="/liquidity-book-leptos/pool"
-            class="inline-flex gap-x-2 items-center text-neutral-500 text-sm font-bold cursor-pointer no-underline"
+            class="inline-flex gap-x-2 items-center text-zinc-500 text-sm font-bold cursor-pointer no-underline"
         >
             <ArrowLeft size=14 color="#737373" />
             "Back to pools list"
@@ -207,7 +207,7 @@ pub fn PoolCreator() -> impl IntoView {
             <label class="block">
                 <span class="mb-1 block">"Select Bin Step"</span>
                 <div class="block box-border font-semibold w-full max-w-xs space-x-4">
-                    <label class="cursor-pointer">
+                    <label class="cursor-pointer space-x-2">
                         <input
                             class=""
                             type="radio"
@@ -258,9 +258,7 @@ pub fn PoolCreator() -> impl IntoView {
                     on:input=move |ev| set_active_price.set(event_target_value(&ev))
                 />
             </label>
-            <button class="w-full p-1 !mt-6" type="submit">
-                Create Pool
-            </button>
+            <button class="w-full py-2 px-6 !mt-6">Create Pool</button>
         </form>
     }
 }

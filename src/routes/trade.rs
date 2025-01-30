@@ -454,8 +454,7 @@ pub fn Trade() -> impl IntoView {
                     // <pre class="px-2 text-xs whitespace-pre-wrap text-zinc-300">{current_quote}</pre>
                     // </div>
                     <div class="p-8 space-y-6 row-start-1 sm:row-auto bg-zinc-800 text-zinc-100
-                            rounded-lg border border-solid border-zinc-700"
-                        >
+                    rounded-lg border border-solid border-zinc-700">
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <label class="block mb-1 text-base font-semibold" for="from-token">
@@ -586,7 +585,12 @@ pub fn Trade() -> impl IntoView {
                         <Show when=move || {
                             get_quote.value().get().is_some_and(|quote| quote.is_ok())
                         }>
-                            <SwapDetails price_ratio=swap_price_ratio expected_output=amount_out minimum_received=amount_out_min price_impact />
+                            <SwapDetails
+                                price_ratio=swap_price_ratio
+                                expected_output=amount_out
+                                minimum_received=amount_out_min
+                                price_impact
+                            />
                         </Show>
 
                         // <Show when=move || amount_out().is_some() fallback=|| ()>
@@ -666,7 +670,7 @@ fn SwapDetails(
                 // TODO: add token symbols to this string.
                 <p on:click=move |_| () class="m-0 text-sm text-white font-semibold">
                     {move || price_ratio.get().map(|uint128| uint128.to_string())}
-                    // "1 AVAX = 35.37513945 USDC"
+                // "1 AVAX = 35.37513945 USDC"
                 </p>
                 <div
                     class="flex items-center justify-center transition-transform"
@@ -686,11 +690,15 @@ fn SwapDetails(
                 <div class="w-full box-border p-4 pt-2 flex flex-col gap-2 items-center">
                     <div class="w-full flex flex-row justify-between text-sm">
                         <p class="m-0 text-zinc-400">"Expected Output:"</p>
-                        <p class="m-0 text-zinc-50 font-semibold">{move || expected_output.get().map(|uint128| uint128.to_string())}</p>
+                        <p class="m-0 text-zinc-50 font-semibold">
+                            {move || expected_output.get().map(|uint128| uint128.to_string())}
+                        </p>
                     </div>
                     <div class="w-full flex flex-row justify-between text-sm">
                         <p class="m-0 text-zinc-400">"Minimum Received:"</p>
-                        <p class="m-0 text-zinc-50 font-semibold">{move || minimum_received.get().map(|uint128| uint128.to_string())}</p>
+                        <p class="m-0 text-zinc-50 font-semibold">
+                            {move || minimum_received.get().map(|uint128| uint128.to_string())}
+                        </p>
                     </div>
                     <div class="w-full flex flex-row justify-between text-sm">
                         <p class="m-0 text-zinc-400">"Price Impact:"</p>
@@ -797,11 +805,11 @@ fn SwapSettings(
                                             type="text"
                                             pattern="^[0-9]*[.,]?[0-9]*$"
                                             placeholder="0.5"
-                                            prop:value=move || {
-                                                slippage.0.get() as f64 / 100.0
-                                            }
+                                            prop:value=move || { slippage.0.get() as f64 / 100.0 }
                                             on:input=move |ev| {
-                                                let value = event_target_value(&ev).parse::<f64>().unwrap_or_default();
+                                                let value = event_target_value(&ev)
+                                                    .parse::<f64>()
+                                                    .unwrap_or_default();
                                                 let value = (value * 100.0).round() as u16;
                                                 slippage.1.set(value)
                                             }
