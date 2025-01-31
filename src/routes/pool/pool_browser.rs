@@ -81,28 +81,28 @@ pub fn PoolBrowser() -> impl IntoView {
                         .into_iter()
                         .map(|n| {
                             view! {
-                                <div class="block bg-zinc-800 rounded-lg space-y-4 border border-solid border-zinc-700 p-4">
-                                    <div class="flex items-center gap-4 text-base font-semibold">
-                                        <a
-                                            class="no-underline text-white"
-                                            href=format!(
-                                                "/liquidity-book-leptos/pool/{}/{}/{}/manage",
-                                                match n.token_x {
-                                                    TokenType::CustomToken { ref contract_addr, .. } => {
-                                                        contract_addr.to_string()
-                                                    }
-                                                    TokenType::NativeToken { ref denom } => denom.to_string(),
-                                                },
-                                                match n.token_y {
-                                                    TokenType::CustomToken { ref contract_addr, .. } => {
-                                                        contract_addr.to_string()
-                                                    }
-                                                    TokenType::NativeToken { ref denom } => denom.to_string(),
-                                                },
-                                                n.bin_step,
-                                            )
-                                        >
-                                            <div class="">
+                                <a
+                                    class="no-underline hover:!no-underline"
+                                    href=format!(
+                                        "/liquidity-book-leptos/pool/{}/{}/{}/manage",
+                                        match n.token_x {
+                                            TokenType::CustomToken { ref contract_addr, .. } => {
+                                                contract_addr.to_string()
+                                            }
+                                            TokenType::NativeToken { ref denom } => denom.to_string(),
+                                        },
+                                        match n.token_y {
+                                            TokenType::CustomToken { ref contract_addr, .. } => {
+                                                contract_addr.to_string()
+                                            }
+                                            TokenType::NativeToken { ref denom } => denom.to_string(),
+                                        },
+                                        n.bin_step,
+                                    )
+                                >
+                                    <div class="block bg-zinc-800 rounded-lg space-y-4 border border-solid border-zinc-700 p-4">
+                                        <div class="flex items-center gap-4 text-base font-semibold">
+                                            <div class="text-zinc-50">
                                                 {format!(
                                                     "{} – {}",
                                                     TOKEN_MAP
@@ -115,28 +115,28 @@ pub fn PoolBrowser() -> impl IntoView {
                                                         .unwrap_or_default(),
                                                 )}
                                             </div>
-                                        </a>
-                                        <div class="text-white text-xs py-1 px-2 rounded-full bg-zinc-700">
-                                            {format!("{} bps", n.bin_step)}
-                                        </div>
+                                            <div class="text-white text-xs py-1 px-2 rounded-full bg-zinc-700">
+                                                {format!("{} bps", n.bin_step)}
+                                            </div>
 
+                                        </div>
+                                        // TODO: how would I get this data while inside of the iterator?
+                                        <div class="flex flex-row justify-between text-sm">
+                                            <div class="flex flex-col">
+                                                <p class="mb-1 mt-0 text-zinc-400">"Liquidity"</p>
+                                                <p class="my-0 font-semibold">"$0.00"</p>
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <p class="mb-1 mt-0 text-zinc-400">"Volume (24H)"</p>
+                                                <p class="my-0 font-semibold">"$0.00"</p>
+                                            </div>
+                                            <div class="flex flex-col">
+                                                <p class="mb-1 mt-0 text-zinc-400">"Fees (24H)"</p>
+                                                <p class="my-0 font-semibold">"$0.00"</p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    // TODO: how would I get this data while inside of the iterator?
-                                    <div class="flex flex-row justify-between text-sm">
-                                        <div class="flex flex-col">
-                                            <p class="mb-1 mt-0 text-zinc-400">"Liquidity"</p>
-                                            <p class="my-0 font-semibold">"$0.00"</p>
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <p class="mb-1 mt-0 text-zinc-400">"Volume (24H)"</p>
-                                            <p class="my-0 font-semibold">"$0.00"</p>
-                                        </div>
-                                        <div class="flex flex-col">
-                                            <p class="mb-1 mt-0 text-zinc-400">"Fees (24H)"</p>
-                                            <p class="my-0 font-semibold">"$0.00"</p>
-                                        </div>
-                                    </div>
-                                </div>
+                                </a>
                             }
                         })
                         .collect_view()
