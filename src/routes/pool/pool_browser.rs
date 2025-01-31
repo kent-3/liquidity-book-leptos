@@ -144,14 +144,14 @@ pub fn PoolBrowser() -> impl IntoView {
             </Suspense>
         </div>
 
-        <div class="hidden md:block box-border p-2 min-w-full border border-solid border-zinc-700 rounded-sm bg-zinc-800">
+        <div class="hidden md:block box-border p-2 min-w-full border border-solid border-zinc-700 rounded-lg bg-zinc-800">
             <table class="min-w-full -my-2 leading-tight border-separate border-spacing-x-0 border-spacing-y-2">
-                <thead class="bg-zinc-700 rounded box-border border-0 border-solid border-spacing-x-0 border-spacing-y-2">
-                    <tr class="box-content">
-                        <th class="px-4 py-2 text-left box-content">"Pool Name"</th>
+                <thead class="box-border border-0 border-solid border-spacing-x-0 border-spacing-y-2">
+                    <tr class="box-content bg-zinc-700">
+                        <th class="px-4 py-2 text-left rounded-l-sm box-content">"Pool Name"</th>
                         <th class="px-4 py-2 text-right box-content">"Volume (24H)"</th>
                         <th class="px-4 py-2 text-right box-content">"Liquidity"</th>
-                        <th class="px-4 py-2 text-right box-content">"Fees (24H)"</th>
+                        <th class="px-4 py-2 text-right rounded-r-sm box-content">"Fees (24H)"</th>
                     </tr>
                 </thead>
                 // crazy, but it works

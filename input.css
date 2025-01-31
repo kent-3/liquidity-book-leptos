@@ -75,23 +75,23 @@
 
   button {
     font-size: 13.3333px;
-    @apply disabled:opacity-50;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
     @apply cursor-default;
     @apply inline-flex justify-center items-center;
     @apply font-medium leading-none py-1 px-2;
     @apply bg-zinc-500 text-white rounded-xs;
-    @apply hover:bg-[oklch(0.607_0.016_285.938)];
-    @apply active:bg-[oklch(0.497_0.016_285.938)];
+    @apply hover:bg-[oklch(0.607_0.016_285.938)] disabled:hover:bg-zinc-500;
+    @apply active:bg-[oklch(0.497_0.016_285.938)] disabled:active:bg-zinc-500;
   }
 
   input,
   select {
     font-size: 13.3333px;
-    @apply disabled:opacity-50;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
     @apply box-content;
     @apply p-1 leading-tight bg-zinc-700 text-zinc-50 placeholder:text-zinc-500 rounded-xs;
-    @apply border border-solid border-zinc-500 hover:border-zinc-400;
-    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400;
+    @apply border border-solid border-zinc-500 hover:border-zinc-400 disabled:hover:border-zinc-500;
+    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:focus-visible:ring-0;
   }
 
   /* select { */

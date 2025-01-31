@@ -417,7 +417,7 @@ pub fn Trade() -> impl IntoView {
 
     view! {
         <LoadingModal when=swap.pending() message="Processing Transaction... (watch the console)" />
-        <div class="flex mt-5 md:mt-10 justify-center">
+        <div class="flex mt-2 md:mt-10 justify-center">
             // <div class="grid gap-4 sm:grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)] grid-cols-1 grid-rows-2 sm:grid-rows-1">
             <div class="grid gap-4 grid-cols-1 max-w-[550px] w-full">
                 <div class="flex flex-col space-y-3 w-full">
@@ -470,8 +470,7 @@ pub fn Trade() -> impl IntoView {
                                     inputmode="decimal"
                                     placeholder="0.0"
                                     autocomplete="off"
-                                    class="px-3 py-1 w-full text-xl font-semibold bg-zinc-700 rounded-sm border border-solid border-zinc-500 hover:border-zinc-400
-                                    placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    class="px-3 py-1 w-full text-xl font-semibold"
                                     prop:value=move || amount_x.get()
                                     on:input=move |ev| {
                                         set_amount_x.set(event_target_value(&ev));
@@ -481,8 +480,7 @@ pub fn Trade() -> impl IntoView {
                                 />
                                 <select
                                     node_ref=select_x_node_ref
-                                    class="w-28 font-medium transition-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
-                                    border-solid border border-zinc-500 bg-zinc-700 shadow-sm hover:border-zinc-400 rounded-sm p-1 text-sm"
+                                    class="w-28 font-medium p-1 text-sm"
                                     title="Select Token X"
                                     on:input=move |ev| {
                                         let token_x = event_target_value(&ev);
@@ -531,10 +529,7 @@ pub fn Trade() -> impl IntoView {
                                     inputmode="decimal"
                                     placeholder="0.0"
                                     autocomplete="off"
-                                    class="px-3 py-1 w-full text-xl font-semibold rounded-sm
-                                    bg-zinc-700 border border-solid border-zinc-500 hover:border-zinc-400
-                                    placeholder:text-zinc-400 disabled:opacity-50 disabled:cursor-not-allowed
-                                    focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                    class="px-3 py-1 w-full text-xl font-semibold disabled:cursor-not-allowed"
                                     prop:value=move || amount_y.get()
                                     on:change=move |ev| {
                                         set_amount_y.set(event_target_value(&ev));
@@ -545,8 +540,7 @@ pub fn Trade() -> impl IntoView {
                                 <select
                                     node_ref=select_y_node_ref
                                     title="Select Token Y"
-                                    class="w-28 font-medium transition-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
-                                    border-solid border border-zinc-500 bg-zinc-700 shadow-sm hover:border-zinc-400 rounded-sm p-1 text-sm"
+                                    class="w-28 font-medium p-1 text-sm"
                                     prop:value=move || token_y.get().unwrap_or_default()
                                     on:change=move |ev| {
                                         let token_y = event_target_value(&ev);
@@ -568,7 +562,7 @@ pub fn Trade() -> impl IntoView {
 
                         <div class="flex flex-row items-center gap-2">
                             <button
-                                class="py-1.5 px-6 text-sm font-medium rounded-xs bg-zinc-600 text-secondary-zinc-50"
+                                class="py-1.5 px-6 text-sm font-medium"
                                 disabled=move || {
                                     token_x.get().is_none() || token_y.get().is_none()
                                         || amount_x.get().is_empty() || get_quote.pending().get()
@@ -778,27 +772,26 @@ fn SwapSettings(
                                     <div class="flex flex-row items-center gap-1">
                                         <button
                                             on:click=move |_| slippage.1.set(10)
-                                            class="h-8 min-w-8 w-14 text-sm font-semibold bg-zinc-600 rounded-sm"
+                                            class="h-8 min-w-8 w-14 text-sm font-semibold"
                                         >
                                             "0.1%"
                                         </button>
                                         <button
                                             on:click=move |_| slippage.1.set(50)
-                                            class="h-8 min-w-8 w-14 text-sm font-semibold bg-zinc-600 rounded-sm"
+                                            class="h-8 min-w-8 w-14 text-sm font-semibold"
                                         >
                                             "0.5%"
                                         </button>
                                         <button
                                             on:click=move |_| slippage.1.set(100)
-                                            class="h-8 min-w-8 w-14 text-sm font-semibold bg-zinc-600 rounded-sm"
+                                            class="h-8 min-w-8 w-14 text-sm font-semibold"
                                         >
                                             "1%"
                                         </button>
                                     </div>
                                     <div class="w-full relative flex items-center isolate box-border">
                                         <input
-                                            class="w-full box-border px-3 h-8 text-sm font-semibold
-                                            bg-zinc-800 border border-solid border-zinc-600 hover:border-zinc-500 rounded-sm"
+                                            class="w-full box-border px-3 h-8 text-sm font-semibold"
                                             inputmode="decimal"
                                             minlength="1"
                                             maxlength="79"
@@ -824,8 +817,7 @@ fn SwapSettings(
                                 <p class="text-zinc-400 text-sm m-0">"Transaction deadline"</p>
                                 <div class="w-full relative flex items-center isolate box-border">
                                     <input
-                                        class="w-full box-border px-3 h-8 text-sm font-semibold
-                                        bg-zinc-800 border border-solid border-zinc-600 hover:border-zinc-500 rounded-sm "
+                                        class="w-full box-border px-3 h-8 text-sm font-semibold"
                                         inputmode="decimal"
                                         minlength="1"
                                         maxlength="79"
