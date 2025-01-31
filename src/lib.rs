@@ -426,11 +426,8 @@ pub fn App() -> impl IntoView {
 
                                 <button
                                     on:click=toggle_wallet_menu
-                                    class="min-w-24 inline-flex justify-center items-center align-middle
-                                    text-sm font-semibold leading-none py-[6px] px-[12px]
-                                    border border-solid border-zinc-600 bg-zinc-600 text-zinc-50 rounded-xs"
+                                    class="min-w-24 text-sm font-semibold leading-none py-[6px] px-[12px] text-zinc-50"
                                 >
-                                    // class="min-w-24 transition-shadow active:bg-neutral-900 active:border-neutral-600 hover:bg-neutral-700 hover:border-neutral-500 ease-standard duration-100 box-border font-semibold leading-5 inline-flex items-center justify-center rounded border border-solid border-neutral-600 bg-neutral-800 text-sm py-[5px] px-[12px]"
                                     "Wallet Menu"
                                 // {move || key_address().map(shorten_address)}
                                 </button>

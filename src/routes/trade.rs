@@ -457,7 +457,7 @@ pub fn Trade() -> impl IntoView {
                     rounded-lg border border-solid border-zinc-700">
                         <div class="space-y-2">
                             <div class="flex justify-between">
-                                <label class="block mb-1 text-base font-semibold" for="from-token">
+                                <label class="block text-base font-semibold" for="from-token">
                                     "From"
                                 </label>
                                 <Secret20Balance token_address=token_x.into() />
@@ -515,7 +515,7 @@ pub fn Trade() -> impl IntoView {
                         // </div>
                         <div class="space-y-2">
                             <div class="flex justify-between">
-                                <label class="block mb-1 text-base font-semibold" for="to-token">
+                                <label class="block text-base font-semibold" for="to-token">
                                     "To"
                                 </label>
                                 <Secret20Balance token_address=token_y.into() />
