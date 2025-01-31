@@ -63,13 +63,13 @@
 
 @layer base {
   * {
-    /* @apply border-zinc-800; */
+    /* @apply border-neutral-800; */
   }
 
   body {
     @apply antialiased box-content;
     @apply max-w-5xl mx-auto;
-    @apply dark bg-zinc-900 text-zinc-200;
+    @apply dark bg-neutral-900 text-neutral-200;
     font-feature-settings: "kern";
   }
 
@@ -79,9 +79,9 @@
     @apply cursor-default;
     @apply inline-flex justify-center items-center;
     @apply font-medium leading-none py-1 px-2;
-    @apply bg-zinc-500 text-white rounded-xs;
-    @apply hover:bg-[oklch(0.607_0.016_285.938)] disabled:hover:bg-zinc-500;
-    @apply active:bg-[oklch(0.497_0.016_285.938)] disabled:active:bg-zinc-500;
+    @apply bg-neutral-500 text-white rounded-xs;
+    @apply hover:bg-[oklch(0.612_0_0)] disabled:hover:bg-neutral-500;
+    @apply active:bg-[oklch(0.500_0_0)] disabled:active:bg-neutral-500;
   }
 
   input,
@@ -89,9 +89,9 @@
     font-size: 13.3333px;
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
     @apply box-content;
-    @apply p-1 leading-tight bg-zinc-700 text-zinc-50 placeholder:text-zinc-500 rounded-xs;
-    @apply border border-solid border-zinc-500 hover:border-zinc-400 disabled:hover:border-zinc-500;
-    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-300 disabled:focus-visible:ring-0;
+    @apply p-1 leading-tight bg-neutral-700 text-neutral-50 placeholder:text-neutral-500 rounded-xs;
+    @apply border border-solid border-neutral-500 hover:border-neutral-400 disabled:hover:border-neutral-500;
+    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-300 disabled:focus-visible:ring-0;
   }
 
   /* select { */
@@ -159,7 +159,7 @@ html {
 /* } */
 
 /* select>option { */
-/*   @apply bg-zinc-600 text-white; */
+/*   @apply bg-neutral-600 text-white; */
 /* } */
 
 ::selection {
@@ -193,11 +193,11 @@ html {
 }
 
 ._chartistry_tick_label {
-  @apply text-zinc-200 stroke-zinc-500 fill-zinc-500;
+  @apply text-neutral-200 stroke-neutral-500 fill-neutral-500;
 }
 
 ._chartistry_tooltip {
-  @apply !p-3 !bg-zinc-700/40 !rounded !border-none;
+  @apply !p-3 !bg-neutral-700/40 !rounded !border-none;
   backdrop-filter: blur(8px);
   transform: translateY(-50%) translateX(117%) !important;
 }
@@ -206,11 +206,11 @@ html {
   .menu-button {
     @apply inline-flex justify-start items-center box-border;
     @apply w-full h-10 px-3 py-1 rounded;
-    @apply text-white text-base font-semibold hover:bg-zinc-700 transition-all ease-linear duration-200;
+    @apply text-white text-base font-semibold hover:bg-neutral-700 transition-all ease-linear duration-200;
   }
 
   .menu-button>svg {
-    @apply stroke-zinc-400;
+    @apply stroke-neutral-400;
   }
 
   .menu-button> :first-child {

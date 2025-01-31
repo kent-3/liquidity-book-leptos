@@ -415,7 +415,7 @@ pub fn App() -> impl IntoView {
                                         disabled=enable_keplr_action.pending()
                                         class="min-w-24 inline-flex justify-center items-center
                                         text-sm font-semibold leading-none py-[6px] px-[12px]
-                                        border border-solid border-zinc-500 bg-zinc-500 text-white rounded-[2px]"
+                                        border border-solid border-neutral-500 bg-neutral-500 text-white rounded-[2px]"
                                     >
                                         "Connect Wallet"
                                     </button>
@@ -426,7 +426,7 @@ pub fn App() -> impl IntoView {
 
                                 <button
                                     on:click=toggle_wallet_menu
-                                    class="min-w-24 text-sm font-semibold leading-none py-[6px] px-[12px] text-zinc-50"
+                                    class="min-w-24 text-sm font-semibold leading-none py-[6px] px-[12px] text-neutral-50"
                                 >
                                     "Wallet Menu"
                                 // {move || key_address().map(shorten_address)}
@@ -439,9 +439,9 @@ pub fn App() -> impl IntoView {
                         </Show>
                     </div>
                 </div>
-                <hr class="mt-2 mb-1 border border-zinc-500" />
+                <hr class="mt-2 mb-1 border border-neutral-500" />
                 <Nav />
-                <hr class="mt-1 mb-2 border border-zinc-500" />
+                <hr class="mt-1 mb-2 border border-neutral-500" />
             </header>
             <main class="px-2 py-2 overflow-x-auto">
                 <Routes transition=true fallback=|| "This page could not be found.">

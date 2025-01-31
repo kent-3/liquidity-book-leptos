@@ -430,8 +430,8 @@ pub fn AddLiquidity() -> impl IntoView {
             <div class="text-xl font-semibold">Deposit Liquidity</div>
             <div class="flex items-center gap-2">
                 <input
-                    class="px-1 py-1 w-full leading-tight bg-zinc-700 rounded-xs border border-solid border-zinc-500 hover:border-zinc-400
-                    placeholder:text-zinc-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400"
+                    class="px-1 py-1 w-full leading-tight bg-neutral-700 rounded-xs border border-solid border-neutral-500 hover:border-neutral-400
+                    placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400"
                     type="number"
                     placeholder="Enter Amount"
                     on:change=move |ev| set_amount_x.set(event_target_value(&ev))

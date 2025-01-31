@@ -80,9 +80,9 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                                     <div
                                         on:click=|_: MouseEvent| ()
                                         class="group box-content px-1.5 translate-x-2 flex flex-row gap-2 items-center text-sm rounded cursor-default
-                                        hover:bg-zinc-700 transition-colors ease-standard"
+                                        hover:bg-neutral-700 transition-colors ease-standard"
                                     >
-                                        <div class="text-zinc-400">"Balance: "</div>
+                                        <div class="text-neutral-400">"Balance: "</div>
                                         <div class="text-white font-medium max-w-[12rem] sm:max-w-full truncate break-all">
                                             {amount}
                                         </div>
@@ -117,9 +117,9 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                                                 "Balance: "<span class="text-white font-semibold">"0"</span>
                                             </span>
                                             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-100 ease-in
-                                            bg-zinc-500 text-white text-xs font-semibold px-2 py-1 rounded-md whitespace-nowrap">
+                                            bg-neutral-500 text-white text-xs font-semibold px-2 py-1 rounded-md whitespace-nowrap">
                                                 "Add " {token_symbol()} " to wallet"
-                                            // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-zinc-500 rotate-45"></div>
+                                            // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                             </div>
                                         </div>
                                     },
@@ -127,20 +127,20 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                             } else {
                                 EitherOf4::D(
                                     view! {
-                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-zinc-500 rotate-45"></div>
-                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-zinc-500 rotate-45"></div>
-                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-zinc-500 rotate-45"></div>
-                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-zinc-500 rotate-45"></div>
-                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-zinc-500 rotate-45"></div>
+                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
+                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
+                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
+                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
+                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                         <div
                                             title=error.to_string()
                                             class="group relative py-0 px-2 text-gold font-semibold text-sm cursor-default hover:bg-gold/20 text-ellipsis"
                                         >
                                             "Error 🛈"
                                             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible group-hover:visible
-                                            bg-zinc-500 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                                            bg-neutral-500 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
                                                 {error.to_string()}
-                                                <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-zinc-500 rotate-45"></div>
+                                                <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                             </div>
                                         </div>
                                     },

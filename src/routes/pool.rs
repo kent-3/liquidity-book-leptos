@@ -269,7 +269,7 @@ pub fn Pool() -> impl IntoView {
     view! {
         <a
             href="/liquidity-book-leptos/pool"
-            class="inline-flex gap-x-2 items-center text-zinc-500 text-sm font-bold cursor-pointer no-underline"
+            class="inline-flex gap-x-2 items-center text-neutral-500 text-sm font-bold cursor-pointer no-underline"
         >
             <ArrowLeft size=14 />
             "Back to pools list"
@@ -288,10 +288,10 @@ pub fn Pool() -> impl IntoView {
             </Suspense>
 
             <div class="flex items-center gap-x-2 md:pl-4">
-                <span class="text-sm text-white inline-flex font-bold px-2 py-1 rounded-full border border-solid border-zinc-700">
+                <span class="text-sm text-white inline-flex font-bold px-2 py-1 rounded-full border border-solid border-neutral-700">
                     {basis_points}" bps"
                 </span>
-                <span class="inline-flex px-2 py-1 rounded-full border border-solid border-zinc-700">
+                <span class="inline-flex px-2 py-1 rounded-full border border-solid border-neutral-700">
                     <a
                         href="about:blank"
                         target="_blank"

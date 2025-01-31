@@ -49,7 +49,7 @@ pub fn PoolBrowser() -> impl IntoView {
 
     view! {
         <div class="text-3xl font-bold">"Pool"</div>
-        <p class="text-sm text-zinc-400">"Provide liquidity and earn fees."</p>
+        <p class="text-sm text-neutral-400">"Provide liquidity and earn fees."</p>
 
         // <table>
         // <TableContent rows=rows scroll_container="html"/>
@@ -64,7 +64,7 @@ pub fn PoolBrowser() -> impl IntoView {
                 <A href="/liquidity-book-leptos/pool/create">
                     <button class="min-w-24 inline-flex justify-center items-center
                     font-medium leading-none py-1.5 px-2
-                    border border-solid border-zinc-500 bg-zinc-500 text-white rounded-xs">
+                    border border-solid border-neutral-500 bg-neutral-500 text-white rounded-xs">
                         "Create New Pool"
                     </button>
                 </A>
@@ -100,9 +100,9 @@ pub fn PoolBrowser() -> impl IntoView {
                                         n.bin_step,
                                     )
                                 >
-                                    <div class="block bg-zinc-800 rounded-lg space-y-4 border border-solid border-zinc-700 p-4">
+                                    <div class="block bg-neutral-800 rounded-lg space-y-4 border border-solid border-neutral-700 p-4">
                                         <div class="flex items-center gap-4 text-base font-semibold">
-                                            <div class="text-zinc-50">
+                                            <div class="text-neutral-50">
                                                 {format!(
                                                     "{} – {}",
                                                     TOKEN_MAP
@@ -115,7 +115,7 @@ pub fn PoolBrowser() -> impl IntoView {
                                                         .unwrap_or_default(),
                                                 )}
                                             </div>
-                                            <div class="text-white text-xs py-1 px-2 rounded-full bg-zinc-700">
+                                            <div class="text-white text-xs py-1 px-2 rounded-full bg-neutral-700">
                                                 {format!("{} bps", n.bin_step)}
                                             </div>
 
@@ -123,15 +123,15 @@ pub fn PoolBrowser() -> impl IntoView {
                                         // TODO: how would I get this data while inside of the iterator?
                                         <div class="flex flex-row justify-between text-sm">
                                             <div class="flex flex-col">
-                                                <p class="mb-1 mt-0 text-zinc-400">"Liquidity"</p>
+                                                <p class="mb-1 mt-0 text-neutral-400">"Liquidity"</p>
                                                 <p class="my-0 font-semibold">"$0.00"</p>
                                             </div>
                                             <div class="flex flex-col">
-                                                <p class="mb-1 mt-0 text-zinc-400">"Volume (24H)"</p>
+                                                <p class="mb-1 mt-0 text-neutral-400">"Volume (24H)"</p>
                                                 <p class="my-0 font-semibold">"$0.00"</p>
                                             </div>
                                             <div class="flex flex-col">
-                                                <p class="mb-1 mt-0 text-zinc-400">"Fees (24H)"</p>
+                                                <p class="mb-1 mt-0 text-neutral-400">"Fees (24H)"</p>
                                                 <p class="my-0 font-semibold">"$0.00"</p>
                                             </div>
                                         </div>
@@ -144,10 +144,10 @@ pub fn PoolBrowser() -> impl IntoView {
             </Suspense>
         </div>
 
-        <div class="hidden md:block box-border p-2 min-w-full border border-solid border-zinc-700 rounded-lg bg-zinc-800">
+        <div class="hidden md:block box-border p-2 min-w-full border border-solid border-neutral-700 rounded-lg bg-neutral-800">
             <table class="min-w-full -my-2 leading-tight border-separate border-spacing-x-0 border-spacing-y-2">
                 <thead class="box-border border-0 border-solid border-spacing-x-0 border-spacing-y-2">
-                    <tr class="box-content bg-zinc-700">
+                    <tr class="box-content bg-neutral-700">
                         <th class="px-4 py-2 text-left rounded-l-sm box-content">"Pool Name"</th>
                         <th class="px-4 py-2 text-right box-content">"Volume (24H)"</th>
                         <th class="px-4 py-2 text-right box-content">"Liquidity"</th>
@@ -199,7 +199,7 @@ pub fn PoolBrowser() -> impl IntoView {
                                                             )}
                                                         </div>
                                                     </a>
-                                                    <div class="text-white text-xs py-1 px-2 rounded-full bg-zinc-700">
+                                                    <div class="text-white text-xs py-1 px-2 rounded-full bg-neutral-700">
                                                         {format!("{} bps", n.bin_step)}
                                                     </div>
 

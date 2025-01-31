@@ -168,7 +168,7 @@ pub fn PoolCreator() -> impl IntoView {
     view! {
         <a
             href="/liquidity-book-leptos/pool"
-            class="inline-flex gap-x-2 items-center text-zinc-500 text-sm font-bold cursor-pointer no-underline"
+            class="inline-flex gap-x-2 items-center text-neutral-500 text-sm font-bold cursor-pointer no-underline"
         >
             <ArrowLeft size=14 />
             "Back to pools list"
