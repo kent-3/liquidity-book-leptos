@@ -472,21 +472,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   margin-left: auto;
   margin-right: auto;
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
   max-width: 64rem;
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-}
-
-@media (min-width: 640px) {
-  body {
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-}
-
-body {
   --background: 240 10% 3.9%;
   --foreground: 0 0% 98%;
   --card: 240 10% 3.9%;
@@ -1673,10 +1659,6 @@ h3 {
 
 .p-4 {
   padding: 1rem;
-}
-
-.p-8 {
-  padding: 2rem;
 }
 
 .px-0 {
@@ -2918,6 +2900,10 @@ ul {
   color: rgb(255 191 90 / var(--tw-text-opacity));
 }
 
+.hover\:\!no-underline:hover {
+  text-decoration-line: none !important;
+}
+
 .hover\:shadow-gold-glow:hover {
   --tw-shadow: 0 0 8px rgba(255, 191, 90, 0.6), 0 0 16px rgba(255, 191, 90, 0.4), 0 0 32px rgba(255, 191, 90, 0.2);
   --tw-shadow-colored: 0 0 8px var(--tw-shadow-color), 0 0 16px var(--tw-shadow-color), 0 0 32px var(--tw-shadow-color);
@@ -3074,6 +3060,10 @@ ul {
 }
 
 @media (min-width: 768px) {
+  .md\:row-auto {
+    grid-row: auto;
+  }
+
   .md\:-mr-\[124px\] {
     margin-right: -124px;
   }
@@ -3100,6 +3090,14 @@ ul {
 
   .md\:items-center {
     align-items: center;
+  }
+
+  .md\:gap-4 {
+    gap: 1rem;
+  }
+
+  .md\:p-8 {
+    padding: 2rem;
   }
 
   .md\:pl-4 {

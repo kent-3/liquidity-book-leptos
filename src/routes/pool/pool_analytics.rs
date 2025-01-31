@@ -247,7 +247,7 @@ pub fn PoolAnalytics() -> impl IntoView {
 
     view! {
         <div class="flex flex-col gap-4">
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
                 <div class="bg-zinc-800 px-4 sm:px-8 py-4 rounded-md">
                     <dl class="m-0">
                         <dt class="text-sm text-zinc-400 font-medium">"Liquidity"</dt>

@@ -68,7 +68,7 @@
 
   body {
     @apply antialiased box-content;
-    @apply max-w-5xl mx-auto my-2 px-2 sm:px-4;
+    @apply max-w-5xl mx-auto;
     @apply dark bg-zinc-900 text-zinc-200;
     font-feature-settings: "kern";
   }

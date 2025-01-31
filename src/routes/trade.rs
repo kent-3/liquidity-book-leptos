@@ -453,8 +453,11 @@ pub fn Trade() -> impl IntoView {
                     // <div class="container block align-middle sm:row-auto row-start-2 outline outline-2 outline-zinc-700 rounded">
                     // <pre class="px-2 text-xs whitespace-pre-wrap text-zinc-300">{current_quote}</pre>
                     // </div>
-                    <div class="p-8 space-y-6 row-start-1 sm:row-auto bg-zinc-800 text-zinc-100
-                    rounded-lg border border-solid border-zinc-700">
+
+                    // Main swap box
+                    <div class="p-4 md:p-8 space-y-6 row-start-1 md:row-auto
+                    bg-zinc-800 text-zinc-100 border-zinc-700
+                    rounded-lg border border-solid">
                         <div class="space-y-2">
                             <div class="flex justify-between">
                                 <label class="block text-base font-semibold" for="from-token">
