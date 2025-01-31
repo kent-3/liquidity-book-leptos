@@ -3031,11 +3031,6 @@ ul {
     grid-row: auto;
   }
 
-  .sm\:mx-0 {
-    margin-left: 0px;
-    margin-right: 0px;
-  }
-
   .sm\:block {
     display: block;
   }
@@ -3075,10 +3070,6 @@ ul {
   .sm\:px-8 {
     padding-left: 2rem;
     padding-right: 2rem;
-  }
-
-  .sm\:text-left {
-    text-align: left;
   }
 }
 

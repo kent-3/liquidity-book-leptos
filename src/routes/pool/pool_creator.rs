@@ -170,18 +170,15 @@ pub fn PoolCreator() -> impl IntoView {
             href="/liquidity-book-leptos/pool"
             class="inline-flex gap-x-2 items-center text-zinc-500 text-sm font-bold cursor-pointer no-underline"
         >
-            <ArrowLeft size=14 color="#737373" />
+            <ArrowLeft size=14 />
             "Back to pools list"
         </a>
-        <div class="py-3 text-2xl font-bold text-center sm:text-left">"Create New Pool"</div>
-        <form
-            class="container max-w-xs space-y-4 py-1 mx-auto sm:mx-0"
-            on:submit=create_pair_handler
-        >
+        <div class="py-3 text-3xl font-bold text-center">"Create New Pool"</div>
+        <form class="container max-w-xs space-y-4 py-1 mx-auto" on:submit=create_pair_handler>
             <label class="block">
                 <span class="mb-1 block">"Select Token"</span>
                 <select
-                    class="block p-1 font-bold w-full max-w-xs"
+                    class="block p-1 font-bold w-full box-border max-w-xs"
                     name="token_x"
                     title="Select Token"
                     on:input=move |ev| set_token_x.set(event_target_value(&ev))
@@ -194,7 +191,7 @@ pub fn PoolCreator() -> impl IntoView {
             <label class="block">
                 <span class="mb-1 block">"Select Quote Asset"</span>
                 <select
-                    class="block p-1 font-bold w-full max-w-xs"
+                    class="block p-1 font-bold w-full box-border max-w-xs"
                     name="token_y"
                     title="Select Quote Asset"
                     on:input=move |ev| set_token_y.set(event_target_value(&ev))
@@ -209,19 +206,7 @@ pub fn PoolCreator() -> impl IntoView {
                 <div class="block box-border font-semibold w-full max-w-xs space-x-4">
                     <label class="cursor-pointer space-x-2">
                         <input
-                            class=""
-                            type="radio"
-                            name="binStep"
-                            value=1
-                            on:input=move |ev| {
-                                set_bin_step.set(event_target_value(&ev).parse().unwrap())
-                            }
-                        />
-                        "0.01%"
-                    </label>
-                    <label class="cursor-pointer">
-                        <input
-                            class=""
+                            class="align-middle"
                             type="radio"
                             name="binStep"
                             value=10
@@ -229,19 +214,43 @@ pub fn PoolCreator() -> impl IntoView {
                                 set_bin_step.set(event_target_value(&ev).parse().unwrap())
                             }
                         />
-                        "0.10%"
+                        <span class="align-middle">"0.1%"</span>
                     </label>
-                    <label class="cursor-pointer">
+                    <label class="cursor-pointer space-x-2">
                         <input
-                            class=""
+                            class="align-middle"
                             type="radio"
                             name="binStep"
-                            value=20
+                            value=25
                             on:input=move |ev| {
                                 set_bin_step.set(event_target_value(&ev).parse().unwrap())
                             }
                         />
-                        "0.20%"
+                        <span class="align-middle">"0.25%"</span>
+                    </label>
+                    <label class="cursor-pointer space-x-2">
+                        <input
+                            class="align-middle"
+                            type="radio"
+                            name="binStep"
+                            value=50
+                            on:input=move |ev| {
+                                set_bin_step.set(event_target_value(&ev).parse().unwrap())
+                            }
+                        />
+                        <span class="align-middle">"0.5%"</span>
+                    </label>
+                    <label class="cursor-pointer space-x-2">
+                        <input
+                            class="align-middle"
+                            type="radio"
+                            name="binStep"
+                            value=100
+                            on:input=move |ev| {
+                                set_bin_step.set(event_target_value(&ev).parse().unwrap())
+                            }
+                        />
+                        <span class="align-middle">"1%"</span>
                     </label>
                 </div>
             </label>
