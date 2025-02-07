@@ -133,6 +133,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                                 EitherOf4::D(
                                     view! {
                                         // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
+                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                         <div
                                             title=error.to_string()
                                             class="group relative py-0 px-2 text-gold font-semibold text-sm cursor-default hover:bg-gold/20 text-ellipsis"

@@ -434,7 +434,7 @@ pub fn Trade() -> impl IntoView {
                             >
                                 "Place Order"
                             </button>
-                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1
+                            <div class="absolute bottom-1/2 md:bottom-full left-1/2 -translate-x-1/2 md:mb-2 px-2 py-1 z-50 translate-y-1/2 md:translate-y-0
                             invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-100 ease-in
                             border border-solid border-border
                             bg-popover text-popover-foreground text-xs font-semibold rounded-md whitespace-nowrap">
@@ -532,16 +532,16 @@ pub fn Trade() -> impl IntoView {
                             </div>
                             // TODO: switch tokens separator
                             // <div class="flex items-center gap-1 w-full">
-                            //     <div class="h-0.5 bg-border w-full"></div>
-                            //     <button
-                            //         type="button"
-                            //         aria-label="change swap direction"
-                            //         class="inline-flex items-center justify-center rounded-full border-0 min-w-[2.5rem] h-10 p-0 bg-transparent
-                            //         hover:bg-muted transition-colors duration-200 active:bg-transparent"
-                            //     >
-                            //         <ArrowUpDown size=16 />
-                            //     </button>
-                            //     <div class="h-0.5 bg-border w-full"></div>
+                            // <div class="h-0.5 bg-border w-full"></div>
+                            // <button
+                            // type="button"
+                            // aria-label="change swap direction"
+                            // class="inline-flex items-center justify-center rounded-full border-0 min-w-[2.5rem] h-10 p-0 bg-transparent
+                            // hover:bg-muted transition-colors duration-200 active:bg-transparent"
+                            // >
+                            // <ArrowUpDown size=16 />
+                            // </button>
+                            // <div class="h-0.5 bg-border w-full"></div>
                             // </div>
                             <div class="flex items-center gap-0.5 w-full">
                                 <hr class="w-full" />
@@ -804,7 +804,9 @@ fn SwapSettings(
                         <div class="flex flex-col items-start gap-4 w-full">
                             <div class="flex flex-col items-start gap-2 w-full">
                                 <div class="flex flex-row items-center justify-between gap-2 w-full">
-                                    <p class="text-muted-foreground text-sm m-0">"Slippage tolerance"</p>
+                                    <p class="text-muted-foreground text-sm m-0">
+                                        "Slippage tolerance"
+                                    </p>
                                     <div class="relative group focus-within:group">
                                         <div
                                             tabindex="0"
@@ -866,7 +868,9 @@ fn SwapSettings(
                                 </div>
                             </div>
                             <div class="flex flex-col items-start gap-2">
-                                <p class="text-muted-foreground text-sm m-0">"Transaction deadline"</p>
+                                <p class="text-muted-foreground text-sm m-0">
+                                    "Transaction deadline"
+                                </p>
                                 <div class="w-full relative flex items-center isolate box-border">
                                     <input
                                         class="w-full box-border px-3 h-8 text-sm font-semibold bg-transparent text-popover-foreground rounded-md"

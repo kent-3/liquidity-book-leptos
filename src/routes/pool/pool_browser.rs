@@ -99,7 +99,7 @@ pub fn PoolBrowser() -> impl IntoView {
                                         n.bin_step,
                                     )
                                 >
-                                    <div class="block bg-neutral-800 rounded-lg space-y-4 border border-solid border-neutral-700 p-4">
+                                    <div class="block bg-card rounded-lg space-y-4 border border-solid p-4">
                                         <div class="flex items-center gap-4 text-base font-semibold">
                                             <div class="text-neutral-50">
                                                 {format!(
@@ -114,7 +114,7 @@ pub fn PoolBrowser() -> impl IntoView {
                                                         .unwrap_or_default(),
                                                 )}
                                             </div>
-                                            <div class="text-white text-xs py-1 px-2 rounded-full bg-neutral-700">
+                                            <div class="text-white text-xs py-1 px-2 rounded-md border border-solid">
                                                 {format!("{} bps", n.bin_step)}
                                             </div>
 
@@ -122,15 +122,17 @@ pub fn PoolBrowser() -> impl IntoView {
                                         // TODO: how would I get this data while inside of the iterator?
                                         <div class="flex flex-row justify-between text-sm">
                                             <div class="flex flex-col">
-                                                <p class="mb-1 mt-0 text-neutral-400">"Liquidity"</p>
+                                                <p class="mb-1 mt-0 text-muted-foreground">"Liquidity"</p>
                                                 <p class="my-0 font-semibold">"$0.00"</p>
                                             </div>
                                             <div class="flex flex-col">
-                                                <p class="mb-1 mt-0 text-neutral-400">"Volume (24H)"</p>
+                                                <p class="mb-1 mt-0 text-muted-foreground">
+                                                    "Volume (24H)"
+                                                </p>
                                                 <p class="my-0 font-semibold">"$0.00"</p>
                                             </div>
                                             <div class="flex flex-col">
-                                                <p class="mb-1 mt-0 text-neutral-400">"Fees (24H)"</p>
+                                                <p class="mb-1 mt-0 text-muted-foreground">"Fees (24H)"</p>
                                                 <p class="my-0 font-semibold">"$0.00"</p>
                                             </div>
                                         </div>
