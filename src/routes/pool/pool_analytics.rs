@@ -248,9 +248,9 @@ pub fn PoolAnalytics() -> impl IntoView {
     view! {
         <div class="flex flex-col gap-4">
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
-                <div class="bg-neutral-800 px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
                     <dl class="m-0">
-                        <dt class="text-sm text-neutral-400 font-medium">"Liquidity"</dt>
+                        <dt class="text-sm text-muted-foreground font-medium">"Liquidity"</dt>
                         <div class="flex flex-row items-center gap-2">
                             <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
                                 "$0.00"
@@ -259,9 +259,9 @@ pub fn PoolAnalytics() -> impl IntoView {
                         </div>
                     </dl>
                 </div>
-                <div class="bg-neutral-800 px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
                     <dl class="m-0">
-                        <dt class="text-sm text-neutral-400 font-medium">"Volume (24H)"</dt>
+                        <dt class="text-sm text-muted-foreground font-medium">"Volume (24H)"</dt>
                         <div class="flex flex-row items-center gap-2">
                             <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
                                 "$0.00"
@@ -270,9 +270,9 @@ pub fn PoolAnalytics() -> impl IntoView {
                         </div>
                     </dl>
                 </div>
-                <div class="bg-neutral-800 px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
                     <dl class="m-0">
-                        <dt class="text-sm text-neutral-400 font-medium">"Fees (24H)"</dt>
+                        <dt class="text-sm text-muted-foreground font-medium">"Fees (24H)"</dt>
                         <div class="flex flex-row items-center gap-2">
                             <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
                                 "$0.00"
@@ -281,17 +281,17 @@ pub fn PoolAnalytics() -> impl IntoView {
                         </div>
                     </dl>
                 </div>
-                <div class="bg-neutral-800 px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
                     <dl class="m-0">
-                        <dt class="text-sm text-neutral-400 font-medium">"APR (7D)"</dt>
+                        <dt class="text-sm text-muted-foreground font-medium">"APR (7D)"</dt>
                         <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
                             "0.00%"
                         </dd>
                     </dl>
                 </div>
-                <div class="bg-neutral-800 px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
                     <dl class="m-0">
-                        <dt class="text-sm text-neutral-400 font-medium">
+                        <dt class="text-sm text-muted-foreground font-medium">
                             {move || token_x_symbol.get()} " Reserves"
                         </dt>
                         <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
@@ -301,9 +301,9 @@ pub fn PoolAnalytics() -> impl IntoView {
                         </dd>
                     </dl>
                 </div>
-                <div class="bg-neutral-800 px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
                     <dl class="m-0">
-                        <dt class="text-sm text-neutral-400 font-medium">
+                        <dt class="text-sm text-muted-foreground font-medium">
                             {move || token_y_symbol.get()} " Reserves"
                         </dt>
                         <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
@@ -313,28 +313,28 @@ pub fn PoolAnalytics() -> impl IntoView {
                         </dd>
                     </dl>
                 </div>
-                <div class="bg-neutral-800 px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
                     <dl class="m-0">
-                        <dt class="text-sm text-neutral-400 font-medium">"+2% Depth"</dt>
+                        <dt class="text-sm text-muted-foreground font-medium">"+2% Depth"</dt>
                         <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
                             "TBD " {move || token_x_symbol.get()}
                         </dd>
                     </dl>
                 </div>
-                <div class="bg-neutral-800 px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
                     <dl class="m-0">
-                        <dt class="text-sm text-neutral-400 font-medium">"-2% Depth"</dt>
+                        <dt class="text-sm text-muted-foreground font-medium">"-2% Depth"</dt>
                         <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
                             "TBD " {move || token_y_symbol.get()}
                         </dd>
                     </dl>
                 </div>
             </div>
-            <div class="p-4 sm:p-7 bg-neutral-800 rounded-md border border-solid border-neutral-700">
+            <div class="p-4 sm:p-7 bg-card rounded-md border border-solid border-border">
                 <div class="grid grid-cols-[minmax(0px,_1fr)_80px_80px] sm:grid-cols-[minmax(0px,_3fr)_minmax(0px,_1fr)_minmax(0px,_1fr)]">
                     <div class="flex flex-col gap-4">
                         <div class="flex flex-col items-start">
-                            <p class="text-sm text-neutral-400 font-semibold m-0">"Pool"</p>
+                            <p class="text-sm text-muted-foreground font-semibold m-0">"Pool"</p>
                             <div class="flex flex-row items-center gap-2">
                                 <p class="text-base font-semibold m-0">{pool_address()}</p>
                                 <div
@@ -342,7 +342,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                         let copy = copy.clone();
                                         move |_| copy(pool_address().as_str())
                                     }
-                                    class="text-neutral-400 hover:brightness-75 active:brightness-125"
+                                    class="text-muted-foreground hover:brightness-75 active:brightness-125"
                                 >
                                     <Copy size=20 stroke_width=3 />
                                 </div>
@@ -353,14 +353,14 @@ pub fn PoolAnalytics() -> impl IntoView {
                                     )
                                     target="_blank"
                                     rel="noopener"
-                                    class="text-neutral-400 hover:brightness-75"
+                                    class="text-muted-foreground hover:brightness-75"
                                 >
                                     <Link size=20 stroke_width=3 />
                                 </a>
                             </div>
                         </div>
                         <div class="flex flex-col items-start">
-                            <p class="text-sm text-neutral-400 font-semibold m-0">
+                            <p class="text-sm text-muted-foreground font-semibold m-0">
                                 {move || token_x_symbol.get()}
                             </p>
                             <div class="flex flex-row items-center gap-2">
@@ -370,7 +370,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                         let copy = copy.clone();
                                         move |_| copy(token_x_address().as_str())
                                     }
-                                    class="text-neutral-400 hover:brightness-75 active:brightness-125"
+                                    class="text-muted-foreground hover:brightness-75 active:brightness-125"
                                 >
                                     <Copy size=20 stroke_width=3 />
                                 </div>
@@ -381,14 +381,14 @@ pub fn PoolAnalytics() -> impl IntoView {
                                     )
                                     target="_blank"
                                     rel="noopener"
-                                    class="text-neutral-400 hover:brightness-75"
+                                    class="text-muted-foreground hover:brightness-75"
                                 >
                                     <Link size=20 stroke_width=3 />
                                 </a>
                             </div>
                         </div>
                         <div class="flex flex-col items-start">
-                            <p class="text-sm text-neutral-400 font-semibold m-0">
+                            <p class="text-sm text-muted-foreground font-semibold m-0">
                                 {move || token_y_symbol.get()}
                             </p>
                             <div class="flex flex-row items-center gap-2">
@@ -398,7 +398,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                         let copy = copy.clone();
                                         move |_| copy(token_y_address().as_str())
                                     }
-                                    class="text-neutral-400 hover:brightness-75 active:brightness-125"
+                                    class="text-muted-foreground hover:brightness-75 active:brightness-125"
                                 >
                                     <Copy size=20 stroke_width=3 />
                                 </div>
@@ -409,7 +409,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                     )
                                     target="_blank"
                                     rel="noopener"
-                                    class="text-neutral-400 hover:brightness-75"
+                                    class="text-muted-foreground hover:brightness-75"
                                 >
                                     <Link size=20 stroke_width=3 />
                                 </a>
@@ -418,23 +418,31 @@ pub fn PoolAnalytics() -> impl IntoView {
                     </div>
                     <div class="flex flex-col gap-4">
                         <div class="flex flex-col items-start">
-                            <p class="text-sm text-neutral-400 font-semibold m-0">"Bin steps"</p>
+                            <p class="text-sm text-muted-foreground font-semibold m-0">
+                                "Bin steps"
+                            </p>
                             <p class="text-base font-semibold m-0">{bin_step()}"bps"</p>
                         </div>
                         // TODO: is the Version stored anywhere?
                         <div class="flex flex-col items-start">
-                            <p class="text-sm text-neutral-400 font-semibold m-0">"Pool Version"</p>
+                            <p class="text-sm text-muted-foreground font-semibold m-0">
+                                "Pool Version"
+                            </p>
                             <p class="text-base font-semibold m-0">v2.2</p>
                         </div>
                         // TODO: I'm not sure what this means.
                         <div class="flex flex-col items-start">
-                            <p class="text-sm text-neutral-400 font-semibold m-0">"Pool Status"</p>
+                            <p class="text-sm text-muted-foreground font-semibold m-0">
+                                "Pool Status"
+                            </p>
                             <p class="text-base font-semibold m-0">Main</p>
                         </div>
                     </div>
                     <div class="flex flex-col gap-4">
                         <div class="flex flex-col items-start">
-                            <p class="text-sm text-neutral-400 font-semibold m-0">"Base fee"</p>
+                            <p class="text-sm text-muted-foreground font-semibold m-0">
+                                "Base fee"
+                            </p>
                             <p class="text-base font-semibold m-0">
                                 <Suspense fallback=|| {
                                     view! { "Loading..." }
@@ -442,7 +450,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                             </p>
                         </div>
                         <div class="flex flex-col items-start">
-                            <p class="text-sm text-neutral-400 font-semibold m-0">"Max fee"</p>
+                            <p class="text-sm text-muted-foreground font-semibold m-0">"Max fee"</p>
                             <p class="text-base font-semibold m-0">
                                 <Suspense fallback=|| {
                                     view! { "Loading..." }
@@ -450,7 +458,9 @@ pub fn PoolAnalytics() -> impl IntoView {
                             </p>
                         </div>
                         <div class="flex flex-col items-start">
-                            <p class="text-sm text-neutral-400 font-semibold m-0">"Protocol fee"</p>
+                            <p class="text-sm text-muted-foreground font-semibold m-0">
+                                "Protocol fee"
+                            </p>
                             <p class="text-base font-semibold m-0">
                                 <Suspense fallback=|| {
                                     view! { "Loading..." }
@@ -462,7 +472,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                     </div>
                 </div>
             </div>
-            <div class="p-4 sm:p-8 bg-neutral-800 rounded-md border border-solid border-neutral-700">
+            <div class="p-4 sm:p-8 bg-card rounded-md border border-solid border-border">
                 <div class="relative">
                     <div class="flex justify-between w-full">
                         <div class="text-xl leading-tight font-semibold text-white">

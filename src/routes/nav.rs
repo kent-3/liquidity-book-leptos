@@ -4,7 +4,7 @@ use leptos_router::components::A;
 #[component]
 pub fn Nav() -> impl IntoView {
     view! {
-        <nav class="leading-tight flex flex-row">
+        <nav class="px-2 sm:px-4 leading-tight flex flex-row items-center">
             <A exact=true strict_trailing_slash=false href="/liquidity-book-leptos/">
                 "Trade"
             </A>

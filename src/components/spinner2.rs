@@ -3,8 +3,7 @@ use leptos::prelude::*;
 #[component]
 pub fn Spinner2(#[prop(optional, into)] size: String) -> impl IntoView {
     let defaults =
-        "ring-1 ring-[#ff3912] rounded-full p-1 animate-spin fill-neutral-900 dark:fill-[#ff3912]"
-            .to_string();
+        "ring-1 ring-[#ff3912] rounded-full p-[4px] animate-spin fill-[#ff3912]".to_string();
     // let class = format!("{defaults} {size}");
 
     view! {

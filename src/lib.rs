@@ -392,10 +392,11 @@ pub fn App() -> impl IntoView {
         <Router>
             // <div class="background-image"></div>
             <header>
-                <div class="mt-2 px-2 flex justify-between items-center">
+                <div class="mt-2 px-2 sm:px-4 flex justify-between items-center">
                     <div
                         id="mainTitle"
-                        class="my-2 font-bold text-3xl line-clamp-1 transition-transform duration-300"
+                        class="my-2 font-bold text-3xl line-clamp-1 transition-transform duration-300 cursor-default"
+                        style="font-feature-settings: \"cv06\" 1, \"cv13\" 1;"
                     >
                         "Liquidity Book"
                     </div>
@@ -413,23 +414,28 @@ pub fn App() -> impl IntoView {
                                     <button
                                         on:click=enable_keplr
                                         disabled=enable_keplr_action.pending()
-                                        class="min-w-24 inline-flex justify-center items-center
-                                        text-sm font-semibold leading-none py-[6px] px-[12px]
-                                        border border-solid border-neutral-500 bg-neutral-500 text-white rounded-[2px]"
+                                        class="min-w-24 text-sm font-medium py-2 px-4 border-none
+                                        bg-primary text-primary-foreground rounded-md"
                                     >
-                                        "Connect Wallet"
+                                        <div class="h-6 flex flex-row items-center gap-2">
+                                            <Wallet size=16 />
+                                            "Connect Wallet"
+                                        </div>
                                     </button>
                                 }
                             }
                         >
                             <div class="relative inline-block">
-
                                 <button
                                     on:click=toggle_wallet_menu
-                                    class="min-w-24 text-sm font-semibold leading-none py-[6px] px-[12px] text-neutral-50"
+                                    class="min-w-24 text-sm font-medium leading-none py-2 px-4 border-none
+                                    bg-secondary text-secondary-foreground rounded-md"
                                 >
-                                    "Wallet Menu"
-                                // {move || key_address().map(shorten_address)}
+                                    <div class="h-6 flex flex-row items-center gap-2">
+                                        <Wallet size=16 />
+                                        "Wallet Menu"
+                                    // {move || key_address().map(shorten_address)}
+                                    </div>
                                 </button>
                                 <WalletMenu
                                     dialog_ref=wallet_dialog_ref
@@ -439,9 +445,10 @@ pub fn App() -> impl IntoView {
                         </Show>
                     </div>
                 </div>
-                <hr class="mt-2 mb-1 border border-neutral-500" />
+                <hr class="mt-2 mb-1 border border-border" />
                 <Nav />
-                <hr class="mt-1 mb-2 border border-neutral-500" />
+                <hr class="mt-1 mb-2 border border-border" />
+            // <hr class="mt-1 mb-2 border border-[oklch(0.560_0.012_286)]" />
             </header>
             <main class="px-2 py-2 overflow-x-auto">
                 <Routes transition=true fallback=|| "This page could not be found.">
@@ -484,13 +491,15 @@ pub fn LoadingModal(when: Memo<bool>, #[prop(into)] message: String) -> impl Int
     });
 
     view! {
-        <dialog node_ref=dialog_ref class="block inset-0">
+        <dialog node_ref=dialog_ref>
+            // prevent focus ring from showing around the main div
+            <div tabindex="0"></div>
             // NOTE: when 'display: none' is toggled on/off, some of the animation gets lost,
             // so it's better to use 'visibility: hidden' instead of 'display: none'.
             // Tailwind's 'invisible' = 'visibility: hidden' and 'hidden' = 'display: none'
             // The svg will be spinning invisibly, but it's worth it for the nicer animation.
             // class=("invisible", move || !when.get())
-            <div class="inline-flex items-center justify-center gap-3">
+            <div class="align-middle inline-flex items-center justify-center gap-3">
                 <Spinner2 size="h-8 w-8" />
                 <div class="font-bold">{message}</div>
             </div>

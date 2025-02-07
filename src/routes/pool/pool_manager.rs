@@ -9,7 +9,8 @@ use batch_query::{
     msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
     BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
 };
-use cosmwasm_std::{Addr, ContractInfo};
+use cosmwasm_std::{Addr, ContractInfo, Uint256};
+use keplr::Keplr;
 use leptos::prelude::*;
 use leptos_router::{
     components::A,
@@ -341,9 +342,66 @@ pub fn PoolManager() -> impl IntoView {
     //     }
     // });
 
-    use ammber_charts::{load_data, LiquidityChart};
-    let debug = RwSignal::new(false);
-    let my_data = load_data();
+    let my_liquidity = LocalResource::new(move || {
+        let url = NODE;
+        let chain_id = CHAIN_ID;
+
+        async move {
+            let Some(Ok(lb_pair)) = lb_pair.get() else {
+                return Err(Error::generic("lb pair information is missing!"));
+            };
+            let Some(Ok(id)) = active_id.get() else {
+                return Err(Error::generic("active id is missing!"));
+            };
+
+            let mut ids = vec![];
+            let radius = 49;
+
+            for i in 0..(radius * 2 + 1) {
+                let offset_id = if i < radius {
+                    id - (radius - i) as u32 // Subtract for the first half
+                } else {
+                    id + (i - radius) as u32 // Add for the second half
+                };
+
+                ids.push(offset_id);
+            }
+
+            debug!("{:?}", ids);
+
+            let key = Keplr::get_key(&chain_id).await?;
+            let account = key.bech32_address;
+
+            let accounts = vec![account.clone(); ids.len()];
+
+            let balances: Vec<Uint256> = ILbPair(lb_pair.contract.clone())
+                .balance_of_batch(accounts, ids.clone())
+                .await?;
+
+            debug!("{:?}", balances);
+
+            Ok((ids, balances))
+        }
+    });
+
+    // use ammber_charts::{load_data, LiquidityChart, ReserveData};
+    // let debug = RwSignal::new(false);
+    // let my_data = load_data();
+
+    // TODO: This is tough because the liquidity amounts are not useful for charting. We need to
+    // figure out how many token_x and token_y the user has instead.
+
+    // let my_data = Signal::derive(move || {
+    //     if let Some(Ok((ids, amounts))) = my_liquidity.get().as_deref() {
+    //         ids.iter()
+    //             .cloned()
+    //             .zip(amounts)
+    //             .map(|(id, amount)| ReserveData::new(id.into(), amount.into(), 0.0))
+    //             .collect()
+    //     } else {
+    //         vec![ReserveData::new(0.0, 0.0, 0.0)]
+    //     }
+    // });
 
     view! {
         <div class="grid auto-rows-min grid-cols-1 md:grid-cols-2 gap-8">
@@ -351,23 +409,27 @@ pub fn PoolManager() -> impl IntoView {
             // left side of the screen
             <div class="flex flex-col items-center gap-6">
                 // my liquidity box
-                <div class="block w-full outline outline-2 outline-neutral-700 rounded">
+                <div class="block w-full bg-card border-solid border rounded-lg">
                     <div class="px-6 py-4">
                         <div class="w-full">
                             <h2 class="m-0 mb-2 text-xl">My Liquidity</h2>
                             // <LiquidityChart debug=debug.into() data=my_data.into() />
                             // <p class="text-neutral-500">"You have no liquidity in this pool"</p>
-                            <div class="flex justify-center items-center h-48"></div>
+                            <div class="flex justify-center items-center h-48">
+                                <p class="text-muted-foreground text-sm">
+                                    "This feature doesn't work yet"
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    <hr class="m-0 border-b-2 border-neutral-700" />
+                    <hr class="m-0 border-b-1 border-border" />
                     <div class="px-6 py-4">
-                        <h2 class="m-0 mb-2 text-xl">Deposit Balance</h2>
+                        <h3 class="m-0 mb-2 text-sm font-medium">Deposit Balance</h3>
                         <div class="flex flex-col gap-2 items-center">
                             <div class="grid grid-cols-1 gap-4 w-full">
                                 <div class="grid grid-cols-[1fr_14px_1fr] gap-4 w-full items-center">
                                     // token x deposit balance
-                                    <div class="flex items-center box-border px-4 py-3 h-16 bg-neutral-800 rounded">
+                                    <div class="flex items-center box-border px-4 py-3 h-16 border border-solid rounded-sm">
                                         <div class="flex items-center flex-row flex-1 gap-2">
                                             // <img class="w-8 h-8 rounded-full" src="" / >
                                             <div class="flex flex-col items-start gap-0">
@@ -376,13 +438,13 @@ pub fn PoolManager() -> impl IntoView {
                                                     " "
                                                     {move || token_a_symbol.get()}
                                                 </p>
-                                                <p class="m-0 text-sm">"$0"</p>
+                                                <p class="m-0 text-sm text-muted-foreground">"$0"</p>
                                             </div>
                                         </div>
                                     </div>
                                     <Plus size=14 color="white" />
                                     // token y deposit balance
-                                    <div class="flex items-center box-border px-4 py-3 h-16 bg-neutral-800 rounded">
+                                    <div class="flex items-center box-border px-4 py-3 h-16 border border-solid rounded-sm">
                                         <div class="flex items-center flex-row flex-1 gap-2">
                                             // <img class="w-8 h-8 rounded-full" src="" / >
                                             <div class="flex flex-col items-start gap-0">
@@ -391,7 +453,7 @@ pub fn PoolManager() -> impl IntoView {
                                                     " "
                                                     {move || token_b_symbol.get()}
                                                 </p>
-                                                <p class="m-0 text-sm">"$0"</p>
+                                                <p class="m-0 text-sm text-muted-foreground">"$0"</p>
                                             </div>
                                         </div>
                                     </div>
@@ -400,12 +462,14 @@ pub fn PoolManager() -> impl IntoView {
                         </div>
                     </div>
                 </div>
-                <div class="block w-full outline outline-2 outline-neutral-700 rounded">
+                <div class="block w-full bg-card border-solid border rounded-lg">
                     <div class="px-6 py-4">
                         <div class="w-full">
                             <h2 class="m-0 mb-2 text-xl">"Fees Earned"</h2>
                             <div class="flex justify-center items-center h-48">
-                                <p class="text-neutral-500">"You have no fees earned"</p>
+                                <p class="text-sm text-muted-foreground">
+                                    "You have no fees earned"
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -489,15 +553,13 @@ pub fn PoolManager() -> impl IntoView {
             // </details>
 
             // right side of screen, moves to bottom on medium screens
-            <div class="block px-5 py-4 w-full box-border space-y-5 mx-auto outline outline-2 outline-neutral-700 rounded max-h-max">
+            <div class="block px-5 py-4 w-full box-border space-y-5 mx-auto bg-card border-solid border rounded-lg max-h-max">
                 // "Tab Group"
                 <div class="flex gap-4 w-full">
                     // This preserves the query params when navigating to nested routes.
                     // TODO: this is terribly complicated. it works, but there must be a simpler way
                     <button
-                        class="w-full inline-flex justify-center items-center
-                        font-medium leading-none py-1 px-2
-                        border border-solid border-neutral-500 bg-neutral-500 text-white rounded-xs"
+                        class="w-full py-1.5 bg-background border border-solid rounded-xs"
                         on:click={
                             let navigate_ = navigate.clone();
                             let nav_options_ = nav_options.clone();

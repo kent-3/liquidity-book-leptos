@@ -5,7 +5,7 @@ use ammber_sdk::contract_interfaces::{
     lb_pair::{self, *},
     lb_quoter::{self, *},
 };
-use cosmwasm_std::{Addr, ContractInfo, StdResult, Uint128};
+use cosmwasm_std::{ContractInfo, StdResult, Uint128, Uint256};
 use leptos::prelude::*;
 use liquidity_book::core::TokenType;
 use rsecret::query::compute::ComputeQuerier;
@@ -215,6 +215,18 @@ impl ILbPair {
         )
         .await
         .map(|response| response.next_id)
+    }
+    pub async fn balance_of_batch(
+        &self,
+        accounts: Vec<String>,
+        ids: Vec<u32>,
+    ) -> Result<Vec<Uint256>, Error> {
+        chain_query::<Vec<Uint256>>(
+            self.0.code_hash.clone(),
+            self.0.address.to_string(),
+            lb_pair::QueryMsg::BalanceOfBatch { accounts, ids },
+        )
+        .await
     }
 }
 

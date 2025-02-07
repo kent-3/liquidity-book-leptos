@@ -269,57 +269,68 @@ pub fn Pool() -> impl IntoView {
     view! {
         <a
             href="/liquidity-book-leptos/pool"
-            class="inline-flex gap-x-2 items-center text-neutral-500 text-sm font-bold cursor-pointer no-underline"
+            class="inline-flex gap-x-2 mb-2 items-center text-muted-foreground text-sm font-bold cursor-pointer no-underline"
         >
             <ArrowLeft size=14 />
             "Back to pools list"
         </a>
 
         // page title with the token symbols
-        <div class="flex flex-col md:flex-row py-2 items-start md:items-center gap-x-4 gap-y-2">
+        <div class="md:h-10 flex flex-col md:flex-row items-start md:items-center gap-x-4 gap-y-2">
             <Suspense fallback=move || {
                 view! { <div class="text-3xl font-bold">{token_a}" / "{token_b}</div> }
             }>
                 // TODO: add token icons here
-                <div class="text-3xl font-bold">
+                <div class="text-white text-3xl font-bold">
                     {move || Suspend::new(async move { token_a_symbol.await })}" / "
                     {move || Suspend::new(async move { token_b_symbol.await })}
                 </div>
             </Suspense>
 
             <div class="flex items-center gap-x-2 md:pl-4">
-                <span class="text-sm text-white inline-flex font-bold px-2 py-1 rounded-full border border-solid border-neutral-700">
+                <span class="text-sm text-foreground inline-flex font-semibold px-2.5 py-0.5 rounded-md border border-solid border-border">
                     {basis_points}" bps"
                 </span>
-                <span class="inline-flex px-2 py-1 rounded-full border border-solid border-neutral-700">
-                    <a
-                        href="about:blank"
-                        target="_blank"
-                        rel="noopener"
-                        class="no-underline text-white text-sm font-bold"
-                    >
-                        <div class="flex gap-1 items-center">
-                            <div>
-                                {move || {
-                                    lb_pair
-                                        .get()
-                                        .and_then(Result::ok)
-                                        .map(|x| shorten_address(x.contract.address))
-                                }}
-                            </div>
-                            <ExternalLink size=14 color="white" />
+                <a
+                    href="about:blank"
+                    target="_blank"
+                    rel="noopener"
+                    class="
+                    inline-flex px-2.5 py-0.5 rounded-md border border-solid border-border
+                    text-sm text-foreground font-semibold no-underline
+                    "
+                >
+                    <div class="flex gap-1 items-center [&_svg]:-translate-y-[1px] [&_svg]:text-muted-foreground">
+                        <div>
+                            {move || {
+                                lb_pair
+                                    .get()
+                                    .and_then(Result::ok)
+                                    .map(|x| shorten_address(x.contract.address))
+                            }}
                         </div>
-                    </a>
-                </span>
+                        <ExternalLink size=14 />
+                    </div>
+                </a>
             </div>
         </div>
-
-        <div class="flex gap-4 items-center mt-2 mb-6">
+        // NOTE: button style changes based on aria-current
+        <div class="inline-flex items-center gap-0.5 my-4 p-[5px] bg-muted rounded-md">
             <A href="manage">
-                <button class="px-4">"Manage"</button>
+                <button
+                    tabindex="-1"
+                    class="py-1.5 px-3 rounded-sm bg-muted text-muted-foreground border-none h-8 w-[95px]"
+                >
+                    "Manage"
+                </button>
             </A>
             <A href="analytics">
-                <button class="px-4">"Analytics"</button>
+                <button
+                    tabindex="-1"
+                    class="py-1.5 px-3 rounded-sm bg-muted text-muted-foreground border-none h-8 w-[95px]"
+                >
+                    "Analytics"
+                </button>
             </A>
         </div>
 

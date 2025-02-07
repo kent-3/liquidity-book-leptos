@@ -1,6 +1,10 @@
-use crate::chain_query;
-use crate::support::COMPUTE_QUERIER;
-use crate::{error::Error, prelude::*, state::*, support::Querier};
+use crate::{
+    chain_query,
+    error::Error,
+    prelude::*,
+    state::*,
+    support::{Querier, COMPUTE_QUERIER},
+};
 use ammber_sdk::{
     constants::liquidity_config::{
         LiquidityConfigurations, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
@@ -288,7 +292,6 @@ pub fn AddLiquidity() -> impl IntoView {
                 }
 
                 let key = Keplr::get_key(&chain_id).await?;
-                keplr.enabled.set(true);
                 // let wallet = Keplr::get_offline_signer_only_amino(&chain_id);
                 let wallet = Keplr::get_offline_signer(&chain_id);
                 let enigma_utils = Keplr::get_enigma_utils(&chain_id).into();
@@ -430,8 +433,7 @@ pub fn AddLiquidity() -> impl IntoView {
             <div class="text-xl font-semibold">Deposit Liquidity</div>
             <div class="flex items-center gap-2">
                 <input
-                    class="px-1 py-1 w-full leading-tight bg-neutral-700 rounded-xs border border-solid border-neutral-500 hover:border-neutral-400
-                    placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-400"
+                    class="p-1 w-full"
                     type="number"
                     placeholder="Enter Amount"
                     on:change=move |ev| set_amount_x.set(event_target_value(&ev))
@@ -551,6 +553,20 @@ pub fn AddLiquidity() -> impl IntoView {
                             type="decimal"
                             placeholder="Range Min"
                             disabled
+                            prop:value=move || {
+                                let active_id = active_id
+                                    .get()
+                                    .and_then(Result::ok)
+                                    .unwrap_or(8_388_608);
+                                let id = active_id - radius.get();
+                                let price = PriceHelper::get_price_from_id(id, bin_step())
+                                    .ok()
+                                    .and_then(|price| {
+                                        PriceHelper::convert128x128_price_to_decimal(price).ok()
+                                    })
+                                    .map(|price| u128_to_string_with_precision(price.as_u128()));
+                                price
+                            }
                         />
                     // prop:value=move || range_min.get()
                     </div>
@@ -564,6 +580,20 @@ pub fn AddLiquidity() -> impl IntoView {
                             type="decimal"
                             placeholder="Range Max"
                             disabled
+                            prop:value=move || {
+                                let active_id = active_id
+                                    .get()
+                                    .and_then(Result::ok)
+                                    .unwrap_or(8_388_608);
+                                let id = active_id + radius.get();
+                                let price = PriceHelper::get_price_from_id(id, bin_step())
+                                    .ok()
+                                    .and_then(|price| {
+                                        PriceHelper::convert128x128_price_to_decimal(price).ok()
+                                    })
+                                    .map(|price| u128_to_string_with_precision(price.as_u128()));
+                                price
+                            }
                         />
                     // prop:value=move || range_max.get()
                     </div>
@@ -578,8 +608,8 @@ pub fn AddLiquidity() -> impl IntoView {
                             placeholder="Number of Bins"
                             min="0"
                             disabled
+                            prop:value=move || radius.get() * 2 + 1
                         />
-                    // prop:value=move || num_bins.get()
                     </div>
                     <div>
                         <label class="block mb-1 text-xs" for="pct-range">
@@ -591,8 +621,11 @@ pub fn AddLiquidity() -> impl IntoView {
                             type="decimal"
                             placeholder="Percentage Range"
                             disabled
+                            prop:value=move || {
+                                let bps = (radius.get() * 2) * bin_step() as u32;
+                                format!("{}.{:02}%", bps / 100, bps % 100)
+                            }
                         />
-                    // prop:value=move || pct_range.get()
                     </div>
                 </div>
 

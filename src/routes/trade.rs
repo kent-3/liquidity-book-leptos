@@ -15,7 +15,7 @@ use leptos::{ev, html, logging::*, prelude::*, tachys::dom::window};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use leptos_use::storage::use_local_storage;
 use liquidity_book::core::TokenType;
-use lucide_leptos::{ArrowUpDown, ChevronDown, Info, Settings2, TriangleAlert, X};
+use lucide_leptos::{ArrowDownUp, ChevronDown, Info, Settings2, TriangleAlert, X};
 use rsecret::{
     secret_client::CreateTxSenderOptions,
     tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
@@ -419,35 +419,40 @@ pub fn Trade() -> impl IntoView {
         <LoadingModal when=swap.pending() message="Processing Transaction... (watch the console)" />
         <div class="flex mt-2 md:mt-10 justify-center">
             // <div class="grid gap-4 sm:grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)] grid-cols-1 grid-rows-2 sm:grid-rows-1">
-            <div class="grid gap-4 grid-cols-1 max-w-[550px] w-full">
-                <div class="flex flex-col space-y-3 w-full">
+            // <div class="grid gap-4 grid-cols-1 max-w-[550px] w-full">
+            <div class="grid gap-4 grid-cols-1 sm:max-w-sm w-full">
+                <div class="flex flex-col space-y-3">
                     // buttons above the main swap box
-                    <div class="w-full flex items-center justify-between">
-                        <div class="inline-flex items-center justify-center
-                        h-10 px-4 py-2 font-semibold
-                        rounded-md border-2 border-solid border-neutral-700
-                        bg-transparent hover:bg-neutral-700 focus-visible:bg-neutral-700
-                        transition-colors ease-standard duration-200 cursor-default
-                        ">"Swap"</div>
-                        <div class="relative">
+                    <div class="flex items-center justify-evenly gap-0.5 p-[5px] bg-muted rounded-md">
+                        <button class="w-full py-1.5 px-3 rounded-sm bg-background text-foreground border-none h-8
+                        ">"Swap"</button>
+                        <div class="w-full group relative">
                             <button
-                                on:click=toggle_swap_settings
-                                class="inline-flex items-center justify-center
-                                ml-auto w-10 h-10
-                                rounded-md border-2 border-solid border-neutral-700
-                                bg-transparent hover:bg-neutral-700 focus-visible:bg-neutral-700
-                                transition-colors ease-standard duration-200"
+                                disabled
+                                class="!opacity-75 w-full py-1.5 px-3 rounded-sm bg-muted text-muted-foreground border-none h-8
+                                "
                             >
-                                <Settings2 size=20 absolute_stroke_width=true />
+                                "Place Order"
                             </button>
-                            <SwapSettings
-                                dialog_ref=settings_dialog_ref
-                                toggle_menu=toggle_swap_settings
-                                slippage=(slippage, set_slippage)
-                                deadline=(deadline, set_deadline)
-                            />
+                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1
+                            invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-100 ease-in
+                            border border-solid border-border
+                            bg-popover text-popover-foreground text-xs font-semibold rounded-md whitespace-nowrap">
+                                "soon"
+                            // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
+                            </div>
                         </div>
                     </div>
+
+                    // <div class="inline-flex items-center gap-0.5 mt-2 mb-4 p-[5px] bg-muted rounded-md">
+                    // <A href="manage">
+                    // <button tabindex="-1" class="py-1.5 px-3 rounded-sm bg-muted text-muted-foreground border-none h-8 w-[95px]">"Manage"</button>
+                    // </A>
+                    // <A href="analytics">
+                    // <button tabindex="-1" class="py-1.5 px-3 rounded-sm bg-muted text-muted-foreground border-none h-8 w-[95px]">"Analytics"</button>
+                    // </A>
+                    // </div>
+
                     // TODO: toggle button to show chart or something else. when that's on, switch to grid
                     // layout with grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)]
                     // <div class="container block align-middle sm:row-auto row-start-2 outline outline-2 outline-neutral-700 rounded">
@@ -455,155 +460,194 @@ pub fn Trade() -> impl IntoView {
                     // </div>
 
                     // Main swap box
-                    <div class="p-4 md:p-8 space-y-6 row-start-1 md:row-auto
-                    bg-neutral-800 text-neutral-100 border-neutral-700
-                    rounded-lg border border-solid">
-                        <div class="space-y-2">
-                            <div class="flex justify-between">
-                                <label class="block text-base font-semibold" for="from-token">
-                                    "From"
-                                </label>
-                                <Secret20Balance token_address=token_x.into() />
-                            </div>
-                            <div class="flex justify-between space-x-2">
-                                <input
-                                    id="from-token"
-                                    type="text"
-                                    pattern="^[0-9]*[.,]?[0-9]*$"
-                                    inputmode="decimal"
-                                    placeholder="0.0"
-                                    autocomplete="off"
-                                    class="px-3 py-1 w-full text-xl font-semibold"
-                                    prop:value=move || amount_x.get()
-                                    on:input=move |ev| {
-                                        set_amount_x.set(event_target_value(&ev));
-                                        set_amount_y.set("".to_string());
-                                        set_swap_for_y.set(true);
-                                    }
-                                />
-                                <select
-                                    node_ref=select_x_node_ref
-                                    class="w-28 font-medium p-1 text-sm"
-                                    title="Select Token X"
-                                    on:input=move |ev| {
-                                        let token_x = event_target_value(&ev);
-                                        set_token_x.set(None);
-                                        set_token_x.set(Some(token_x));
-                                    }
-                                    prop:value=move || token_x.get().unwrap_or_default()
+                    <div class="row-start-1 md:row-auto rounded-lg shadow-sm
+                    bg-card text-card-foreground border border-solid border-border">
+                        // card header
+                        <div class="p-6 flex justify-between items-center">
+                            <h2 class="m-0">Swap</h2>
+                            <div class="relative">
+                                <button
+                                    on:click=toggle_swap_settings
+                                    class="inline-flex items-center justify-center
+                                    ml-auto w-10 h-10 text-muted-foreground
+                                    rounded-md border border-solid border-border"
                                 >
-                                    <option value="" disabled selected>
-                                        "Select Token"
-                                    </option>
-                                    <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
-                                    <option value=SYMBOL_TO_ADDR
-                                        .get("STKDSCRT")>"stkd-SCRT"</option>
-                                    <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
-                                    <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
-                                </select>
-                            </div>
-                        </div>
-                        // TODO: switch tokens separator
-                        // <div class="flex items-center gap-1 w-full">
-                        // <div class="h-0.5 bg-neutral-700 w-full"></div>
-                        // <button
-                        // type="button"
-                        // aria-label="change swap direction"
-                        // class="inline-flex items-center justify-center rounded-full border-0 min-w-[2.5rem] h-10 p-0 bg-transparent
-                        // hover:bg-neutral-700 transition-colors duration-200 active:bg-transparent"
-                        // >
-                        // <ArrowUpDown size=18 />
-                        // </button>
-                        // <div class="h-0.5 bg-neutral-700 w-full"></div>
-                        // </div>
-                        <div class="space-y-2">
-                            <div class="flex justify-between">
-                                <label class="block text-base font-semibold" for="to-token">
-                                    "To"
-                                </label>
-                                <Secret20Balance token_address=token_y.into() />
-                            </div>
-                            <div class="flex justify-between space-x-2">
-                                <input
-                                    disabled
-                                    id="to-token"
-                                    type="text"
-                                    pattern="^[0-9]*[.,]?[0-9]*$"
-                                    inputmode="decimal"
-                                    placeholder="0.0"
-                                    autocomplete="off"
-                                    class="px-3 py-1 w-full text-xl font-semibold disabled:cursor-not-allowed"
-                                    prop:value=move || amount_y.get()
-                                    on:change=move |ev| {
-                                        set_amount_y.set(event_target_value(&ev));
-                                        set_amount_x.set("".to_string());
-                                        set_swap_for_y.set(false);
-                                    }
+                                    <Settings2 size=16 />
+                                </button>
+                                <SwapSettings
+                                    dialog_ref=settings_dialog_ref
+                                    toggle_menu=toggle_swap_settings
+                                    slippage=(slippage, set_slippage)
+                                    deadline=(deadline, set_deadline)
                                 />
-                                <select
-                                    node_ref=select_y_node_ref
-                                    title="Select Token Y"
-                                    class="w-28 font-medium p-1 text-sm"
-                                    prop:value=move || token_y.get().unwrap_or_default()
-                                    on:change=move |ev| {
-                                        let token_y = event_target_value(&ev);
-                                        set_token_y.set(None);
-                                        set_token_y.set(Some(token_y));
-                                    }
-                                >
-                                    <option value="" disabled selected>
-                                        "Select Token"
-                                    </option>
-                                    <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
-                                    <option value=SYMBOL_TO_ADDR
-                                        .get("STKDSCRT")>"stkd-SCRT"</option>
-                                    <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
-                                    <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
-                                </select>
                             </div>
-                        </div>
 
-                        <div class="flex flex-row items-center gap-2">
-                            <button
-                                class="py-1.5 px-6 text-sm font-medium"
-                                disabled=move || {
-                                    token_x.get().is_none() || token_y.get().is_none()
-                                        || amount_x.get().is_empty() || get_quote.pending().get()
-                                }
-                                on:click=handle_quote
-                            >
-                                "Estimate Swap"
-                            </button>
-                            <Show when=move || get_quote.pending().get()>
-                                <Spinner2 size="h-6 w-6" />
+                        </div>
+                        // card body
+                        <div class="px-6 pb-6 space-y-4">
+                            <div class="space-y-2">
+                                <div class="flex items-end justify-between">
+                                    <label class="block text-sm font-medium" for="from-token">
+                                        "From"
+                                    </label>
+                                    <Secret20Balance token_address=token_x.into() />
+                                </div>
+                                <div class="flex justify-between gap-4 h-9">
+                                    <input
+                                        id="from-token"
+                                        type="text"
+                                        pattern="^[0-9]*[.,]?[0-9]*$"
+                                        inputmode="decimal"
+                                        placeholder="0.0"
+                                        autocomplete="off"
+                                        class="px-3 py-1 w-full text-sm rounded-md font-normal"
+                                        prop:value=move || amount_x.get()
+                                        on:input=move |ev| {
+                                            set_amount_x.set(event_target_value(&ev));
+                                            set_amount_y.set("".to_string());
+                                            set_swap_for_y.set(true);
+                                        }
+                                    />
+                                    <select
+                                        node_ref=select_x_node_ref
+                                        class="w-[135px] font-medium py-2 px-4 text-sm bg-card rounded-md"
+                                        title="Select Token X"
+                                        on:input=move |ev| {
+                                            let token_x = event_target_value(&ev);
+                                            set_token_x.set(None);
+                                            set_token_x.set(Some(token_x));
+                                        }
+                                        prop:value=move || token_x.get().unwrap_or_default()
+                                    >
+                                        <option value="" disabled selected>
+                                            "Select Token"
+                                        </option>
+                                        <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
+                                        <option value=SYMBOL_TO_ADDR
+                                            .get("STKDSCRT")>"stkd-SCRT"</option>
+                                        <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
+                                        <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
+                                    </select>
+                                </div>
+                            </div>
+                            // TODO: switch tokens separator
+                            // <div class="flex items-center gap-1 w-full">
+                            //     <div class="h-0.5 bg-border w-full"></div>
+                            //     <button
+                            //         type="button"
+                            //         aria-label="change swap direction"
+                            //         class="inline-flex items-center justify-center rounded-full border-0 min-w-[2.5rem] h-10 p-0 bg-transparent
+                            //         hover:bg-muted transition-colors duration-200 active:bg-transparent"
+                            //     >
+                            //         <ArrowUpDown size=16 />
+                            //     </button>
+                            //     <div class="h-0.5 bg-border w-full"></div>
+                            // </div>
+                            <div class="flex items-center gap-0.5 w-full">
+                                <hr class="w-full" />
+                                <button
+                                    type="button"
+                                    aria-label="change swap direction"
+                                    class="inline-flex items-center justify-center rounded-full border-0 min-w-[1.5rem] h-6 p-0
+                                    hover:text-primary"
+                                >
+                                    <ArrowDownUp size=15 />
+                                </button>
+                                <hr class="w-full" />
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between leading-none">
+                                    <label class="block text-sm font-medium" for="to-token">
+                                        "To"
+                                    </label>
+                                    <Secret20Balance token_address=token_y.into() />
+                                </div>
+                                <div class="flex justify-between gap-4 h-9">
+                                    <input
+                                        disabled
+                                        id="to-token"
+                                        type="text"
+                                        pattern="^[0-9]*[.,]?[0-9]*$"
+                                        inputmode="decimal"
+                                        placeholder="0.0"
+                                        autocomplete="off"
+                                        class="px-3 py-1 w-full text-sm font-normal rounded-md disabled:cursor-not-allowed"
+                                        prop:value=move || amount_y.get()
+                                        on:change=move |ev| {
+                                            set_amount_y.set(event_target_value(&ev));
+                                            set_amount_x.set("".to_string());
+                                            set_swap_for_y.set(false);
+                                        }
+                                    />
+                                    <select
+                                        node_ref=select_y_node_ref
+                                        title="Select Token Y"
+                                        class="w-[135px] font-medium py-2 px-4 text-sm bg-card rounded-md"
+                                        prop:value=move || token_y.get().unwrap_or_default()
+                                        on:change=move |ev| {
+                                            let token_y = event_target_value(&ev);
+                                            set_token_y.set(None);
+                                            set_token_y.set(Some(token_y));
+                                        }
+                                    >
+                                        <option value="" disabled selected>
+                                            "Select Token"
+                                        </option>
+                                        <option value=SYMBOL_TO_ADDR.get("SSCRT")>sSCRT</option>
+                                        <option value=SYMBOL_TO_ADDR
+                                            .get("STKDSCRT")>"stkd-SCRT"</option>
+                                        <option value=SYMBOL_TO_ADDR.get("AMBER")>AMBER</option>
+                                        <option value=SYMBOL_TO_ADDR.get("SHD")>SHD</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-row items-center gap-2">
+                                <button
+                                    class="py-1.5 px-6 bg-secondary text-secondary-foreground rounded-md h-9"
+                                    disabled=move || {
+                                        token_x.get().is_none() || token_y.get().is_none()
+                                            || amount_x.get().is_empty() || get_quote.pending().get()
+                                    }
+                                    on:click=handle_quote
+                                >
+                                    "Estimate Swap"
+                                </button>
+                                <Show when=move || get_quote.pending().get()>
+                                    <Spinner2 size="h-6 w-6" />
+                                </Show>
+                            </div>
+
+                            // Swap Details
+                            <Show when=move || {
+                                get_quote.value().get().is_some_and(|quote| quote.is_ok())
+                            }>
+                                <SwapDetails
+                                    price_ratio=swap_price_ratio
+                                    expected_output=amount_out
+                                    minimum_received=amount_out_min
+                                    price_impact
+                                />
                             </Show>
-                        </div>
-
-                        <Show when=move || {
-                            get_quote.value().get().is_some_and(|quote| quote.is_ok())
-                        }>
-                            <SwapDetails
-                                price_ratio=swap_price_ratio
-                                expected_output=amount_out
-                                minimum_received=amount_out_min
-                                price_impact
-                            />
-                        </Show>
 
                         // <Show when=move || amount_out().is_some() fallback=|| ()>
                         // <p>"Amount out: " {amount_out}</p>
                         // </Show>
+                        </div>
 
-                        <button
-                            class="w-full py-2 px-6 bg-neutral-500 text-neutral-50 text-base font-semibold rounded-xs shadow-lg"
-                            disabled=move || {
-                                !keplr.enabled.get()
-                                    || get_quote.value().get().and_then(Result::ok).is_none()
-                            }
-                            on:click=handle_swap
-                        >
-                            "Swap"
-                        </button>
+                        // card footer
+                        <div class="px-6 pb-6">
+                            <button
+                                class="w-full py-2 px-6 bg-primary active:brightness-90 text-primary-foreground text-sm font-medium rounded-md"
+                                disabled=move || {
+                                    !keplr.enabled.get()
+                                        || get_quote.value().get().and_then(Result::ok).is_none()
+                                }
+                                on:click=handle_swap
+                            >
+                                "Swap"
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -655,7 +699,7 @@ fn SwapDetails(
     };
 
     view! {
-        <div class="flex flex-col w-full rounded-md box-border border border-solid border-neutral-600">
+        <div class="flex flex-col w-full rounded-md box-border border border-solid border-border">
             // Header (Click to Toggle)
             <div
                 class="min-h-[40px] px-4 flex items-center justify-between cursor-pointer"
@@ -686,20 +730,22 @@ fn SwapDetails(
             >
                 <div class="w-full box-border p-4 pt-2 flex flex-col gap-2 items-center">
                     <div class="w-full flex flex-row justify-between text-sm">
-                        <p class="m-0 text-neutral-400">"Expected Output:"</p>
-                        <p class="m-0 text-neutral-50 font-semibold">
+                        <p class="m-0 text-muted-foreground">"Expected Output:"</p>
+                        <p class="m-0 text-foreground font-semibold">
                             {move || expected_output.get().map(|uint128| uint128.to_string())}
                         </p>
                     </div>
                     <div class="w-full flex flex-row justify-between text-sm">
-                        <p class="m-0 text-neutral-400">"Minimum Received:"</p>
-                        <p class="m-0 text-neutral-50 font-semibold">
+                        <p class="m-0 text-muted-foreground">"Minimum Received:"</p>
+                        <p class="m-0 text-foreground font-semibold">
                             {move || minimum_received.get().map(|uint128| uint128.to_string())}
                         </p>
                     </div>
                     <div class="w-full flex flex-row justify-between text-sm">
-                        <p class="m-0 text-neutral-400">"Price Impact:"</p>
-                        <p class="m-0 text-neutral-50 font-semibold">{move || price_impact.get()}</p>
+                        <p class="m-0 text-muted-foreground">"Price Impact:"</p>
+                        <p class="m-0 text-foreground font-semibold">
+                            {move || price_impact.get()}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -735,20 +781,20 @@ fn SwapSettings(
         <div class="floating-menu">
             <dialog
                 node_ref=dialog_ref
-                class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 p-0 shadow-lg bg-[oklch(0.300_0_0)] rounded-md border border-solid border-neutral-600"
+                class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 p-0 shadow-lg bg-popover text-foreground rounded-md border border-solid border-border"
             >
-                <div tabindex="0"></div>
                 <div class="relative flex flex-col z-auto">
                     // <div class="absolute right-1.5 top-1.5 flex shrink-0 items-center justify-center w-6 h-6 p-1 box-border rounded-md hover:bg-neutral-700">
                     // <X size=16 />
                     // </div>
-                    <div class="flex justify-between items-center p-2 pl-3 text-neutral-200 border-0 border-b border-solid border-neutral-600">
+                    <div class="flex justify-between items-center p-2 pl-3 text-popover-foreground border-0 border-b border-solid border-border">
                         <p class="m-0">"Settings"</p>
                         <button
+                            autofocus
                             on:click=toggle_menu
                             class="appearance-none border-0
                             flex shrink-0 items-center justify-center w-6 h-6 p-1 box-border rounded-md
-                            bg-transparent hover:bg-neutral-700 transition-colors duration-200 ease-standard
+                            bg-transparent hover:bg-muted transition-colors duration-200 ease-standard
                             "
                         >
                             <X size=16 />
@@ -758,14 +804,17 @@ fn SwapSettings(
                         <div class="flex flex-col items-start gap-4 w-full">
                             <div class="flex flex-col items-start gap-2 w-full">
                                 <div class="flex flex-row items-center justify-between gap-2 w-full">
-                                    <p class="text-neutral-400 text-sm m-0">"Slippage tolerance"</p>
+                                    <p class="text-muted-foreground text-sm m-0">"Slippage tolerance"</p>
                                     <div class="relative group focus-within:group">
-                                        <div tabindex="0" class="text-neutral-400 focus:outline-none">
+                                        <div
+                                            tabindex="0"
+                                            class="text-foreground focus:outline-none"
+                                        >
                                             <Info size=16 />
                                         </div>
-                                        <div class="absolute w-52 z-50 bottom-full right-0 lg:right-1/2 translate-x-0 lg:translate-x-1/2
-                                        text-white text-sm font-medium bg-neutral-500 rounded-md 
-                                        mb-1 px-2 py-1 invisible opacity-0 transition-opacity duration-100 ease-in
+                                        <div class="absolute w-[200px] z-50 bottom-full right-0 lg:right-1/2 translate-x-0 lg:translate-x-1/2
+                                        bg-popover text-popover-foreground text-xs font-normal rounded-md border border-solid
+                                        mb-1 p-2 invisible opacity-0 transition-opacity duration-100 ease-in
                                         group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
                                             "Your transaction will revert if the price changes unfavorably by more than this percentage."
                                         </div>
@@ -775,26 +824,26 @@ fn SwapSettings(
                                     <div class="flex flex-row items-center gap-1">
                                         <button
                                             on:click=move |_| slippage.1.set(10)
-                                            class="h-8 min-w-8 w-14 text-sm font-semibold"
+                                            class="h-8 min-w-8 w-16 text-sm font-semibold bg-secondary text-secondary-foreground rounded-md"
                                         >
                                             "0.1%"
                                         </button>
                                         <button
                                             on:click=move |_| slippage.1.set(50)
-                                            class="h-8 min-w-8 w-14 text-sm font-semibold"
+                                            class="h-8 min-w-8 w-16 text-sm font-semibold bg-secondary text-secondary-foreground rounded-md"
                                         >
                                             "0.5%"
                                         </button>
                                         <button
                                             on:click=move |_| slippage.1.set(100)
-                                            class="h-8 min-w-8 w-14 text-sm font-semibold"
+                                            class="h-8 min-w-8 w-16 text-sm font-semibold bg-secondary text-secondary-foreground rounded-md"
                                         >
                                             "1%"
                                         </button>
                                     </div>
                                     <div class="w-full relative flex items-center isolate box-border">
                                         <input
-                                            class="w-full box-border px-3 h-8 text-sm font-semibold"
+                                            class="w-full box-border px-3 h-8 text-sm font-semibold bg-transparent text-popover-foreground rounded-md"
                                             inputmode="decimal"
                                             minlength="1"
                                             maxlength="79"
@@ -810,17 +859,17 @@ fn SwapSettings(
                                                 slippage.1.set(value)
                                             }
                                         />
-                                        <div class="absolute right-0 top-0 w-8 h-8 z-[2] flex items-center justify-center">
+                                        <div class="absolute right-0 top-0 w-8 h-8 z-[2] flex items-center justify-center text-popover-foreground">
                                             "%"
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="flex flex-col items-start gap-2">
-                                <p class="text-neutral-400 text-sm m-0">"Transaction deadline"</p>
+                                <p class="text-muted-foreground text-sm m-0">"Transaction deadline"</p>
                                 <div class="w-full relative flex items-center isolate box-border">
                                     <input
-                                        class="w-full box-border px-3 h-8 text-sm font-semibold"
+                                        class="w-full box-border px-3 h-8 text-sm font-semibold bg-transparent text-popover-foreground rounded-md"
                                         inputmode="decimal"
                                         minlength="1"
                                         maxlength="79"
@@ -829,7 +878,7 @@ fn SwapSettings(
                                         placeholder="10"
                                         bind:value=deadline
                                     />
-                                    <div class="absolute right-0 top-0 min-w-fit h-8 mr-4 z-[2] flex items-center justify-center text-sm">
+                                    <div class="absolute right-0 top-0 min-w-fit h-8 mr-4 z-[2] flex items-center justify-center text-sm text-popover-foreground">
                                         "minutes"
                                     </div>
                                 </div>

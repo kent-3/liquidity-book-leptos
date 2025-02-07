@@ -6,6 +6,30 @@
 
 @layer base {
   :root {
+    font-family: Inter, sans-serif;
+    font-feature-settings:
+      "liga" 1,
+      "calt" 1,
+      "cv01" 1,
+      "cv09" 1,
+      "cv02" 1,
+      "cv03" 1,
+      "cv04" 1;
+  }
+
+  @supports (font-variation-settings: normal) {
+    :root {
+      font-family: InterVariable, sans-serif;
+      font-feature-settings:
+        "cv01" 1,
+        "cv09" 1,
+        "cv02" 1,
+        "cv03" 1,
+        "cv04" 1;
+    }
+  }
+
+  :root {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -33,65 +57,86 @@
     --chart-5: 27 87% 67%;
   }
 
+  /* amber theme */
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    /* --background: 22.23% 0.006 271.14; */
+    /* my slightly darker version (900) */
+    --background: 20.5% 0.006 271.14;
+    /* my even darker version (950) */
+    /* --background: 14.5% 0.006 271.14; */
+    --foreground: 92.76% 0.0058 264.53;
+    --card: 25.11% 0.0064 258.36;
+    --card-foreground: 92.76% 0.0058 264.53;
+    /* neutral-500 equivalent */
+    /* --popover: 54% 0.0064 258.36; */
+    --popover: 22.23% 0.006 271.14;
+    --popover-foreground: 92.76% 0.0058 264.53;
+    --primary: 82.46% 0.1358 76.72;
+    --primary-foreground: 22.23% 0.006 271.14;
+    --secondary: 28.92% 0.0056 271.22;
+    --secondary-foreground: 92.76% 0.0058 264.53;
+    --muted: 28.92% 0.0056 271.22;
+    --muted-foreground: 71.37% 0.0192 261.32;
+    --accent: 78.37% 0.1587 72.99;
+    --accent-foreground: 100% 0 0;
+    /* --destructive: 0 62.8% 30.6%; */
+    /* --destructive-foreground: 0 0% 98%; */
+    --border: 37.03% 0.0119 285.81;
+    --input: 37.03% 0.0119 285.81;
+    --ring: 78.37% 0.1587 72.99;
+    /* --chart-1: 220 70% 50%; */
+    /* --chart-2: 160 60% 45%; */
+    /* --chart-3: 30 80% 55%; */
+    /* --chart-4: 280 65% 60%; */
+    /* --chart-5: 340 75% 55%; */
   }
 }
 
 @layer base {
   * {
-    /* @apply border-neutral-800; */
+    @apply border-border;
+  }
+
+  a {
+    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-xs;
   }
 
   body {
     @apply antialiased box-content;
     @apply max-w-5xl mx-auto;
-    @apply dark bg-neutral-900 text-neutral-200;
-    font-feature-settings: "kern";
+    /* @apply dark bg-neutral-900 text-neutral-200; */
+    @apply dark bg-background text-foreground;
+    /* font-feature-settings: "kern"; */
   }
 
   button {
     font-size: 13.3333px;
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
     @apply cursor-default;
-    @apply inline-flex justify-center items-center;
+    @apply inline-flex justify-center items-center align-middle;
     @apply font-medium leading-none py-1 px-2;
-    @apply bg-neutral-500 text-white rounded-xs;
-    @apply hover:bg-[oklch(0.612_0_0)] disabled:hover:bg-neutral-500;
-    @apply active:bg-[oklch(0.500_0_0)] disabled:active:bg-neutral-500;
+    @apply bg-transparent rounded-xs;
+    @apply border border-solid border-transparent rounded-xs;
+    @apply hover:brightness-95 disabled:hover:brightness-100;
+    /* @apply hover:bg-[oklch(0.612_0_0)] disabled:hover:bg-neutral-500; */
+    /* @apply active:bg-[oklch(0.500_0_0)] disabled:active:bg-neutral-500; */
+    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring;
   }
 
   input,
   select {
     font-size: 13.3333px;
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
-    @apply box-content;
-    @apply p-1 leading-tight bg-neutral-700 text-neutral-50 placeholder:text-neutral-500 rounded-xs;
-    @apply border border-solid border-neutral-500 hover:border-neutral-400 disabled:hover:border-neutral-500;
-    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-neutral-300 disabled:focus-visible:ring-0;
+    /* @apply box-content; */
+    @apply p-1 leading-tight bg-input text-foreground placeholder:text-muted-foreground rounded-xs;
+    @apply border border-solid border-border;
+    @apply focus-visible:outline-none focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-ring;
+  }
+
+  dialog {
+    @apply p-4 rounded-none border-2 border-solid;
+    @apply bg-white text-black border-black;
+    @apply dark:bg-black dark:text-white dark:border-white;
   }
 
   /* select { */
@@ -140,13 +185,14 @@
 html {
   /* scroll-behavior: smooth; */
   /* text-rendering: optimizelegibility; */
-  font-family:
-    Segoe UI,
-    SegoeUI,
-    Helvetica Neue,
-    Helvetica,
-    Arial,
-    sans-serif;
+  /* font-family: */
+  /*   Inter, */
+  /*   Segoe UI, */
+  /*   SegoeUI, */
+  /*   Helvetica Neue, */
+  /*   Helvetica, */
+  /*   Arial, */
+  /*   sans-serif; */
   color-scheme: dark;
 }
 
@@ -206,18 +252,18 @@ html {
   .menu-button {
     @apply inline-flex justify-start items-center box-border;
     @apply w-full h-10 px-3 py-1 rounded;
-    @apply text-white text-base font-semibold hover:bg-neutral-700 transition-all ease-linear duration-200;
+    @apply text-popover-foreground text-base font-semibold hover:bg-secondary transition-colors ease-linear;
   }
 
-  .menu-button>svg {
-    @apply stroke-neutral-400;
+  .menu-button > svg {
+    @apply stroke-muted-foreground;
   }
 
-  .menu-button> :first-child {
+  .menu-button > :first-child {
     margin-right: 0.75rem;
   }
 
-  .menu-button> :last-child {
+  .menu-button > :last-child {
     margin-left: auto;
   }
 }
@@ -277,7 +323,12 @@ html {
 }
 
 a[aria-current] {
-  font-weight: bold;
+  /* font-weight: bold; */
+  @apply text-foreground;
+}
+
+a[aria-current] > button {
+  @apply text-foreground bg-background;
 }
 
 a:hover {
@@ -298,12 +349,13 @@ a:hover {
 
 /* microsoft docs blue */
 nav a {
-  color: #75b6e7;
+  /* color: #75b6e7; */
+  @apply text-muted-foreground;
   @apply px-2 py-1 no-underline leading-none;
 }
 
 nav a:hover {
-  color: #278cda;
+  /* color: #278cda; */
   @apply underline;
 }
 
@@ -767,7 +819,6 @@ ul {
 /* } */
 
 @media (prefers-reduced-motion) {
-
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) {

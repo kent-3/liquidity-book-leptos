@@ -5,6 +5,7 @@ use crate::{
 use cosmwasm_std::Uint128;
 use keplr::Keplr;
 use leptos::{either::EitherOf4, logging::*, prelude::*};
+use lucide_leptos::{Eye, EyeClosed};
 use rsecret::query::compute::ComputeQuerier;
 use send_wrapper::SendWrapper;
 use serde::{Deserialize, Serialize};
@@ -68,7 +69,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
     // The middle error types are mild enough that it's not worth showing an error
     // TODO: copy balance on click
     view! {
-        <div class="snip-balance self-center box-content">
+        <div class="snip-balance leading-none">
             <Suspense fallback=|| {
                 view! { <div class="py-0 px-2 text-ellipsis text-sm">"Loading..."</div> }
             }>
@@ -80,9 +81,9 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                                     <div
                                         on:click=|_: MouseEvent| ()
                                         class="group box-content px-1.5 translate-x-2 flex flex-row gap-2 items-center text-sm rounded cursor-default
-                                        hover:bg-neutral-700 transition-colors ease-standard"
+                                        hover:bg-muted transition-colors ease-standard"
                                     >
-                                        <div class="text-neutral-400">"Balance: "</div>
+                                        <div class="text-muted-foreground">"Balance: "</div>
                                         <div class="text-white font-medium max-w-[12rem] sm:max-w-full truncate break-all">
                                             {amount}
                                         </div>
@@ -95,9 +96,10 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                                 view! {
                                     <div
                                         title=error.to_string()
-                                        class="py-0 px-2 cursor-default text-ellipsis text-sm"
+                                        class="inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     >
-                                        "Balance: 👀"
+                                        <EyeClosed size=16 />
+                                        "View Balance"
                                     </div>
                                 },
                             )
@@ -106,18 +108,21 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                             if error.to_string() == "There is no matched secret20!" {
                                 EitherOf4::C(
                                     view! {
-                                        <div
-                                            on:click=move |_| {
-                                                _ = suggest_token
-                                                    .dispatch_local(token_address.get().unwrap_or_default());
-                                            }
-                                            class="group relative py-0 px-2 text-sm cursor-pointer rounded"
-                                        >
-                                            <span class="brightness-50">
-                                                "Balance: "<span class="text-white font-semibold">"0"</span>
-                                            </span>
-                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-100 ease-in
-                                            bg-neutral-500 text-white text-xs font-semibold px-2 py-1 rounded-md whitespace-nowrap">
+                                        <div class="group relative">
+                                            <button
+                                                on:click=move |_| {
+                                                    _ = suggest_token
+                                                        .dispatch_local(token_address.get().unwrap_or_default());
+                                                }
+                                                class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                            >
+                                                <EyeClosed size=16 />
+                                                "View Balance"
+                                            </button>
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1
+                                            invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-100 ease-in
+                                            border border-solid border-border
+                                            bg-popover text-popover-foreground text-xs font-semibold rounded-md whitespace-nowrap">
                                                 "Add " {token_symbol()} " to wallet"
                                             // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                             </div>
@@ -127,10 +132,6 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                             } else {
                                 EitherOf4::D(
                                     view! {
-                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
-                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
-                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
-                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                         // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                         <div
                                             title=error.to_string()

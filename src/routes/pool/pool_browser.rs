@@ -49,7 +49,7 @@ pub fn PoolBrowser() -> impl IntoView {
 
     view! {
         <div class="text-3xl font-bold">"Pool"</div>
-        <p class="text-sm text-neutral-400">"Provide liquidity and earn fees."</p>
+        <p class="text-sm text-muted-foreground">"Provide liquidity and earn fees."</p>
 
         // <table>
         // <TableContent rows=rows scroll_container="html"/>
@@ -60,12 +60,11 @@ pub fn PoolBrowser() -> impl IntoView {
                 "All Pools - " {move || number_of_lb_pairs.get().as_deref().cloned()}
             </h3>
 
+            // TODO: prevent link from being tab focusable
             <div class="">
                 <A href="/liquidity-book-leptos/pool/create">
-                    <button class="min-w-24 inline-flex justify-center items-center
-                    font-medium leading-none py-1.5 px-2
-                    border border-solid border-neutral-500 bg-neutral-500 text-white rounded-xs">
-                        "Create New Pool"
+                    <button class="min-w-24 py-1.5 px-3 text-sm border-secondary bg-secondary text-secondary-foreground rounded-md duration-200">
+                        "Create Pool"
                     </button>
                 </A>
             </div>
@@ -144,14 +143,18 @@ pub fn PoolBrowser() -> impl IntoView {
             </Suspense>
         </div>
 
-        <div class="hidden md:block box-border p-2 min-w-full border border-solid border-neutral-700 rounded-lg bg-neutral-800">
+        <div class="hidden md:block box-border p-2 min-w-full border border-solid rounded-lg bg-card">
             <table class="min-w-full -my-2 leading-tight border-separate border-spacing-x-0 border-spacing-y-2">
                 <thead class="box-border border-0 border-solid border-spacing-x-0 border-spacing-y-2">
-                    <tr class="box-content bg-neutral-700">
-                        <th class="px-4 py-2 text-left rounded-l-sm box-content">"Pool Name"</th>
-                        <th class="px-4 py-2 text-right box-content">"Volume (24H)"</th>
-                        <th class="px-4 py-2 text-right box-content">"Liquidity"</th>
-                        <th class="px-4 py-2 text-right rounded-r-sm box-content">"Fees (24H)"</th>
+                    <tr class="box-content text-muted-foreground">
+                        <th class="px-4 py-2 font-medium text-left rounded-l-sm box-content">
+                            "Pool Name"
+                        </th>
+                        <th class="px-4 py-2 font-medium text-right box-content">"Volume (24H)"</th>
+                        <th class="px-4 py-2 font-medium text-right box-content">"Liquidity"</th>
+                        <th class="px-4 py-2 font-medium text-right rounded-r-sm box-content">
+                            "Fees (24H)"
+                        </th>
                     </tr>
                 </thead>
                 // crazy, but it works
@@ -199,7 +202,7 @@ pub fn PoolBrowser() -> impl IntoView {
                                                             )}
                                                         </div>
                                                     </a>
-                                                    <div class="text-white text-xs py-1 px-2 rounded-full bg-neutral-700">
+                                                    <div class="cursor-default text-foreground text-xs py-1 px-2 rounded-full border border-solid">
                                                         {format!("{} bps", n.bin_step)}
                                                     </div>
 
