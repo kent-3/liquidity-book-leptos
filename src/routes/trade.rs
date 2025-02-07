@@ -486,7 +486,7 @@ pub fn Trade() -> impl IntoView {
                         // card body
                         <div class="px-6 pb-6 space-y-4">
                             <div class="space-y-2">
-                                <div class="flex items-end justify-between">
+                                <div class="flex items-center justify-between">
                                     <label class="block text-sm font-medium" for="from-token">
                                         "From"
                                     </label>

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use web_sys::{js_sys, wasm_bindgen};
 
-#[derive(thiserror::Error, Serialize, Deserialize, Debug, Clone)]
+#[derive(thiserror::Error, Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum Error {
     #[error("Keplr is unavailable!")]
     KeplrUnavailable,

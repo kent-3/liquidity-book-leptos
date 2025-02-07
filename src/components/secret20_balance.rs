@@ -1,4 +1,5 @@
 use crate::{
+    alert,
     constants::{CHAIN_ID, NODE, TOKEN_MAP},
     state::{ChainId, Endpoint, KeplrSignals, TokenMap},
 };
@@ -29,9 +30,30 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
             .map(|t| t.symbol)
     };
 
+    // TODO: figure out a way to re-check for the viewing key after it's been set
+    let suggest_token = Action::new_local(move |contract_address: &String| {
+        let chain_id = chain_id.chain_id.get();
+        let contract_address = contract_address.clone();
+        // This still doesn't work right. It only works if the user already has the token in their wallet
+        // let viewing_key = Some("hola");
+
+        async move {
+            Keplr::suggest_token(&chain_id, &contract_address, None)
+                .await
+                .is_ok()
+        }
+    });
+
     let token_balance = Resource::new(
-        move || (keplr.enabled.get(), keplr.key.get(), token_address.get()),
-        move |(enabled, maybe_key, maybe_contract_address)| {
+        move || {
+            (
+                keplr.enabled.get(),
+                keplr.key.get(),
+                token_address.get(),
+                suggest_token.value().get(),
+            )
+        },
+        move |(enabled, maybe_key, maybe_contract_address, token_suggested)| {
             let endpoint = endpoint.get();
             let chain_id = chain_id.get();
             SendWrapper::new({
@@ -56,20 +78,10 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
         },
     );
 
-    // TODO: figure out a way to re-check for the viewing key after it's been set
-    let suggest_token = Action::new_local(move |contract_address: &String| {
-        let chain_id = chain_id.chain_id.get();
-        let contract_address = contract_address.clone();
-        // This still doesn't work right. It only works if the user already has the token in their wallet
-        // let viewing_key = Some("hola");
-
-        async move { Keplr::suggest_token(&chain_id, &contract_address, None).await }
-    });
-
     // The middle error types are mild enough that it's not worth showing an error
     // TODO: copy balance on click
     view! {
-        <div class="snip-balance leading-none">
+        // <div class="snip-balance leading-none">
             <Suspense fallback=|| {
                 view! { <div class="py-0 px-2 text-ellipsis text-sm">"Loading..."</div> }
             }>
@@ -78,53 +90,53 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                         Ok(amount) => {
                             EitherOf4::A(
                                 view! {
-                                    <div
-                                        on:click=|_: MouseEvent| ()
-                                        class="group box-content px-1.5 translate-x-2 flex flex-row gap-2 items-center text-sm rounded cursor-default
-                                        hover:bg-muted transition-colors ease-standard"
-                                    >
-                                        <div class="text-muted-foreground">"Balance: "</div>
-                                        <div class="text-white font-medium max-w-[12rem] sm:max-w-full truncate break-all">
-                                            {amount}
-                                        </div>
+                                    <div class="inline-flex gap-1 items-center text-sm rounded-md cursor-default text-muted-foreground">
+                                        // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                        <button
+                                            tabindex=0
+                                            class="p-0 hover:text-primary cursor-pointer rounded-sm"
+                                            on:click=|_: MouseEvent| alert("TODO: hide balance")
+                                        >
+                                            <Eye size=16 />
+                                        </button>
+                                        <button
+                                            tabindex="-1"
+                                            on:click=|_: MouseEvent| alert("TODO: use max balance")
+                                            class="p-0 inline-flex items-center gap-2"
+                                        >
+                                            "Balance: "
+                                            <span tabindex=0 class="text-white font-medium max-w-[12rem] truncate break-all cursor-pointer
+                                                hover:text-primary focus-visible:text-primary focus-visible:outline-none">
+                                                {amount}
+                                            </span>
+                                        </button>
                                     </div>
                                 },
                             )
                         }
                         Err(error @ (Error::KeplrDisabled | Error::KeplrKey | Error::NoToken)) => {
-                            EitherOf4::B(
-                                view! {
-                                    <div
-                                        title=error.to_string()
-                                        class="inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
-                                    >
-                                        <EyeClosed size=16 />
-                                        "View Balance"
-                                    </div>
-                                },
-                            )
+                            EitherOf4::B(view! {})
                         }
                         Err(error) => {
                             if error.to_string() == "There is no matched secret20!" {
                                 EitherOf4::C(
                                     view! {
-                                        <div class="group relative">
+                                        <div class="group relative leading-none">
                                             <button
                                                 on:click=move |_| {
                                                     _ = suggest_token
                                                         .dispatch_local(token_address.get().unwrap_or_default());
                                                 }
-                                                class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                                class="p-0 border-none inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                             >
                                                 <EyeClosed size=16 />
                                                 "View Balance"
                                             </button>
-                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1
+                                            <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-0 px-2 py-1
                                             invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-100 ease-in
                                             border border-solid border-border
                                             bg-popover text-popover-foreground text-xs font-semibold rounded-md whitespace-nowrap">
                                                 "Add " {token_symbol()} " to wallet"
-                                            // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                             </div>
                                         </div>
                                     },
@@ -132,17 +144,14 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                             } else {
                                 EitherOf4::D(
                                     view! {
-                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
-                                        // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                         <div
                                             title=error.to_string()
-                                            class="group relative py-0 px-2 text-gold font-semibold text-sm cursor-default hover:bg-gold/20 text-ellipsis"
+                                            class="group relative leading-none text-primary font-semibold text-sm cursor-default text-ellipsis"
                                         >
                                             "Error 🛈"
                                             <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 invisible group-hover:visible
-                                            bg-neutral-500 text-white text-xs font-semibold px-2 py-1 rounded shadow-lg whitespace-nowrap">
+                                            bg-popover text-popover-foreground text-xs font-medium px-2 py-1 rounded shadow-sm whitespace-nowrap">
                                                 {error.to_string()}
-                                                <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                                             </div>
                                         </div>
                                     },
@@ -152,7 +161,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                     }
                 })}
             </Suspense>
-        </div>
+        // </div>
     }
 }
 
