@@ -404,10 +404,9 @@ pub fn PoolManager() -> impl IntoView {
     // });
 
     view! {
-        <div class="grid auto-rows-min grid-cols-1 md:grid-cols-2 gap-8">
-
+        <div class="grid auto-rows-min grid-cols-1 md:grid-cols-2 gap-4">
             // left side of the screen
-            <div class="flex flex-col items-center gap-6">
+            <div class="flex flex-col items-center gap-4">
                 // my liquidity box
                 <div class="block w-full bg-card border-solid border rounded-lg">
                     <div class="px-6 py-4">
@@ -555,11 +554,11 @@ pub fn PoolManager() -> impl IntoView {
             // right side of screen, moves to bottom on medium screens
             <div class="block px-5 py-4 w-full box-border space-y-5 mx-auto bg-card border-solid border rounded-lg max-h-max">
                 // "Tab Group"
-                <div class="flex gap-4 w-full">
+                <div class="flex gap-0.5 w-full p-[5px] bg-muted rounded-md">
                     // This preserves the query params when navigating to nested routes.
                     // TODO: this is terribly complicated. it works, but there must be a simpler way
                     <button
-                        class="w-full py-1.5 bg-background border border-solid rounded-xs"
+                        class="w-full h-8 py-1.5 bg-background rounded-sm"
                         on:click={
                             let navigate_ = navigate.clone();
                             let nav_options_ = nav_options.clone();
@@ -584,9 +583,7 @@ pub fn PoolManager() -> impl IntoView {
                         "Add Liquidity"
                     </button>
                     <button
-                        class="w-full inline-flex justify-center items-center
-                        font-medium leading-none py-1 px-2
-                        border border-solid border-neutral-500 bg-neutral-500 text-white rounded-xs"
+                        class="w-full h-8 py-1.5 bg-muted text-muted-foreground rounded-sm"
                         on:click={
                             let navigate_ = navigate.clone();
                             let nav_options_ = nav_options.clone();

@@ -352,14 +352,14 @@ pub fn RemoveLiquidity() -> impl IntoView {
 
     view! {
         <div class="space-y-2">
-            <div class="text-xl font-semibold">"Remove Liquidity"</div>
+            <div class="text-base font-semibold">"Remove Liquidity"</div>
 
-            <button class="block" on:click=move |_| _ = find_liquidity.dispatch(())>
+            <button class="block bg-secondary" on:click=move |_| _ = find_liquidity.dispatch(())>
                 "Find Liquidity"
             </button>
             // <pre>{move || find_liquidity.value_local().get().and_then(Result::ok).and_then(Result::ok).unwrap_or_default() }</pre>
             <button
-                class="block"
+                class="block bg-secondary"
                 on:click=move |_| _ = remove_liquidity.dispatch(())
                 disabled=move || find_liquidity.value().get().is_none()
             >

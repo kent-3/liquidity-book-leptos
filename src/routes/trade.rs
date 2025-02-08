@@ -420,7 +420,7 @@ pub fn Trade() -> impl IntoView {
         <div class="flex mt-2 md:mt-10 justify-center">
             // <div class="grid gap-4 sm:grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)] grid-cols-1 grid-rows-2 sm:grid-rows-1">
             // <div class="grid gap-4 grid-cols-1 max-w-[550px] w-full">
-            <div class="grid gap-4 grid-cols-1 sm:max-w-sm w-full">
+            <div class="grid gap-4 grid-cols-1 max-w-sm">
                 <div class="flex flex-col space-y-3">
                     // buttons above the main swap box
                     <div class="flex items-center justify-evenly gap-0.5 p-[5px] bg-muted rounded-md">
@@ -781,7 +781,7 @@ fn SwapSettings(
         <div class="floating-menu">
             <dialog
                 node_ref=dialog_ref
-                class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 p-0 shadow-lg bg-popover text-foreground rounded-md border border-solid border-border"
+                class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 p-0 shadow-md bg-background text-foreground rounded-md border border-solid border-border"
             >
                 <div class="relative flex flex-col z-auto">
                     // <div class="absolute right-1.5 top-1.5 flex shrink-0 items-center justify-center w-6 h-6 p-1 box-border rounded-md hover:bg-neutral-700">

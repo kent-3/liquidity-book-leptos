@@ -430,29 +430,33 @@ pub fn AddLiquidity() -> impl IntoView {
 
     view! {
         <div class="space-y-2">
-            <div class="text-xl font-semibold">Deposit Liquidity</div>
-            <div class="flex items-center gap-2">
+            <div class="text-base font-semibold">"Deposit Liquidity"</div>
+            <div class="flex relative items-center gap-2">
                 <input
-                    class="p-1 w-full"
-                    type="number"
+                    class="w-full px-3 py-2 h-9 bg-transparent rounded-md"
+                    type="text"
                     placeholder="Enter Amount"
                     on:change=move |ev| set_amount_x.set(event_target_value(&ev))
                 />
-                <div class="text-sm p-2">{move || token_a_symbol.get()}</div>
+                <div class="absolute right-0 top-0 px-3 py-2 h-9 z-[2] flex items-center justify-center text-sm text-popover-foreground">
+                    {move || token_a_symbol.get()}
+                </div>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="w-full relative flex items-center gap-2">
                 <input
-                    class="p-1 w-full"
-                    type="number"
+                    class="w-full px-3 py-2 h-9 bg-transparent rounded-md"
+                    type="text"
                     placeholder="Enter Amount"
                     on:change=move |ev| set_amount_y.set(event_target_value(&ev))
                 />
-                <div class="text-sm p-2">{move || token_b_symbol.get()}</div>
+                <div class="absolute right-0 top-0 px-3 py-2 h-9 z-[2] flex items-center justify-center text-sm text-popover-foreground">
+                    {move || token_b_symbol.get()}
+                </div>
             </div>
 
-            <div class="text-xl font-semibold !mt-6">Choose Liquidity Shape</div>
+            <div class="text-base font-semibold !mt-6">Choose Liquidity Shape</div>
             <select
-                class="block p-1"
+                class="font-medium py-2 px-4 text-sm bg-card rounded-md"
                 on:change=move |ev| {
                     let shape = event_target_value(&ev);
                     let preset = match shape.as_ref() {
@@ -472,13 +476,25 @@ pub fn AddLiquidity() -> impl IntoView {
             </select>
 
             <div class="flex items-center gap-2 !mt-6">
-                <div class="text-xl font-semibold mr-auto">Price</div>
-                <button on:click=move |_| {
-                    set_price_by.set(Some("range".to_string()));
-                }>"By Range"</button>
-                <button on:click=move |_| {
-                    set_price_by.set(Some("radius".to_string()));
-                }>"By Radius"</button>
+                <div class="text-base font-semibold mr-auto">Price</div>
+                <div class="flex items-center gap-0.5 p-[3px] bg-muted rounded-md">
+                    <button
+                        on:click=move |_| {
+                            set_price_by.set(Some("range".to_string()));
+                        }
+                        class="bg-muted text-muted-foreground rounded-sm h-6"
+                    >
+                        "By Range"
+                    </button>
+                    <button
+                        on:click=move |_| {
+                            set_price_by.set(Some("radius".to_string()));
+                        }
+                        class="bg-background text-foreground rounded-sm h-6"
+                    >
+                        "By Radius"
+                    </button>
+                </div>
             </div>
 
             <Show when=move || price_by() == "range">
@@ -511,14 +527,14 @@ pub fn AddLiquidity() -> impl IntoView {
                 // />
                 // </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                     <div>
                         <label class="block mb-1 text-xs" for="target-price">
                             "Target Price:"
                         </label>
                         <input
                             id="target-price"
-                            class="p-1 w-full box-border"
+                            class="px-3 py-1 w-full h-8 bg-transparent rounded-md"
                             type="decimal"
                             placeholder="Enter Target Price"
                             min="0"
@@ -532,7 +548,7 @@ pub fn AddLiquidity() -> impl IntoView {
                         </label>
                         <input
                             id="radius"
-                            class="p-1 w-full box-border"
+                            class="px-3 py-1 w-full h-8 bg-transparent rounded-md"
                             type="number"
                             placeholder="Enter Bin Radius"
                             min="0"
@@ -549,7 +565,7 @@ pub fn AddLiquidity() -> impl IntoView {
                         </label>
                         <input
                             id="range-min"
-                            class="p-1 w-full box-border"
+                            class="px-3 py-1 w-full h-8 bg-transparent rounded-md"
                             type="decimal"
                             placeholder="Range Min"
                             disabled
@@ -576,7 +592,7 @@ pub fn AddLiquidity() -> impl IntoView {
                         </label>
                         <input
                             id="range-max"
-                            class="p-1 w-full box-border"
+                            class="px-3 py-1 w-full h-8 bg-transparent rounded-md"
                             type="decimal"
                             placeholder="Range Max"
                             disabled
@@ -603,7 +619,7 @@ pub fn AddLiquidity() -> impl IntoView {
                         </label>
                         <input
                             id="num-bins"
-                            class="p-1 w-full box-border"
+                            class="px-3 py-1 w-full h-8 bg-transparent rounded-md"
                             type="number"
                             placeholder="Number of Bins"
                             min="0"
@@ -617,7 +633,7 @@ pub fn AddLiquidity() -> impl IntoView {
                         </label>
                         <input
                             id="pct-range"
-                            class="p-1 w-full box-border"
+                            class="px-3 py-1 w-full h-8 bg-transparent rounded-md"
                             type="decimal"
                             placeholder="Percentage Range"
                             disabled
@@ -629,7 +645,12 @@ pub fn AddLiquidity() -> impl IntoView {
                     </div>
                 </div>
 
-                <button class="w-full py-2 px-6 !mt-6" on:click=add_liquidity>
+                // TODO: better card spacing, disable button if amounts aren't set
+                <button
+                    class="w-full !mt-6 !mb-2 py-2 px-6 bg-primary text-primary-foreground text-sm font-medium rounded-md"
+                    on:click=add_liquidity
+                    disabled=move || { !keplr.enabled.get() }
+                >
                     "Add Liquidity"
                 </button>
             </Show>

@@ -102,7 +102,7 @@
   }
 
   body {
-    @apply antialiased box-content;
+    @apply antialiased box-content h-screen;
     @apply max-w-5xl mx-auto;
     /* @apply dark bg-neutral-900 text-neutral-200; */
     @apply dark bg-background text-foreground;
@@ -115,20 +115,18 @@
     @apply cursor-default;
     @apply inline-flex justify-center items-center align-middle;
     @apply font-medium leading-none py-1 px-2;
-    @apply bg-transparent rounded-xs;
     @apply border border-solid border-transparent rounded-xs;
     @apply hover:brightness-95 disabled:hover:brightness-100;
+    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring;
     /* @apply hover:bg-[oklch(0.612_0_0)] disabled:hover:bg-neutral-500; */
     /* @apply active:bg-[oklch(0.500_0_0)] disabled:active:bg-neutral-500; */
-    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring;
   }
 
   input,
   select {
     font-size: 13.3333px;
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
-    /* @apply box-content; */
-    @apply p-1 leading-tight bg-input text-foreground placeholder:text-muted-foreground rounded-xs;
+    @apply p-1 leading-tight bg-input placeholder:text-muted-foreground rounded-xs;
     @apply border border-solid border-border;
     @apply focus-visible:outline-none focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-ring;
   }
@@ -255,15 +253,15 @@ html {
     @apply text-popover-foreground text-base font-semibold hover:bg-secondary transition-colors ease-linear;
   }
 
-  .menu-button > svg {
+  .menu-button>svg {
     @apply stroke-muted-foreground;
   }
 
-  .menu-button > :first-child {
+  .menu-button> :first-child {
     margin-right: 0.75rem;
   }
 
-  .menu-button > :last-child {
+  .menu-button> :last-child {
     margin-left: auto;
   }
 }
@@ -327,7 +325,7 @@ a[aria-current] {
   @apply text-foreground;
 }
 
-a[aria-current] > button {
+a[aria-current]>button {
   @apply text-foreground bg-background;
 }
 
@@ -821,6 +819,7 @@ ul {
 /* } */
 
 @media (prefers-reduced-motion) {
+
   ::view-transition-group(*),
   ::view-transition-old(*),
   ::view-transition-new(*) {

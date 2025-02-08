@@ -1,5 +1,5 @@
-use crate::chain_query;
 use crate::error::Error;
+use crate::{chain_query, shorten_address};
 use ammber_sdk::contract_interfaces::lb_pair::{
     self, BinResponse, LbPair, ReservesResponse, StaticFeeParametersResponse,
 };
@@ -336,7 +336,12 @@ pub fn PoolAnalytics() -> impl IntoView {
                         <div class="flex flex-col items-start">
                             <p class="text-sm text-muted-foreground font-semibold m-0">"Pool"</p>
                             <div class="flex flex-row items-center gap-2">
-                                <p class="text-base font-semibold m-0">{pool_address()}</p>
+                                <p class="hidden lg:block text-base font-semibold m-0">
+                                    {pool_address()}
+                                </p>
+                                <p class="block lg:hidden text-base font-semibold m-0">
+                                    {shorten_address(pool_address())}
+                                </p>
                                 <div
                                     on:click={
                                         let copy = copy.clone();
@@ -364,7 +369,12 @@ pub fn PoolAnalytics() -> impl IntoView {
                                 {move || token_x_symbol.get()}
                             </p>
                             <div class="flex flex-row items-center gap-2">
-                                <p class="text-base font-semibold m-0">{token_x_address()}</p>
+                                <p class="hidden lg:block text-base font-semibold m-0">
+                                    {token_x_address()}
+                                </p>
+                                <p class="block lg:hidden text-base font-semibold m-0">
+                                    {shorten_address(token_x_address())}
+                                </p>
                                 <div
                                     on:click={
                                         let copy = copy.clone();
@@ -392,7 +402,12 @@ pub fn PoolAnalytics() -> impl IntoView {
                                 {move || token_y_symbol.get()}
                             </p>
                             <div class="flex flex-row items-center gap-2">
-                                <p class="text-base font-semibold m-0">{token_y_address()}</p>
+                                <p class="hidden lg:block text-base font-semibold m-0">
+                                    {token_y_address()}
+                                </p>
+                                <p class="block lg:hidden text-base font-semibold m-0">
+                                    {shorten_address(token_y_address())}
+                                </p>
                                 <div
                                     on:click={
                                         let copy = copy.clone();
