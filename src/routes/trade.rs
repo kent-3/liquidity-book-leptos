@@ -1,10 +1,9 @@
 use crate::{
-    components::Secret20Balance,
-    components::Spinner2,
+    components::{Secret20Balance, Spinner2},
     constants::{contracts::*, CHAIN_ID, NODE, SYMBOL_TO_ADDR, TOKEN_MAP},
     error::Error,
     state::*,
-    utils::{display_token_amount, parse_token_amount},
+    utils::{alert, display_token_amount, parse_token_amount},
     LoadingModal,
 };
 use ammber_sdk::contract_interfaces::{lb_quoter::Quote, lb_router::Path, *};
@@ -24,8 +23,7 @@ use rsecret::{
 use secretrs::AccountId;
 use std::str::FromStr;
 use tracing::{debug, info};
-use web_sys::js_sys::Date;
-use web_sys::wasm_bindgen::JsCast;
+use web_sys::{js_sys::Date, wasm_bindgen::JsCast};
 
 #[component]
 fn KeyboardShortcuts() -> impl IntoView {
@@ -510,7 +508,7 @@ pub fn Trade() -> impl IntoView {
                                     />
                                     <select
                                         node_ref=select_x_node_ref
-                                        class="w-[135px] font-medium py-2 px-4 text-sm bg-card rounded-md"
+                                        class="w-[135px] font-medium py-2 px-4 bg-card rounded-md"
                                         title="Select Token X"
                                         on:input=move |ev| {
                                             let token_x = event_target_value(&ev);
@@ -530,19 +528,6 @@ pub fn Trade() -> impl IntoView {
                                     </select>
                                 </div>
                             </div>
-                            // TODO: switch tokens separator
-                            // <div class="flex items-center gap-1 w-full">
-                            // <div class="h-0.5 bg-border w-full"></div>
-                            // <button
-                            // type="button"
-                            // aria-label="change swap direction"
-                            // class="inline-flex items-center justify-center rounded-full border-0 min-w-[2.5rem] h-10 p-0 bg-transparent
-                            // hover:bg-muted transition-colors duration-200 active:bg-transparent"
-                            // >
-                            // <ArrowUpDown size=16 />
-                            // </button>
-                            // <div class="h-0.5 bg-border w-full"></div>
-                            // </div>
                             <div class="flex items-center gap-0.5 w-full">
                                 <hr class="w-full" />
                                 <button
@@ -550,6 +535,7 @@ pub fn Trade() -> impl IntoView {
                                     aria-label="change swap direction"
                                     class="inline-flex items-center justify-center rounded-full border-0 min-w-[1.5rem] h-6 p-0
                                     hover:text-primary"
+                                    on:click=move |_| alert("TODO: switch tokens")
                                 >
                                     <ArrowDownUp size=15 />
                                 </button>
@@ -582,7 +568,7 @@ pub fn Trade() -> impl IntoView {
                                     <select
                                         node_ref=select_y_node_ref
                                         title="Select Token Y"
-                                        class="w-[135px] font-medium py-2 px-4 text-sm bg-card rounded-md"
+                                        class="w-[135px] font-medium py-2 px-4 bg-card rounded-md"
                                         prop:value=move || token_y.get().unwrap_or_default()
                                         on:change=move |ev| {
                                             let token_y = event_target_value(&ev);

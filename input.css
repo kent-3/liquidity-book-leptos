@@ -59,11 +59,11 @@
 
   /* amber theme */
   .dark {
-    /* --background: 22.23% 0.006 271.14; */
+    --background: 22.23% 0.006 271.14;
     /* my slightly darker version (900) */
     /* --background: 20.5% 0.006 271.14; */
     /* my even darker version (950) */
-    --background: 14.5% 0.006 271.14;
+    /* --background: 14.5% 0.006 271.14; */
     --foreground: 92.76% 0.0058 264.53;
     --card: 25.11% 0.0064 258.36;
     --card-foreground: 92.76% 0.0058 264.53;
