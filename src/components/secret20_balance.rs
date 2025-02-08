@@ -127,6 +127,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                                     // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     <div class="group relative leading-none">
                                         <button
                                             on:click=move |_| {
@@ -150,6 +151,11 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                         } else {
                             EitherOf4::D(
                                 view! {
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"

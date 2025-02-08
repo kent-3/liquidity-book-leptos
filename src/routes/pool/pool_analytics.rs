@@ -331,7 +331,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                 </div>
             </div>
             <div class="p-4 sm:p-7 bg-card rounded-md border border-solid border-border">
-                <div class="grid grid-cols-[minmax(0px,_1fr)_80px_80px] sm:grid-cols-[minmax(0px,_3fr)_minmax(0px,_1fr)_minmax(0px,_1fr)]">
+                <div class="grid grid-cols-[minmax(0px,_1fr)_85px_75px] sm:grid-cols-[minmax(0px,_3fr)_minmax(0px,_1fr)_minmax(0px,_1fr)]">
                     <div class="flex flex-col gap-4">
                         <div class="flex flex-col items-start">
                             <p class="text-sm text-muted-foreground font-semibold m-0">"Pool"</p>
@@ -339,7 +339,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                 <p class="hidden lg:block text-base font-semibold m-0">
                                     {pool_address()}
                                 </p>
-                                <p class="block lg:hidden text-base font-semibold m-0">
+                                <p class="block lg:hidden text-sm font-semibold m-0">
                                     {shorten_address(pool_address())}
                                 </p>
                                 <div
@@ -372,7 +372,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                 <p class="hidden lg:block text-base font-semibold m-0">
                                     {token_x_address()}
                                 </p>
-                                <p class="block lg:hidden text-base font-semibold m-0">
+                                <p class="block lg:hidden text-sm font-semibold m-0">
                                     {shorten_address(token_x_address())}
                                 </p>
                                 <div
@@ -405,7 +405,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                 <p class="hidden lg:block text-base font-semibold m-0">
                                     {token_y_address()}
                                 </p>
-                                <p class="block lg:hidden text-base font-semibold m-0">
+                                <p class="block lg:hidden text-sm font-semibold m-0">
                                     {shorten_address(token_y_address())}
                                 </p>
                                 <div

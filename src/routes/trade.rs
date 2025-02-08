@@ -415,7 +415,7 @@ pub fn Trade() -> impl IntoView {
 
     view! {
         <LoadingModal when=swap.pending() message="Processing Transaction... (watch the console)" />
-        <div class="flex mt-2 md:mt-10 justify-center">
+        <div class="flex mt-2 sm:mt-12 justify-center">
             // <div class="grid gap-4 sm:grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)] grid-cols-1 grid-rows-2 sm:grid-rows-1">
             // <div class="grid gap-4 grid-cols-1 max-w-[550px] w-full">
             <div class="grid gap-4 grid-cols-1 max-w-sm">

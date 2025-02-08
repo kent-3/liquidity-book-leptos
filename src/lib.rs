@@ -392,16 +392,21 @@ pub fn App() -> impl IntoView {
         <Router>
             // <div class="background-image"></div>
             <header>
-                <div class="pt-2 px-4 flex justify-between items-center">
-                    <div
-                        id="mainTitle"
-                        class="my-2 font-bold text-3xl line-clamp-1 transition-transform duration-300 cursor-default"
-                        style="font-feature-settings: \"cv06\" 1, \"cv13\" 1;"
-                    >
-                        "Liquidity Book"
+                <div class="p-4 flex justify-between items-center border-b">
+                    <div class="flex flex-row gap-4">
+                        <div
+                            id="mainTitle"
+                            class="m-0 font-bold text-3xl line-clamp-1 transition-transform duration-300 cursor-default"
+                            style="font-feature-settings: \"cv06\" 1, \"cv13\" 1;"
+                        >
+                            "Liquidity Book"
+                        </div>
+                        <div class="hidden sm:inline-flex">
+                            <Nav />
+                        </div>
                     </div>
                     <Show when=move || keplr.key.get().and_then(|key| key.ok()).is_some()>
-                        <p class="hidden sm:block text-sm text-muted-foreground leading-none px-4 py-1.5 border border-solid border-muted-foreground rounded-sm">
+                        <p class="hidden md:block text-sm text-muted-foreground leading-none px-4 py-1.5 border border-solid border-muted-foreground rounded-sm">
                             "Connected as "<strong>{key_name}</strong>
                         </p>
                     </Show>
@@ -445,10 +450,9 @@ pub fn App() -> impl IntoView {
                         </Show>
                     </div>
                 </div>
-                <hr class="mt-2 mb-1 border border-border" />
-                <Nav />
-                <hr class="mt-1 mb-2 border border-border" />
-            // <hr class="mt-1 mb-2 border border-[oklch(0.560_0.012_286)]" />
+                <div class="sm:hidden block mb-3 px-1 py-0.5 border-b">
+                    <Nav />
+                </div>
             </header>
             <main class="px-4 overflow-x-auto">
                 <Routes transition=true fallback=|| "This page could not be found.">
