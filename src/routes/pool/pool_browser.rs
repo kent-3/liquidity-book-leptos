@@ -106,11 +106,23 @@ pub fn PoolBrowser() -> impl IntoView {
                                                     "{} – {}",
                                                     TOKEN_MAP
                                                         .get(&n.token_x.unique_key())
-                                                        .map(|t| t.symbol.clone())
+                                                        .map(|t| {
+                                                            if let Some(ref display_name) = t.display_name {
+                                                                display_name.clone()
+                                                            } else {
+                                                                t.symbol.clone()
+                                                            }
+                                                        })
                                                         .unwrap_or_default(),
                                                     TOKEN_MAP
                                                         .get(&n.token_y.unique_key())
-                                                        .map(|t| t.symbol.clone())
+                                                        .map(|t| {
+                                                            if let Some(ref display_name) = t.display_name {
+                                                                display_name.clone()
+                                                            } else {
+                                                                t.symbol.clone()
+                                                            }
+                                                        })
                                                         .unwrap_or_default(),
                                                 )}
                                             </div>
@@ -195,11 +207,23 @@ pub fn PoolBrowser() -> impl IntoView {
                                                                 "{} – {}",
                                                                 TOKEN_MAP
                                                                     .get(&n.token_x.unique_key())
-                                                                    .map(|t| t.symbol.clone())
+                                                                    .map(|t| {
+                                                                        if let Some(ref display_name) = t.display_name {
+                                                                            display_name.clone()
+                                                                        } else {
+                                                                            t.symbol.clone()
+                                                                        }
+                                                                    })
                                                                     .unwrap_or_default(),
                                                                 TOKEN_MAP
                                                                     .get(&n.token_y.unique_key())
-                                                                    .map(|t| t.symbol.clone())
+                                                                    .map(|t| {
+                                                                        if let Some(ref display_name) = t.display_name {
+                                                                            display_name.clone()
+                                                                        } else {
+                                                                            t.symbol.clone()
+                                                                        }
+                                                                    })
                                                                     .unwrap_or_default(),
                                                             )}
                                                         </div>

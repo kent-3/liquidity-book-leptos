@@ -454,7 +454,7 @@ pub fn App() -> impl IntoView {
                     <Nav />
                 </div>
             </header>
-            <main class="px-4 py-3 overflow-x-auto">
+            <main class="px-4 lg:px-8 py-3 overflow-x-auto">
                 <Routes transition=true fallback=|| "This page could not be found.">
                     <Route path=path!("liquidity-book-leptos") view=Trade />
                     <ParentRoute path=path!("/liquidity-book-leptos/pool") view=Pools>

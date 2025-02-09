@@ -17,8 +17,7 @@ use web_sys::MouseEvent;
 // TODO: add a way to "suggest_token" if "there is no matched secret20"
 
 #[component]
-// TODO: make the input something like `impl Into<Signal<String>>`
-pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
+pub fn Secret20Balance(#[prop(into)] token_address: Signal<Option<String>>) -> impl IntoView {
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let chain_id = use_context::<ChainId>().expect("chain_id context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr context missing!");

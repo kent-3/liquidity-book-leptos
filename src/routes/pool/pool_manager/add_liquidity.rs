@@ -501,43 +501,21 @@ pub fn AddLiquidity() -> impl IntoView {
                 <div class="font-mono">"todo!()"</div>
             </Show>
             <Show when=move || price_by() == "radius">
-                // <div class="flex items-center gap-2">
-                // <div class="basis-1/3">"Target Price:"</div>
-                // <input
-                // class="p-1 basis-2/3"
-                // type="decimal"
-                // placeholder="Enter Target Price"
-                // min="0"
-                // prop:value=move || target_price.get()
-                // on:change=move |ev| set_target_price.set(event_target_value(&ev))
-                // />
-                // </div>
-                // <div class="flex items-center gap-2">
-                // <div class="basis-1/3">"Radius:"</div>
-                // <input
-                // class="p-1 basis-2/3"
-                // type="number"
-                // placeholder="Enter Bin Radius"
-                // min="0"
-                // prop:value=move || radius.get()
-                // on:change=move |ev| {
-                // set_radius
-                // .set(event_target_value(&ev).parse::<u32>().unwrap_or_default())
-                // }
-                // />
-                // </div>
-
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                     <div>
                         <label class="block mb-1 text-xs" for="target-price">
                             "Target Price:"
                         </label>
+                        // TODO: parse the input on change, make sure it's valid
                         <input
                             id="target-price"
-                            class="px-3 py-1 w-full h-8 bg-transparent rounded-md"
-                            type="decimal"
+                            inputmode="decimal"
+                            type="text"
+                            minlength="1"
+                            maxlength="79"
+                            pattern="^[0-9]*[.,]?[0-9]*$"
                             placeholder="Enter Target Price"
-                            min="0"
+                            class="px-3 py-2 w-full h-9 bg-transparent rounded-md"
                             prop:value=move || target_price.get()
                             on:change=move |ev| set_target_price.set(event_target_value(&ev))
                         />
@@ -548,10 +526,11 @@ pub fn AddLiquidity() -> impl IntoView {
                         </label>
                         <input
                             id="radius"
-                            class="px-3 py-1 w-full h-8 bg-transparent rounded-md"
+                            inputmode="decimal"
                             type="number"
-                            placeholder="Enter Bin Radius"
                             min="0"
+                            placeholder="Enter Bin Radius"
+                            class="px-3 py-2 w-full h-9 bg-transparent rounded-md"
                             prop:value=move || radius.get()
                             on:change=move |ev| {
                                 set_radius
@@ -565,7 +544,7 @@ pub fn AddLiquidity() -> impl IntoView {
                         </label>
                         <input
                             id="range-min"
-                            class="px-3 py-1 w-full h-8 bg-transparent rounded-md"
+                            class="px-3 py-2 w-full h-9 bg-transparent rounded-md"
                             type="decimal"
                             placeholder="Range Min"
                             disabled
@@ -584,7 +563,6 @@ pub fn AddLiquidity() -> impl IntoView {
                                 price
                             }
                         />
-                    // prop:value=move || range_min.get()
                     </div>
                     <div>
                         <label class="block mb-1 text-xs" for="range-max">
@@ -592,7 +570,7 @@ pub fn AddLiquidity() -> impl IntoView {
                         </label>
                         <input
                             id="range-max"
-                            class="px-3 py-1 w-full h-8 bg-transparent rounded-md"
+                            class="px-3 py-2 w-full h-9 bg-transparent rounded-md"
                             type="decimal"
                             placeholder="Range Max"
                             disabled
@@ -619,7 +597,7 @@ pub fn AddLiquidity() -> impl IntoView {
                         </label>
                         <input
                             id="num-bins"
-                            class="px-3 py-1 w-full h-8 bg-transparent rounded-md"
+                            class="px-3 py-2 w-full h-9 bg-transparent rounded-md"
                             type="number"
                             placeholder="Number of Bins"
                             min="0"
@@ -633,7 +611,7 @@ pub fn AddLiquidity() -> impl IntoView {
                         </label>
                         <input
                             id="pct-range"
-                            class="px-3 py-1 w-full h-8 bg-transparent rounded-md"
+                            class="px-3 py-2 w-full h-9 bg-transparent rounded-md"
                             type="decimal"
                             placeholder="Percentage Range"
                             disabled

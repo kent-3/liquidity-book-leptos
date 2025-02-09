@@ -136,7 +136,11 @@ pub fn Pool() -> impl IntoView {
 
     async fn token_symbol_convert(address: String) -> String {
         if let Some(token) = TOKEN_MAP.get(&address) {
-            return token.symbol.clone();
+            if let Some(ref display_name) = token.display_name {
+                return display_name.clone();
+            } else {
+                return token.symbol.clone();
+            }
         }
         let contract = addr_2_contract(&address).await.unwrap();
 

@@ -124,7 +124,7 @@
 
   body {
     @apply antialiased box-content h-screen;
-    @apply max-w-5xl mx-auto;
+    @apply max-w-screen-xl mx-auto;
     /* @apply dark bg-neutral-900 text-neutral-200; */
     @apply dark bg-background text-foreground;
     /* font-feature-settings: "kern"; */

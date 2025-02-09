@@ -432,24 +432,14 @@ pub fn Trade() -> impl IntoView {
                             >
                                 "Place Order"
                             </button>
-                            <div class="absolute bottom-1/2 md:bottom-full left-1/2 -translate-x-1/2 md:mb-2 px-2 py-1 z-50 translate-y-1/2 md:translate-y-0
+                            <div class="w-[100px] text-center absolute bottom-1/2 md:bottom-full left-1/2 -translate-x-1/2 md:mb-2 px-2 py-1 z-50 translate-y-1/2 md:translate-y-0
                             invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-opacity duration-100 ease-in
                             border border-solid border-border
                             bg-popover text-popover-foreground text-xs font-semibold rounded-md whitespace-nowrap">
                                 "soon"
-                            // <div class="absolute left-1/2 -translate-x-1/2 top-full -mt-1 w-2 h-2 bg-neutral-500 rotate-45"></div>
                             </div>
                         </div>
                     </div>
-
-                    // <div class="inline-flex items-center gap-0.5 mt-2 mb-4 p-[5px] bg-muted rounded-md">
-                    // <A href="manage">
-                    // <button tabindex="-1" class="py-1.5 px-3 rounded-sm bg-muted text-muted-foreground border-none h-8 w-[95px]">"Manage"</button>
-                    // </A>
-                    // <A href="analytics">
-                    // <button tabindex="-1" class="py-1.5 px-3 rounded-sm bg-muted text-muted-foreground border-none h-8 w-[95px]">"Analytics"</button>
-                    // </A>
-                    // </div>
 
                     // TODO: toggle button to show chart or something else. when that's on, switch to grid
                     // layout with grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)]
@@ -488,7 +478,7 @@ pub fn Trade() -> impl IntoView {
                                     <label class="block text-sm font-medium" for="from-token">
                                         "From"
                                     </label>
-                                    <Secret20Balance token_address=token_x.into() />
+                                    <Secret20Balance token_address=token_x />
                                 </div>
                                 <div class="flex justify-between gap-4 h-9">
                                     <input
@@ -535,7 +525,12 @@ pub fn Trade() -> impl IntoView {
                                     aria-label="change swap direction"
                                     class="inline-flex items-center justify-center rounded-full border-0 min-w-[1.5rem] h-6 p-0
                                     hover:text-primary"
-                                    on:click=move |_| alert("TODO: switch tokens")
+                                    on:click=move |_| {
+                                        let x = token_x.get();
+                                        let y = token_y.get();
+                                        set_token_x.set(y);
+                                        set_token_y.set(x);
+                                    }
                                 >
                                     <ArrowDownUp size=15 />
                                 </button>
@@ -546,7 +541,7 @@ pub fn Trade() -> impl IntoView {
                                     <label class="block text-sm font-medium" for="to-token">
                                         "To"
                                     </label>
-                                    <Secret20Balance token_address=token_y.into() />
+                                    <Secret20Balance token_address=token_y />
                                 </div>
                                 <div class="flex justify-between gap-4 h-9">
                                     <input
