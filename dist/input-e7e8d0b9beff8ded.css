@@ -3185,6 +3185,14 @@ ul {
   .sm\:pb-0 {
     padding-bottom: 0px;
   }
+
+  .sm\:pt-0 {
+    padding-top: 0px;
+  }
+
+  .sm\:pt-0\.5 {
+    padding-top: 0.125rem;
+  }
 }
 
 @media (min-width: 768px) {

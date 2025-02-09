@@ -271,6 +271,8 @@ pub fn PoolAnalytics() -> impl IntoView {
         format!("{data:?}")
     });
 
+    // TODO: make signals for delta liquidity, volume, and fees. toggle class by value.
+
     view! {
         <div class="flex flex-col gap-4">
             <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -281,7 +283,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                             <dd class="py-0.5 sm:pb-0 text-2xl font-semibold align-baseline proportional-nums">
                                 "$0.00"
                             </dd>
-                            <dd class="m-0 text-foam text-sm font-semibold">"0%"</dd>
+                            <dd class="sm:pt-0.5 text-foam text-sm font-semibold">"0%"</dd>
                         </div>
                     </dl>
                 </div>
@@ -292,7 +294,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                             <dd class="py-0.5 sm:pb-0 text-2xl font-semibold align-baseline proportional-nums">
                                 "$0.00"
                             </dd>
-                            <dd class="m-0 text-rose text-sm font-semibold">"0%"</dd>
+                            <dd class="sm:pt-0.5 text-rose text-sm font-semibold">"0%"</dd>
                         </div>
                     </dl>
                 </div>
@@ -303,7 +305,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                             <dd class="py-0.5 sm:pb-0 text-2xl font-semibold align-baseline proportional-nums">
                                 "$0.00"
                             </dd>
-                            <dd class="m-0 text-rose text-sm font-semibold">"0%"</dd>
+                            <dd class="sm:pt-0.5 text-rose text-sm font-semibold">"0%"</dd>
                         </div>
                     </dl>
                 </div>
