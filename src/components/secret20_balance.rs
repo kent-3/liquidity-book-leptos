@@ -30,7 +30,6 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
             .map(|t| t.symbol)
     };
 
-    // TODO: figure out a way to re-check for the viewing key after it's been set
     let suggest_token = Action::new_local(move |contract_address: &String| {
         let chain_id = chain_id.chain_id.get();
         let contract_address = contract_address.clone();
@@ -50,7 +49,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                 keplr.enabled.get(),
                 keplr.key.get(),
                 token_address.get(),
-                suggest_token.value().get(),
+                suggest_token.value().get(), // this will reload the resource after the token is added
             )
         },
         move |(enabled, maybe_key, maybe_contract_address, token_suggested)| {
@@ -128,6 +127,7 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                                     // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     <div class="group relative leading-none">
                                         <button
                                             on:click=move |_| {
@@ -151,6 +151,12 @@ pub fn Secret20Balance(token_address: Signal<Option<String>>) -> impl IntoView {
                         } else {
                             EitherOf4::D(
                                 view! {
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
+                                    // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"
                                     // class="p-0 inline-flex items-center gap-1 cursor-default text-ellipsis text-sm text-muted-foreground"

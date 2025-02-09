@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::{chain_query, shorten_address};
+use crate::{chain_query, display_token_amount, get_token_decimals, shorten_address};
 use ammber_sdk::contract_interfaces::lb_pair::{
     self, BinResponse, LbPair, ReservesResponse, StaticFeeParametersResponse,
 };
@@ -109,18 +109,44 @@ pub fn PoolAnalytics() -> impl IntoView {
         .expect("missing the total reserves resource context");
 
     let reserve_x = AsyncDerived::new(move || async move {
+        let decimals_x = get_token_decimals(token_x_address().as_str());
+
         let amount = total_reserves
             .await
-            .map(|r| r.reserve_x.to_string())
+            .map(|r| {
+                if let Ok(decimals) = decimals_x {
+                    let full_amount = display_token_amount(r.reserve_x.u128(), decimals);
+                    full_amount
+                        .splitn(2, '.')
+                        .next()
+                        .unwrap_or(&full_amount)
+                        .to_string()
+                } else {
+                    r.reserve_x.to_string()
+                }
+            })
             .unwrap_or(0.to_string());
         let denom = token_x_symbol.await;
 
         format!("{} {}", amount, denom)
     });
     let reserve_y = AsyncDerived::new(move || async move {
+        let decimals_y = get_token_decimals(token_y_address().as_str());
+
         let amount = total_reserves
             .await
-            .map(|r| r.reserve_y.to_string())
+            .map(|r| {
+                if let Ok(decimals) = decimals_y {
+                    let full_amount = display_token_amount(r.reserve_y.u128(), decimals);
+                    full_amount
+                        .splitn(2, '.')
+                        .next()
+                        .unwrap_or(&full_amount)
+                        .to_string()
+                } else {
+                    r.reserve_y.to_string()
+                }
+            })
             .unwrap_or(0.to_string());
         let denom = token_y_symbol.await;
 
@@ -247,91 +273,91 @@ pub fn PoolAnalytics() -> impl IntoView {
 
     view! {
         <div class="flex flex-col gap-4">
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
-                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-lg">
                     <dl class="m-0">
                         <dt class="text-sm text-muted-foreground font-medium">"Liquidity"</dt>
-                        <div class="flex flex-row items-center gap-2">
-                            <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
+                        <div class="flex items-start flex-col sm:flex-row sm:items-center sm:gap-2">
+                            <dd class="py-0.5 sm:pb-0 text-2xl font-semibold align-baseline proportional-nums">
                                 "$0.00"
                             </dd>
                             <dd class="m-0 text-foam text-sm font-semibold">"0%"</dd>
                         </div>
                     </dl>
                 </div>
-                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-lg">
                     <dl class="m-0">
                         <dt class="text-sm text-muted-foreground font-medium">"Volume (24H)"</dt>
-                        <div class="flex flex-row items-center gap-2">
-                            <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
+                        <div class="flex items-start flex-col sm:flex-row sm:items-center sm:gap-2">
+                            <dd class="py-0.5 sm:pb-0 text-2xl font-semibold align-baseline proportional-nums">
                                 "$0.00"
                             </dd>
                             <dd class="m-0 text-rose text-sm font-semibold">"0%"</dd>
                         </div>
                     </dl>
                 </div>
-                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-lg">
                     <dl class="m-0">
                         <dt class="text-sm text-muted-foreground font-medium">"Fees (24H)"</dt>
-                        <div class="flex flex-row items-center gap-2">
-                            <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
+                        <div class="flex items-start flex-col sm:flex-row sm:items-center sm:gap-2">
+                            <dd class="py-0.5 sm:pb-0 text-2xl font-semibold align-baseline proportional-nums">
                                 "$0.00"
                             </dd>
                             <dd class="m-0 text-rose text-sm font-semibold">"0%"</dd>
                         </div>
                     </dl>
                 </div>
-                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-lg">
                     <dl class="m-0">
                         <dt class="text-sm text-muted-foreground font-medium">"APR (7D)"</dt>
-                        <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
+                        <dd class="pt-0.5 text-2xl font-semibold align-baseline proportional-nums">
                             "0.00%"
                         </dd>
                     </dl>
                 </div>
-                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-lg">
                     <dl class="m-0">
                         <dt class="text-sm text-muted-foreground font-medium">
                             {move || token_x_symbol.get()} " Reserves"
                         </dt>
-                        <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
+                        <dd class="pt-0.5 text-2xl font-semibold align-baseline proportional-nums">
                             <Suspense fallback=|| {
                                 view! { "Loading..." }
                             }>{move || Suspend::new(async move { reserve_x.await })}</Suspense>
                         </dd>
                     </dl>
                 </div>
-                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-lg">
                     <dl class="m-0">
                         <dt class="text-sm text-muted-foreground font-medium">
                             {move || token_y_symbol.get()} " Reserves"
                         </dt>
-                        <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
+                        <dd class="pt-0.5 text-2xl font-semibold align-baseline proportional-nums">
                             <Suspense fallback=|| {
                                 view! { "Loading..." }
                             }>{move || Suspend::new(async move { reserve_y.await })}</Suspense>
                         </dd>
                     </dl>
                 </div>
-                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-lg">
                     <dl class="m-0">
                         <dt class="text-sm text-muted-foreground font-medium">"+2% Depth"</dt>
-                        <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
+                        <dd class="pt-0.5 text-2xl font-semibold align-baseline proportional-nums">
                             "TBD " {move || token_x_symbol.get()}
                         </dd>
                     </dl>
                 </div>
-                <div class="bg-card px-4 sm:px-8 py-4 rounded-md">
+                <div class="bg-card px-4 sm:px-8 py-4 rounded-lg">
                     <dl class="m-0">
                         <dt class="text-sm text-muted-foreground font-medium">"-2% Depth"</dt>
-                        <dd class="m-0 text-2xl font-semibold align-baseline proportional-nums">
+                        <dd class="pt-0.5 text-2xl font-semibold align-baseline proportional-nums">
                             "TBD " {move || token_y_symbol.get()}
                         </dd>
                     </dl>
                 </div>
             </div>
-            <div class="p-4 sm:p-7 bg-card rounded-md border border-solid border-border">
-                <div class="grid grid-cols-[minmax(0px,_1fr)_85px_75px] sm:grid-cols-[minmax(0px,_3fr)_minmax(0px,_1fr)_minmax(0px,_1fr)]">
+            <div class="p-4 sm:p-7 bg-card rounded-lg border border-solid border-border">
+                <div class="grid grid-cols-[minmax(0px,_1fr)_80px_80px] sm:grid-cols-[minmax(0px,_3fr)_minmax(0px,_1fr)_minmax(0px,_1fr)]">
                     <div class="flex flex-col gap-4">
                         <div class="flex flex-col items-start">
                             <p class="text-sm text-muted-foreground font-semibold m-0">"Pool"</p>
@@ -339,7 +365,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                 <p class="hidden lg:block text-base font-semibold m-0">
                                     {pool_address()}
                                 </p>
-                                <p class="block lg:hidden text-sm font-semibold m-0">
+                                <p class="block lg:hidden text-base font-semibold m-0">
                                     {shorten_address(pool_address())}
                                 </p>
                                 <div
@@ -347,7 +373,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                         let copy = copy.clone();
                                         move |_| copy(pool_address().as_str())
                                     }
-                                    class="text-muted-foreground hover:brightness-75 active:brightness-125"
+                                    class="hidden md:inline text-muted-foreground hover:brightness-75 active:brightness-125"
                                 >
                                     <Copy size=20 stroke_width=3 />
                                 </div>
@@ -372,7 +398,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                 <p class="hidden lg:block text-base font-semibold m-0">
                                     {token_x_address()}
                                 </p>
-                                <p class="block lg:hidden text-sm font-semibold m-0">
+                                <p class="block lg:hidden text-base font-semibold m-0">
                                     {shorten_address(token_x_address())}
                                 </p>
                                 <div
@@ -380,7 +406,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                         let copy = copy.clone();
                                         move |_| copy(token_x_address().as_str())
                                     }
-                                    class="text-muted-foreground hover:brightness-75 active:brightness-125"
+                                    class="hidden md:inline text-muted-foreground hover:brightness-75 active:brightness-125"
                                 >
                                     <Copy size=20 stroke_width=3 />
                                 </div>
@@ -405,7 +431,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                 <p class="hidden lg:block text-base font-semibold m-0">
                                     {token_y_address()}
                                 </p>
-                                <p class="block lg:hidden text-sm font-semibold m-0">
+                                <p class="block lg:hidden text-base font-semibold m-0">
                                     {shorten_address(token_y_address())}
                                 </p>
                                 <div
@@ -413,7 +439,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                                         let copy = copy.clone();
                                         move |_| copy(token_y_address().as_str())
                                     }
-                                    class="text-muted-foreground hover:brightness-75 active:brightness-125"
+                                    class="hidden md:inline text-muted-foreground hover:brightness-75 active:brightness-125"
                                 >
                                     <Copy size=20 stroke_width=3 />
                                 </div>
@@ -440,16 +466,12 @@ pub fn PoolAnalytics() -> impl IntoView {
                         </div>
                         // TODO: is the Version stored anywhere?
                         <div class="flex flex-col items-start">
-                            <p class="text-sm text-muted-foreground font-semibold m-0">
-                                "Pool Version"
-                            </p>
+                            <p class="text-sm text-muted-foreground font-semibold m-0">"Version"</p>
                             <p class="text-base font-semibold m-0">v2.2</p>
                         </div>
                         // TODO: I'm not sure what this means.
                         <div class="flex flex-col items-start">
-                            <p class="text-sm text-muted-foreground font-semibold m-0">
-                                "Pool Status"
-                            </p>
+                            <p class="text-sm text-muted-foreground font-semibold m-0">"Status"</p>
                             <p class="text-base font-semibold m-0">Main</p>
                         </div>
                     </div>
@@ -487,7 +509,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                     </div>
                 </div>
             </div>
-            <div class="p-4 sm:p-8 bg-card rounded-md border border-solid border-border">
+            <div class="p-4 sm:p-8 bg-card rounded-lg border border-solid border-border">
                 <div class="relative">
                     <div class="flex justify-between w-full">
                         <div class="text-xl leading-tight font-semibold text-white">

@@ -90,6 +90,27 @@
     /* --chart-4: 280 65% 60%; */
     /* --chart-5: 340 75% 55%; */
   }
+
+  /* shadcn-like theme */
+  /* .dark { */
+  /*   --background: 14.5% 0 0; */
+  /*   --foreground: 95% 0 0; */
+  /*   --card: 14.5% 0 0; */
+  /*   --card-foreground: 95% 0 0; */
+  /*   --popover: 14.5% 0 0; */
+  /*   --popover-foreground: 95% 0 0; */
+  /*   --primary: 95% 0 0; */
+  /*   --primary-foreground: 2% 0 0; */
+  /*   --secondary: 27% 0 0; */
+  /*   --secondary-foreground: 95% 0 0; */
+  /*   --muted: 27% 0 0; */
+  /*   --muted-foreground: 71% 0.01 271; */
+  /*   --accent: 78.37% 0.1587 72.99; */
+  /*   --accent-foreground: 100% 0 0; */
+  /*   --border: 27% 0 0; */
+  /*   --input: 27% 0 0; */
+  /*   --ring: 78.37% 0.1587 72.99; */
+  /* } */
 }
 
 @layer base {
@@ -182,7 +203,7 @@
 /* Base styles */
 html {
   /* scroll-behavior: smooth; */
-  /* text-rendering: optimizelegibility; */
+  text-rendering: optimizelegibility;
   /* font-family: */
   /*   Inter, */
   /*   Segoe UI, */

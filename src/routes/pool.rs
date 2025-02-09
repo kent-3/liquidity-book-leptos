@@ -316,7 +316,7 @@ pub fn Pool() -> impl IntoView {
         </div>
         // NOTE: button style changes based on aria-current
         <div class="inline-flex items-center gap-0.5 my-4 p-[5px] bg-muted rounded-md">
-            <A href="manage">
+            <A href="manage/add">
                 <button
                     tabindex="-1"
                     class="py-1.5 px-3 rounded-sm bg-muted text-muted-foreground border-none h-8 w-[95px]"

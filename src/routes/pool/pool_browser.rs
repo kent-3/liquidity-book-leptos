@@ -83,7 +83,7 @@ pub fn PoolBrowser() -> impl IntoView {
                                 <a
                                     class="no-underline hover:!no-underline"
                                     href=format!(
-                                        "/liquidity-book-leptos/pool/{}/{}/{}/manage",
+                                        "/liquidity-book-leptos/pool/{}/{}/{}/manage/add",
                                         match n.token_x {
                                             TokenType::CustomToken { ref contract_addr, .. } => {
                                                 contract_addr.to_string()
@@ -174,7 +174,7 @@ pub fn PoolBrowser() -> impl IntoView {
                                                     <a
                                                         class="no-underline text-white"
                                                         href=format!(
-                                                            "/liquidity-book-leptos/pool/{}/{}/{}/manage",
+                                                            "/liquidity-book-leptos/pool/{}/{}/{}/manage/add",
                                                             match n.token_x {
                                                                 TokenType::CustomToken { ref contract_addr, .. } => {
                                                                     contract_addr.to_string()

@@ -80,22 +80,24 @@ pub fn Trade() -> impl IntoView {
     let (token_x, set_token_x) = query_signal_with_options::<String>("from", nav_options.clone());
     let (token_y, set_token_y) = query_signal_with_options::<String>("to", nav_options.clone());
 
-    let token_x_info = move || token_x.get().and_then(|ref address| TOKEN_MAP.get(address));
-    let token_y_info = move || token_y.get().and_then(|ref address| TOKEN_MAP.get(address));
+    let token_x_info =
+        Signal::derive(move || token_x.get().and_then(|ref address| TOKEN_MAP.get(address)));
+    let token_y_info =
+        Signal::derive(move || token_y.get().and_then(|ref address| TOKEN_MAP.get(address)));
 
     let (amount_x, set_amount_x) = signal(String::default());
     let (amount_y, set_amount_y) = signal(String::default());
     let (swap_for_y, set_swap_for_y) = signal(true);
 
+    // slippage is in basis points. smallest supported slippage = 0.01%
     let (slippage, set_slippage, _) = use_local_storage::<u16, FromToStringCodec>("swap_slippage");
-    let (deadline, set_deadline, _) =
-        use_local_storage::<String, FromToStringCodec>("swap_deadline");
+    let (deadline, set_deadline, _) = use_local_storage::<u64, FromToStringCodec>("swap_deadline");
 
     if slippage.get() == 0 {
-        set_slippage.set(50);
+        set_slippage.set(50u16);
     }
-    if deadline.get().is_empty() {
-        set_deadline.set("5".to_string());
+    if deadline.get() == 0 {
+        set_deadline.set(5u64);
     }
 
     // TODO: come up with cool keyboard shortcuts
@@ -203,20 +205,20 @@ pub fn Trade() -> impl IntoView {
     );
 
     let handle_quote = move |_| {
-        _ = get_quote.dispatch((
-            token_x.get().unwrap(),
-            token_y.get().unwrap(),
-            amount_x.get(),
-        ))
+        let (Some(token_x), Some(token_y)) = (token_x.get(), token_y.get()) else {
+            return;
+        };
+        _ = get_quote.dispatch((token_x, token_y, amount_x.get()))
     };
 
+    // Updates the amount_y input whenever the quote changes
     Effect::new(move || {
         if let Some(Ok(quote)) = get_quote.value().get() {
             if let Some(amount_out) = quote.amounts.last() {
-                set_amount_y.set(display_token_amount(
-                    amount_out.u128(),
-                    token_y_info().unwrap().decimals,
-                ))
+                if let Some(token_info) = token_y_info.get() {
+                    let amount = display_token_amount(amount_out.u128(), token_info.decimals);
+                    set_amount_y.set(amount);
+                }
             }
         }
     });
@@ -226,7 +228,7 @@ pub fn Trade() -> impl IntoView {
             .value()
             .get()
             .and_then(Result::ok)
-            .map(|quote| serde_json::to_string_pretty(&quote).unwrap())
+            .and_then(|quote| serde_json::to_string_pretty(&quote).ok())
     };
 
     let path = move || {
@@ -241,7 +243,7 @@ pub fn Trade() -> impl IntoView {
             })
     };
 
-    // TODO: how will we recheck the balances after a successful swap?
+    // TODO: how will we recheck the balances after a swap?
     let swap = Action::new_local(move |quote: &Quote| {
         // TODO: Use the dynamic versions instead.
         // let url = endpoint.get();
@@ -256,8 +258,6 @@ pub fn Trade() -> impl IntoView {
                 return Err(Error::generic("Could not get key from Keplr"));
             };
 
-            // smallest supported slippage = 0.01%
-            // let slippage = ((1.0 - slippage.get().parse::<f64>()?) * 10_000.0).round() as u16;
             let slippage = 10_000 - slippage.get();
 
             let amount_in = quote
@@ -276,7 +276,7 @@ pub fn Trade() -> impl IntoView {
                 token_path: quote.route,
             };
             let to = key.bech32_address.clone();
-            let deadline = deadline.get().parse::<u64>()? * 60 + (Date::now() / 1000.0) as u64;
+            let deadline = deadline.get() * 60 + (Date::now() / 1000.0) as u64;
 
             // let wallet = Keplr::get_offline_signer_only_amino(CHAIN_ID);
             let wallet = Keplr::get_offline_signer(chain_id);
@@ -759,7 +759,7 @@ fn SwapSettings(
     dialog_ref: NodeRef<html::Dialog>,
     toggle_menu: impl Fn(ev::MouseEvent) + 'static,
     slippage: (Signal<u16>, WriteSignal<u16>),
-    deadline: (Signal<String>, WriteSignal<String>),
+    deadline: (Signal<u64>, WriteSignal<u64>),
 ) -> impl IntoView {
     info!("rendering <SettingsMenu/>");
 
@@ -837,12 +837,11 @@ fn SwapSettings(
                                             maxlength="79"
                                             type="text"
                                             pattern="^[0-9]*[.,]?[0-9]*$"
-                                            placeholder="0.5"
                                             prop:value=move || { slippage.0.get() as f64 / 100.0 }
-                                            on:input=move |ev| {
+                                            on:change=move |ev| {
                                                 let value = event_target_value(&ev)
                                                     .parse::<f64>()
-                                                    .unwrap_or_default();
+                                                    .unwrap_or(0.5);
                                                 let value = (value * 100.0).round() as u16;
                                                 slippage.1.set(value)
                                             }
@@ -865,8 +864,13 @@ fn SwapSettings(
                                         maxlength="79"
                                         type="text"
                                         pattern="^[0-9]*[.,]?[0-9]*$"
-                                        placeholder="10"
-                                        bind:value=deadline
+                                        prop:value=move || { deadline.0.get() }
+                                        on:change=move |ev| {
+                                            let value = event_target_value(&ev)
+                                                .parse::<u64>()
+                                                .unwrap_or(5u64);
+                                            deadline.1.set(value)
+                                        }
                                     />
                                     <div class="absolute right-0 top-0 min-w-fit h-8 mr-4 z-[2] flex items-center justify-center text-sm text-popover-foreground">
                                         "minutes"

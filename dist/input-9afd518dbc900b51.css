@@ -488,6 +488,46 @@ video {
 
 /* amber theme */
 
+/* shadcn-like theme */
+
+/* .dark { */
+
+/*   --background: 14.5% 0 0; */
+
+/*   --foreground: 95% 0 0; */
+
+/*   --card: 14.5% 0 0; */
+
+/*   --card-foreground: 95% 0 0; */
+
+/*   --popover: 14.5% 0 0; */
+
+/*   --popover-foreground: 95% 0 0; */
+
+/*   --primary: 95% 0 0; */
+
+/*   --primary-foreground: 2% 0 0; */
+
+/*   --secondary: 27% 0 0; */
+
+/*   --secondary-foreground: 95% 0 0; */
+
+/*   --muted: 27% 0 0; */
+
+/*   --muted-foreground: 71% 0.01 271; */
+
+/*   --accent: 78.37% 0.1587 72.99; */
+
+/*   --accent-foreground: 100% 0 0; */
+
+/*   --border: 27% 0 0; */
+
+/*   --input: 27% 0 0; */
+
+/*   --ring: 78.37% 0.1587 72.99; */
+
+/* } */
+
 * {
   border-color: oklch(var(--border));
 }
@@ -1390,8 +1430,8 @@ h3 {
   grid-template-columns: minmax(0px,7fr) minmax(0px,5fr);
 }
 
-.grid-cols-\[minmax\(0px\2c _1fr\)_85px_75px\] {
-  grid-template-columns: minmax(0px, 1fr) 85px 75px;
+.grid-cols-\[minmax\(0px\2c _1fr\)_80px_80px\] {
+  grid-template-columns: minmax(0px, 1fr) 80px 80px;
 }
 
 .grid-rows-2 {
@@ -1812,6 +1852,14 @@ h3 {
   padding-left: 1rem;
 }
 
+.pt-0 {
+  padding-top: 0px;
+}
+
+.pt-0\.5 {
+  padding-top: 0.125rem;
+}
+
 .pt-2 {
   padding-top: 0.5rem;
 }
@@ -2151,7 +2199,7 @@ h3 {
 
 html {
   /* scroll-behavior: smooth; */
-  /* text-rendering: optimizelegibility; */
+  text-rendering: optimizelegibility;
   /* font-family: */
   /*   Inter, */
   /*   Segoe UI, */
@@ -3121,6 +3169,18 @@ ul {
     grid-template-rows: repeat(1, minmax(0, 1fr));
   }
 
+  .sm\:flex-row {
+    flex-direction: row;
+  }
+
+  .sm\:items-center {
+    align-items: center;
+  }
+
+  .sm\:gap-2 {
+    gap: 0.5rem;
+  }
+
   .sm\:p-7 {
     padding: 1.75rem;
   }
@@ -3132,6 +3192,10 @@ ul {
   .sm\:px-8 {
     padding-left: 2rem;
     padding-right: 2rem;
+  }
+
+  .sm\:pb-0 {
+    padding-bottom: 0px;
   }
 }
 
@@ -3154,6 +3218,10 @@ ul {
 
   .md\:block {
     display: block;
+  }
+
+  .md\:inline {
+    display: inline;
   }
 
   .md\:hidden {
@@ -3179,10 +3247,6 @@ ul {
 
   .md\:items-center {
     align-items: center;
-  }
-
-  .md\:gap-4 {
-    gap: 1rem;
   }
 
   .md\:pl-4 {
