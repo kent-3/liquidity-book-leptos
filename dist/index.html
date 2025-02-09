@@ -9,7 +9,7 @@
     
     <!-- <link data-trunk rel="copy-file" href="/manifest.json" /> -->
     
-<script type="module" nonce="7UtYiv97CTFm47NTrkdb4Q==">
+<script type="module" nonce="icUgfwTj/ThACY9Ze7J5Kg==">
 import init, * as bindings from 'https://kent-3.github.io/liquidity-book-leptos/liquidity-book-leptos-b23c1f194978129f.js';
 const wasm = await init({ module_or_path: 'https://kent-3.github.io/liquidity-book-leptos/liquidity-book-leptos-b23c1f194978129f_bg.wasm' });
 
@@ -104,6 +104,17 @@ dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
   </style>
 
   <body>
+    <script>
+      (function () {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect != location.href) {
+          history.replaceState(null, null, redirect);
+        } else {
+        }
+      })();
+    </script>
+
     <div
       id="elementToRemove"
       class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 overflow-hidden bg-neutral-400 bg-opacity-50 dark:bg-neutral-900 dark:bg-opacity-50"

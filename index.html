@@ -93,6 +93,17 @@
   </style>
 
   <body>
+    <script>
+      (function () {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect != location.href) {
+          history.replaceState(null, null, redirect);
+        } else {
+        }
+      })();
+    </script>
+
     <div
       id="elementToRemove"
       class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-2 overflow-hidden bg-neutral-400 bg-opacity-50 dark:bg-neutral-900 dark:bg-opacity-50"
