@@ -675,6 +675,21 @@ input,
   border-color: oklch(var(--border));
 }
 
+input:hover,
+  select:hover {
+  border-color: oklch(1 0 0 / 0.24);
+}
+
+input,
+  select {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
 input:focus-visible,
   select:focus-visible {
   border-color: transparent;
