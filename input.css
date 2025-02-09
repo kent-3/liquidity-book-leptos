@@ -149,6 +149,8 @@
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
     @apply p-1 leading-tight bg-input placeholder:text-muted-foreground rounded-xs;
     @apply border border-solid border-border;
+    @apply hover:border-[oklch(1_0_0_/_0.24)];
+    @apply transition-all ease-standard duration-200 outline-none;
     @apply focus-visible:outline-none focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-ring;
   }
 
