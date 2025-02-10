@@ -8,6 +8,7 @@ use ammber_sdk::{
 };
 use cosmwasm_std::Addr;
 use keplr::Keplr;
+use leptos::html;
 use leptos::prelude::*;
 use liquidity_book::core::TokenType;
 use lucide_leptos::ArrowLeft;
@@ -165,6 +166,18 @@ pub fn PoolCreator() -> impl IntoView {
         create_lb_pair.dispatch(());
     };
 
+    let form_node_ref = NodeRef::<html::Form>::new();
+
+    // TODO: how to check this continually? it only runs once. I think i would need a node_ref for
+    // the button, and set the form on:input to check_validity and update the button.disabled state
+    // Effect::new(move || {
+    //     let disabled = form_node_ref
+    //         .get()
+    //         .map(|form| !form.check_validity())
+    //         .unwrap_or(true);
+    //     debug!("{disabled}");
+    // });
+
     view! {
         <a
             href="/liquidity-book-leptos/pool"
@@ -173,103 +186,127 @@ pub fn PoolCreator() -> impl IntoView {
             <ArrowLeft size=14 />
             "Back to pools list"
         </a>
-        <div class="py-3 text-3xl font-bold text-center">"Create New Pool"</div>
-        <form class="container max-w-xs space-y-4 py-1 mx-auto" on:submit=create_pair_handler>
-            <label class="block">
-                <span class="mb-1 block">"Select Token"</span>
-                <select
-                    class="block p-1 font-bold w-full box-border max-w-xs"
-                    name="token_x"
-                    title="Select Token"
-                    on:input=move |ev| set_token_x.set(event_target_value(&ev))
-                >
-                    <option value="AMBER">"AMBER"</option>
-                    <option value="SHD">"SHD"</option>
-                    <option value="STKDSCRT">"stkd-SCRT"</option>
-                </select>
-            </label>
-            <label class="block">
-                <span class="mb-1 block">"Select Quote Asset"</span>
-                <select
-                    class="block p-1 font-bold w-full box-border max-w-xs"
-                    name="token_y"
-                    title="Select Quote Asset"
-                    on:input=move |ev| set_token_y.set(event_target_value(&ev))
-                >
-                    <option value="SSCRT">"sSCRT"</option>
-                    <option value="STKDSCRT">"stkd-SCRT"</option>
-                    <option value="SNOBLEUSDC">"sUSDC"</option>
-                </select>
-            </label>
-            <label class="block">
-                <span class="mb-1 block">"Select Bin Step"</span>
-                <div class="block box-border font-semibold w-full max-w-xs space-x-4">
-                    <label class="cursor-pointer space-x-2">
-                        <input
-                            class="align-middle"
-                            type="radio"
-                            name="binStep"
-                            value=10
-                            on:input=move |ev| {
-                                set_bin_step.set(event_target_value(&ev).parse().unwrap())
-                            }
-                        />
-                        <span class="align-middle">"0.1%"</span>
-                    </label>
-                    <label class="cursor-pointer space-x-2">
-                        <input
-                            class="align-middle"
-                            type="radio"
-                            name="binStep"
-                            value=25
-                            on:input=move |ev| {
-                                set_bin_step.set(event_target_value(&ev).parse().unwrap())
-                            }
-                        />
-                        <span class="align-middle">"0.25%"</span>
-                    </label>
-                    <label class="cursor-pointer space-x-2">
-                        <input
-                            class="align-middle"
-                            type="radio"
-                            name="binStep"
-                            value=50
-                            on:input=move |ev| {
-                                set_bin_step.set(event_target_value(&ev).parse().unwrap())
-                            }
-                        />
-                        <span class="align-middle">"0.5%"</span>
-                    </label>
-                    <label class="cursor-pointer space-x-2">
-                        <input
-                            class="align-middle"
-                            type="radio"
-                            name="binStep"
-                            value=100
-                            on:input=move |ev| {
-                                set_bin_step.set(event_target_value(&ev).parse().unwrap())
-                            }
-                        />
-                        <span class="align-middle">"1%"</span>
-                    </label>
+
+        <form
+            node_ref=form_node_ref
+            class="max-w-sm mx-auto mt-8 sm:mt-12 bg-card border rounded-lg shadow-sm"
+            on:submit=create_pair_handler
+        >
+
+            // card header
+            <div class="p-6 flex flex-col items-center justify-center">
+                <div class="text-2xl font-bold text-center">"Create New Pool"</div>
+            </div>
+
+            // card body
+            <div class="p-6 pt-0 flex flex-col items-center justify-center gap-6">
+                <div class="flex flex-col gap-2 w-full">
+                    <select
+                        required
+                        class="px-3 py-2 h-9 text-sm font-medium bg-transparent text-white rounded-md"
+                        name="token_x"
+                        title="Select Token"
+                        on:input=move |ev| set_token_x.set(event_target_value(&ev))
+                    >
+                        <option value="" selected>
+                            "Select Token"
+                        </option>
+                        <option value="AMBER">"AMBER"</option>
+                        <option value="SHD">"SHD"</option>
+                        <option value="STKDSCRT">"stkd-SCRT"</option>
+                    </select>
+                    <select
+                        required
+                        class="px-3 py-2 h-9 text-sm font-medium bg-transparent text-white rounded-md"
+                        name="token_y"
+                        title="Select Quote Asset"
+                        on:input=move |ev| set_token_y.set(event_target_value(&ev))
+                    >
+                        <option value="" selected>
+                            "Select Quote Asset"
+                        </option>
+                        <option value="SSCRT">"sSCRT"</option>
+                        <option value="STKDSCRT">"stkd-SCRT"</option>
+                        <option value="SNOBLEUSDC">"sUSDC"</option>
+                    </select>
                 </div>
-            </label>
-            <label class="block">
-                <span class="mb-1 block">"Enter Active Price"</span>
-                <input
-                    name="active_price"
-                    class="block p-1 font-bold w-full max-w-xs box-border"
-                    type="number"
-                    inputmode="decimal"
-                    min="0"
-                    placeholder="0.0"
-                    title="Enter Active Price"
-                    on:input=move |ev| set_active_price.set(event_target_value(&ev))
-                />
-            </label>
-            <button class="w-full py-3 px-6 !mt-6 bg-primary text-primary-foreground text-sm rounded-md">
-                Create Pool
-            </button>
+                <div class="flex flex-col gap-2 w-full font-medium">
+                    <p class="text-sm font-medium">"Bin Step"</p>
+                    <div class="flex flex-row justify-between w-full">
+                        <label class="leading-none cursor-pointer space-x-2">
+                            <input
+                                class="align-middle w-4 h-4"
+                                type="radio"
+                                name="binStep"
+                                value=10
+                                on:input=move |ev| {
+                                    set_bin_step.set(event_target_value(&ev).parse().unwrap())
+                                }
+                            />
+                            <span class="text-sm">"0.1%"</span>
+                        </label>
+                        <label class="leading-none cursor-pointer space-x-2">
+                            <input
+                                class="align-middle w-4 h-4"
+                                type="radio"
+                                name="binStep"
+                                value=25
+                                on:input=move |ev| {
+                                    set_bin_step.set(event_target_value(&ev).parse().unwrap())
+                                }
+                            />
+                            <span class="text-sm">"0.25%"</span>
+                        </label>
+                        <label class="leading-none cursor-pointer space-x-2">
+                            <input
+                                class="align-middle w-4 h-4"
+                                type="radio"
+                                name="binStep"
+                                value=50
+                                on:input=move |ev| {
+                                    set_bin_step.set(event_target_value(&ev).parse().unwrap())
+                                }
+                            />
+                            <span class="text-sm">"0.5%"</span>
+                        </label>
+                        <label class="leading-none cursor-pointer space-x-2">
+                            <input
+                                class="align-middle w-4 h-4"
+                                type="radio"
+                                name="binStep"
+                                value=100
+                                on:input=move |ev| {
+                                    set_bin_step.set(event_target_value(&ev).parse().unwrap())
+                                }
+                            />
+                            <span class="text-sm">"1.0%"</span>
+                        </label>
+                    </div>
+                </div>
+                <label class="flex flex-col gap-2 w-full font-medium">
+                    <p class="text-sm">"Active Price"</p>
+                    <input
+                        required
+                        name="active_price"
+                        title="Enter Active Price"
+                        type="number"
+                        inputmode="decimal"
+                        min="0"
+                        placeholder="0.0"
+                        class="px-3 py-2 h-9 text-sm font-medium bg-transparent text-white rounded-md"
+                        on:input=move |ev| set_active_price.set(event_target_value(&ev))
+                    />
+                </label>
+
+                <button
+                    type="submit"
+                    class="w-full px-3 h-10 bg-primary text-primary-foreground text-sm rounded-md border-none"
+                    disabled=move || { !keplr.enabled.get() }
+                >
+                    Create Pool
+                </button>
+            </div>
+
         </form>
     }
 }
