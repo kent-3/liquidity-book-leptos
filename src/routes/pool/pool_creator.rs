@@ -211,9 +211,10 @@ pub fn PoolCreator() -> impl IntoView {
                         <option value="" selected>
                             "Select Token"
                         </option>
-                        <option value="AMBER">"AMBER"</option>
-                        <option value="SHD">"SHD"</option>
-                        <option value="STKDSCRT">"stkd-SCRT"</option>
+                        <option value=SYMBOL_TO_ADDR.get("SSCRT")>"sSCRT"</option>
+                        <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
+                        <option value=SYMBOL_TO_ADDR.get("AMBER")>"AMBER"</option>
+                        <option value=SYMBOL_TO_ADDR.get("SHD")>"SHD"</option>
                     </select>
                     <select
                         required
@@ -225,9 +226,9 @@ pub fn PoolCreator() -> impl IntoView {
                         <option value="" selected>
                             "Select Quote Asset"
                         </option>
-                        <option value="SSCRT">"sSCRT"</option>
-                        <option value="STKDSCRT">"stkd-SCRT"</option>
-                        <option value="SNOBLEUSDC">"sUSDC"</option>
+                        <option value=SYMBOL_TO_ADDR.get("SSCRT")>"sSCRT"</option>
+                        <option value=SYMBOL_TO_ADDR.get("STKDSCRT")>"stkd-SCRT"</option>
+                        <option value=SYMBOL_TO_ADDR.get("SNOBLEUSDC")>"USDC.nbl"</option>
                     </select>
                 </div>
                 <div class="flex flex-col gap-2 w-full font-medium">
