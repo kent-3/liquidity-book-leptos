@@ -447,6 +447,8 @@ pub fn Trade() -> impl IntoView {
                     // <pre class="px-2 text-xs whitespace-pre-wrap text-neutral-300">{current_quote}</pre>
                     // </div>
 
+                <figure class="flex relative flex-col">
+                    // <section class="img-bg absolute inset-0 w-full h-full bg-primary" />
                     // Main swap box
                     <div class="row-start-1 md:row-auto rounded-lg shadow-sm
                     bg-card text-card-foreground border border-solid border-border">
@@ -630,6 +632,7 @@ pub fn Trade() -> impl IntoView {
                             </button>
                         </div>
                     </div>
+                </figure>
                 </div>
             </div>
         </div>

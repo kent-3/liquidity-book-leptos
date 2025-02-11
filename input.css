@@ -370,17 +370,62 @@ nav a {
   }
 }
 
-.background-image {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background:
-    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-    url("images/mountains2.webp") center / cover no-repeat fixed;
-  z-index: -1;
+/* NOTE: full page background */
+
+/* #background { */
+/*   position: fixed; */
+/*   top: 0; */
+/*   left: 0; */
+/*   width: 100%; */
+/*   height: 100%; */
+/*   z-index: -1; */
+/*   background-image: radial-gradient(circle at 76% -20%, */
+/*       hsla(37, 86%, 61%, 0.2) 0px, */
+/*       transparent 50%), */
+/*     radial-gradient(circle at 20% 120%, */
+/*       hsla(218, 13%, 53%, 0.3) 0px, */
+/*       transparent 50%); */
+/*   background-attachment: fixed; */
+/*   background-position: center; */
+/*   background-repeat: no-repeat; */
+/*   background-size: cover; */
+/* background: */
+/*   linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), */
+/*   url("images/mountains2.webp") center / cover no-repeat fixed; */
+/* } */
+
+/* NOTE: glow effect behind something */
+
+.img-bg {
+  @apply absolute z-[-1] overflow-hidden rounded-full blur-[50px] scale-125 opacity-50 transition-all;
+  /* animation: */
+  /*   pulse 5s cubic-bezier(0, 0, 0, 0.5) infinite, */
+  /*   glow 5s linear infinite; */
 }
+
+/* @keyframes glow { */
+/*   0% { */
+/*     @apply bg-gold opacity-50; */
+/*   } */
+/**/
+/*   33% { */
+/*     @apply bg-[#798498] opacity-50; */
+/*   } */
+/**/
+/*   66% { */
+/*     @apply bg-iris opacity-50; */
+/*   } */
+/**/
+/*   100% { */
+/*     @apply bg-gold opacity-50; */
+/*   } */
+/* } */
+/**/
+/* @keyframes pulse { */
+/*   50% { */
+/*     transform: scale(1.05); */
+/*   } */
+/* } */
 
 /* Light mode styles */
 @media (prefers-color-scheme: light) {
