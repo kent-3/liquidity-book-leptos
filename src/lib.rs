@@ -395,7 +395,7 @@ pub fn App() -> impl IntoView {
                 <div class="p-4 flex justify-between items-center border-b">
                     <div class="flex flex-row items-center gap-4">
                         <img
-                            src="/icons/logo-2.png"
+                            src="/liquidity-book-leptos/icons/logo-2.png"
                             class="h-8 hover:rotate-3 transition-transform duration-300 cursor-default"
                         />
                         // <div
