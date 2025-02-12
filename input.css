@@ -125,6 +125,7 @@
   body {
     @apply antialiased box-content h-screen;
     @apply max-w-screen-xl mx-auto;
+    @apply flex flex-col;
     /* @apply dark bg-neutral-900 text-neutral-200; */
     @apply dark bg-background text-foreground;
     /* font-feature-settings: "kern"; */
@@ -372,27 +373,19 @@ nav a {
 
 /* NOTE: full page background */
 
-/* #background { */
-/*   position: fixed; */
-/*   top: 0; */
-/*   left: 0; */
-/*   width: 100%; */
-/*   height: 100%; */
-/*   z-index: -1; */
-/*   background-image: radial-gradient(circle at 76% -20%, */
-/*       hsla(37, 86%, 61%, 0.2) 0px, */
-/*       transparent 50%), */
-/*     radial-gradient(circle at 20% 120%, */
-/*       hsla(218, 13%, 53%, 0.3) 0px, */
-/*       transparent 50%); */
-/*   background-attachment: fixed; */
-/*   background-position: center; */
-/*   background-repeat: no-repeat; */
-/*   background-size: cover; */
-/* background: */
-/*   linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), */
-/*   url("images/mountains2.webp") center / cover no-repeat fixed; */
-/* } */
+#background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background-image: url("images/Background.svg");
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
 
 /* NOTE: glow effect behind something */
 

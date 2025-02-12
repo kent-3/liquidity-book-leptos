@@ -412,13 +412,13 @@ pub fn Trade() -> impl IntoView {
 
     // TODO: figure out how to calculate this and enforce 2 decimal places
     let price_impact = RwSignal::new(2.00);
-
+    // absolute inset-0 m-auto -translate-y-[54px]
     view! {
         <LoadingModal when=swap.pending() message="Processing Transaction... (watch the console)" />
-        <div class="flex mt-2 sm:mt-12 justify-center">
+        <div class="absolute inset-0 m-auto flex items-center justify-center">
             // <div class="grid gap-4 sm:grid-cols-[minmax(0px,7fr)_minmax(0px,5fr)] grid-cols-1 grid-rows-2 sm:grid-rows-1">
             // <div class="grid gap-4 grid-cols-1 max-w-[550px] w-full">
-            <div class="grid gap-4 grid-cols-1 max-w-sm">
+            <div class="grid gap-4 grid-cols-1 max-w-sm md:-translate-y-[54px]">
                 <div class="flex flex-col space-y-3">
                     // buttons above the main swap box
                     <div class="flex items-center justify-evenly gap-0.5 p-[5px] bg-muted rounded-md">
@@ -447,8 +447,6 @@ pub fn Trade() -> impl IntoView {
                     // <pre class="px-2 text-xs whitespace-pre-wrap text-neutral-300">{current_quote}</pre>
                     // </div>
 
-                <figure class="flex relative flex-col">
-                    // <section class="img-bg absolute inset-0 w-full h-full bg-primary" />
                     // Main swap box
                     <div class="row-start-1 md:row-auto rounded-lg shadow-sm
                     bg-card text-card-foreground border border-solid border-border">
@@ -632,7 +630,6 @@ pub fn Trade() -> impl IntoView {
                             </button>
                         </div>
                     </div>
-                </figure>
                 </div>
             </div>
         </div>
