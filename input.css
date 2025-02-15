@@ -123,7 +123,7 @@
   }
 
   body {
-    @apply antialiased box-content h-screen;
+    @apply antialiased box-content min-h-[100dvh];
     @apply max-w-screen-xl mx-auto;
     @apply flex flex-col;
     /* @apply dark bg-neutral-900 text-neutral-200; */

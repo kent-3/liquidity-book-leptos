@@ -547,7 +547,7 @@ a:focus-visible {
 
 body {
   box-sizing: content-box;
-  height: 100vh;
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin-left: auto;
