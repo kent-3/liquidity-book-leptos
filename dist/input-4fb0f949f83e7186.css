@@ -1246,6 +1246,10 @@ h3 {
   height: 2.25rem;
 }
 
+.h-\[46px\] {
+  height: 46px;
+}
+
 .max-h-\[50vh\] {
   max-height: 50vh;
 }
@@ -1295,6 +1299,10 @@ h3 {
   width: 20rem;
 }
 
+.w-9 {
+  width: 2.25rem;
+}
+
 .w-\[100px\] {
   width: 100px;
 }
@@ -1305,6 +1313,10 @@ h3 {
 
 .w-\[200px\] {
   width: 200px;
+}
+
+.w-\[46px\] {
+  width: 46px;
 }
 
 .w-\[95px\] {
@@ -1340,6 +1352,11 @@ h3 {
   max-width: 550px;
 }
 
+.max-w-fit {
+  max-width: -moz-fit-content;
+  max-width: fit-content;
+}
+
 .max-w-lg {
   max-width: 32rem;
 }
@@ -1354,6 +1371,10 @@ h3 {
 
 .shrink-0 {
   flex-shrink: 0;
+}
+
+.basis-1\/2 {
+  flex-basis: 50%;
 }
 
 .border-separate {
@@ -1449,10 +1470,6 @@ h3 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.grid-cols-\[1fr_14px_1fr\] {
-  grid-template-columns: 1fr 14px 1fr;
-}
-
 .grid-cols-\[minmax\(0px\2c 7fr\)_minmax\(0px\2c 5fr\)\] {
   grid-template-columns: minmax(0px,7fr) minmax(0px,5fr);
 }
@@ -1471,6 +1488,10 @@ h3 {
 
 .flex-col {
   flex-direction: column;
+}
+
+.flex-col-reverse {
+  flex-direction: column-reverse;
 }
 
 .items-start {
@@ -1538,6 +1559,10 @@ h3 {
 
 .gap-y-2 {
   row-gap: 0.5rem;
+}
+
+.gap-y-3 {
+  row-gap: 0.75rem;
 }
 
 .space-x-2 > :not([hidden]) ~ :not([hidden]) {
@@ -2168,6 +2193,11 @@ h3 {
 
 .blur {
   --tw-blur: blur(8px);
+  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
+}
+
+.invert {
+  --tw-invert: invert(100%);
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
 }
 
@@ -3289,6 +3319,10 @@ ul {
     align-items: center;
   }
 
+  .sm\:justify-normal {
+    justify-content: normal;
+  }
+
   .sm\:gap-2 {
     gap: 0.5rem;
   }
@@ -3366,12 +3400,20 @@ ul {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .md\:grid-cols-\[1fr_14px_1fr\] {
+    grid-template-columns: 1fr 14px 1fr;
+  }
+
   .md\:flex-row {
     flex-direction: row;
   }
 
   .md\:items-center {
     align-items: center;
+  }
+
+  .md\:gap-4 {
+    gap: 1rem;
   }
 
   .md\:pl-4 {

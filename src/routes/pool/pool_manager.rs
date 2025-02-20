@@ -3,6 +3,7 @@ use crate::{
     prelude::*,
     state::*,
     support::{chain_query, ILbPair, Querier, COMPUTE_QUERIER},
+    BASE_URL,
 };
 use ammber_sdk::contract_interfaces::lb_pair::{self, BinResponse, LbPair};
 use batch_query::{
@@ -184,22 +185,20 @@ pub fn PoolManager() -> impl IntoView {
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
-    // TODO: I should provide a context here with all the pool information. that way child
-    // components like the Add/Remove liquidity ones can access it. I don't think putting the
-    // active_id as a query param in the url is a good idea (it should be updated frequently).
-
     let params = use_params_map();
     // TODO: decide on calling these a/b or x/y
     let token_a = move || {
         params
             .read()
             .get("token_a")
+            .and_then(|token_address| TOKEN_MAP.get(&token_address))
             .expect("Missing token_a URL param")
     };
     let token_b = move || {
         params
             .read()
             .get("token_b")
+            .and_then(|token_address| TOKEN_MAP.get(&token_address))
             .expect("Missing token_b URL param")
     };
     let basis_points = move || {
@@ -248,11 +247,8 @@ pub fn PoolManager() -> impl IntoView {
         .unwrap_or(address)
     }
 
-    let token_a_symbol =
-        AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_a()).await });
-
-    let token_b_symbol =
-        AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_b()).await });
+    let token_a_symbol = Signal::derive(move || token_a().symbol.clone());
+    let token_b_symbol = Signal::derive(move || token_b().symbol.clone());
 
     // TODO: how about instead, we have a contract query that can return the nearby liquidity, so
     // we don't have to mess with the complicated batch query router? That might be the purpose of
@@ -411,7 +407,7 @@ pub fn PoolManager() -> impl IntoView {
                 <div class="block w-full bg-card border-solid border rounded-lg">
                     <div class="px-6 py-4">
                         <div class="w-full">
-                            <h2 class="m-0 mb-2 text-xl">My Liquidity</h2>
+                            <h2 class="m-0 mb-2 text-base font-semibold">My Liquidity</h2>
                             // <LiquidityChart debug=debug.into() data=my_data.into() />
                             <div class="flex justify-center items-center h-48">
                                 <p class="text-muted-foreground text-sm">
@@ -425,13 +421,17 @@ pub fn PoolManager() -> impl IntoView {
                         <h3 class="m-0 mb-2 text-sm font-medium">Deposit Balance</h3>
                         <div class="flex flex-col gap-2 items-center">
                             <div class="grid grid-cols-1 gap-4 w-full">
-                                <div class="grid grid-cols-[1fr_14px_1fr] gap-4 w-full items-center">
+                                <div class="grid grid-cols-1 md:grid-cols-[1fr_14px_1fr] gap-4 w-full items-center">
                                     // token x deposit balance
-                                    <div class="flex items-center box-border px-4 py-3 h-16 border border-solid rounded-sm">
+                                    <div class="flex items-center bg-muted px-4 py-3 h-16 border border-none rounded-md">
                                         <div class="flex items-center flex-row flex-1 gap-2">
-                                            // <img class="w-8 h-8 rounded-full" src="" / >
+                                            <img
+                                                // src=move || token_a()
+                                                src=format!("{BASE_URL}{}", "/icons/amber.svg")
+                                                class="w-8 h-8 rounded-full"
+                                            />
                                             <div class="flex flex-col items-start gap-0">
-                                                <p class="m-0 text-sm box-content">
+                                                <p class="m-0 text-sm text-muted-foreground">
                                                     <b class="text-white">0</b>
                                                     " "
                                                     {move || token_a_symbol.get()}
@@ -440,13 +440,18 @@ pub fn PoolManager() -> impl IntoView {
                                             </div>
                                         </div>
                                     </div>
-                                    <Plus size=14 color="white" />
+                                    <div class="hidden md:block">
+                                        <Plus size=14 color="white" />
+                                    </div>
                                     // token y deposit balance
-                                    <div class="flex items-center box-border px-4 py-3 h-16 border border-solid rounded-sm">
+                                    <div class="flex items-center bg-muted px-4 py-3 h-16 border border-none rounded-md">
                                         <div class="flex items-center flex-row flex-1 gap-2">
-                                            // <img class="w-8 h-8 rounded-full" src="" / >
+                                            <img
+                                                src=format!("{BASE_URL}{}", "/icons/uscrt.png")
+                                                class="w-8 h-8 rounded-full"
+                                            />
                                             <div class="flex flex-col items-start gap-0">
-                                                <p class="m-0 text-sm">
+                                                <p class="m-0 text-sm text-muted-foreground">
                                                     <b class="text-white">0</b>
                                                     " "
                                                     {move || token_b_symbol.get()}
