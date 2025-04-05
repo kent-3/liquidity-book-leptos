@@ -1,15 +1,12 @@
 // #![allow(unused)]
 
 use crate::prelude::*;
-use crate::support::chain_query;
+use crate::support::{chain_batch_query, chain_query};
 use ammber_sdk::contract_interfaces::{
     lb_factory::{self, LbPairAtIndexResponse},
     lb_pair::LbPair,
 };
-use batch_query::{
-    msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
-    BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
-};
+use batch_query::{BatchItemResponseStatus, BatchQueryParams, BatchQueryParsedResponse};
 use keplr::{Keplr, Key};
 use leptos::{
     ev,
@@ -46,8 +43,8 @@ use routes::{nav::Nav, pool::*, trade::*};
 use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
 
 // TODO: configure this to be different in dev mode
-// pub static BASE_URL: &str = "";
-pub static BASE_URL: &str = "/liquidity-book-leptos";
+pub static BASE_URL: &str = "";
+// pub static BASE_URL: &str = "/liquidity-book-leptos";
 
 // TODO: If possible, use batch queries for resources. Combine the outputs in a struct
 // and use that as the return type of the Resource.
@@ -197,18 +194,10 @@ pub fn App() -> impl IntoView {
             });
         }
 
-        let batch_query_message = msg_batch_query(queries);
-
-        // TODO: change BATCH_QUERY_ROUTER to automatically know the current chain_id
-        let pairs = chain_query::<BatchQueryResponse>(
-            BATCH_QUERY_ROUTER.pulsar.code_hash.clone(),
-            BATCH_QUERY_ROUTER.pulsar.address.to_string(),
-            batch_query_message,
-        )
-        .await
-        .map(parse_batch_query)
-        .map(extract_pairs_from_batch)
-        .unwrap();
+        let pairs = chain_batch_query(queries)
+            .await
+            .map(extract_pairs_from_batch)
+            .unwrap_or_default();
 
         pairs
     }

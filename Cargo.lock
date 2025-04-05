@@ -1736,6 +1736,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
+name = "hex-literal"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bcaaec4551594c969335c98c903c1397853d4198408ea609190f420500f6be71"
+
+[[package]]
 name = "hkdf"
 version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2151,15 +2157,6 @@ checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 
 [[package]]
 name = "itertools"
-version = "0.13.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
@@ -2380,7 +2377,7 @@ dependencies = [
  "cfg-if",
  "convert_case 0.7.1",
  "html-escape",
- "itertools 0.14.0",
+ "itertools",
  "leptos_hot_reload",
  "prettyplease",
  "proc-macro-error2",
@@ -2548,7 +2545,7 @@ dependencies = [
  "ethnum",
  "futures",
  "git2",
- "hex-literal",
+ "hex-literal 1.0.0",
  "keplr",
  "keplr-sys",
  "leptos",
@@ -3006,7 +3003,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
- "itertools 0.13.0",
+ "itertools",
  "proc-macro2",
  "quote",
  "syn 2.0.96",
@@ -3116,7 +3113,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aadc7c19e3a360bf19cd595d2dc8b58ce67b9240b95a103fbc1317a8ff194237"
 dependencies = [
  "guardian",
- "itertools 0.14.0",
+ "itertools",
  "or_poisoned",
  "paste",
  "reactive_graph",
@@ -3243,7 +3240,7 @@ dependencies = [
  "derive_more",
  "getrandom",
  "hex",
- "hex-literal",
+ "hex-literal 0.4.1",
  "hkdf",
  "ibc-proto",
  "nanorand",
@@ -3573,9 +3570,9 @@ dependencies = [
 
 [[package]]
 name = "secret-toolkit-snip20"
-version = "0.10.2"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b9a75e321b8f6115c4b9045e100c34950186276815701197257361b0acfaacf"
+checksum = "cf24fa86beadfa9f4d9b767c15e172ea8e8ae27262b730541d9705808dc5cb71"
 dependencies = [
  "schemars",
  "secret-cosmwasm-std",
@@ -3597,9 +3594,9 @@ dependencies = [
 
 [[package]]
 name = "secret-toolkit-utils"
-version = "0.10.2"
+version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee464d607765ab148164b154eba2ee649bf77f2855c5c2691342f426c263704f"
+checksum = "9bd4f40764d8dc24e96a34c8e2195d4f3295b06c732a172e55b4b0c35f6772f5"
 dependencies = [
  "schemars",
  "secret-cosmwasm-std",
@@ -3639,7 +3636,7 @@ dependencies = [
  "env_logger",
  "getrandom",
  "hex",
- "hex-literal",
+ "hex-literal 0.4.1",
  "hkdf",
  "ibc-proto",
  "log",
@@ -4086,7 +4083,7 @@ dependencies = [
  "futures",
  "html-escape",
  "indexmap 2.7.1",
- "itertools 0.14.0",
+ "itertools",
  "js-sys",
  "linear-map",
  "next_tuple",

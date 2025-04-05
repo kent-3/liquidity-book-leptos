@@ -1,3 +1,6 @@
 mod query_helpers;
 
-pub use query_helpers::{chain_query, ILbFactory, ILbPair, ILbQuoter, Querier, COMPUTE_QUERIER};
+pub use query_helpers::{
+    chain_batch_query, chain_query, get_compute_querier, ILbFactory, ILbPair, ILbQuoter, Querier,
+    COMPUTE_QUERIER,
+};

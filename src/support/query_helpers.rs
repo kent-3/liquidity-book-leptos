@@ -5,6 +5,10 @@ use ammber_sdk::contract_interfaces::{
     lb_pair::{self, *},
     lb_quoter::{self, *},
 };
+use batch_query::{
+    get_batch_query_router, msg_batch_query, parse_batch_query, BatchQueryParams,
+    BatchQueryParsedResponse, BatchQueryResponse,
+};
 use cosmwasm_std::{ContractInfo, StdResult, Uint128, Uint256};
 use leptos::prelude::*;
 use liquidity_book::core::TokenType;
@@ -16,41 +20,28 @@ use std::sync::{Arc, LazyLock};
 use tonic_web_wasm_client::Client as WebWasmClient;
 use tracing::{debug, error};
 
-pub static WEB_WASM_CLIENT: LazyLock<WebWasmClient> =
-    LazyLock::new(|| WebWasmClient::new(NODE.to_string()));
-
-// used for read-only client queries
-pub static ENIGMA_UTILS: LazyLock<Arc<EnigmaUtils>> = LazyLock::new(|| {
-    if CHAIN_ID == "secretdev-1" {
-        EnigmaUtils::from_io_key(None, DEVNET_IO_PUBKEY).into()
-    } else {
-        EnigmaUtils::new(None, CHAIN_ID)
-            .expect("Failed to create EnigmaUtils")
-            .into()
-    }
-});
-
 pub static COMPUTE_QUERIER: LazyLock<ComputeQuerier<WebWasmClient, EnigmaUtils>> =
-    LazyLock::new(|| ComputeQuerier::new(WEB_WASM_CLIENT.clone(), ENIGMA_UTILS.clone()));
+    LazyLock::new(|| get_compute_querier(NODE, CHAIN_ID));
 
-pub fn compute_querier(
+pub fn get_compute_querier(
     url: impl Into<String>,
     chain_id: &str,
 ) -> ComputeQuerier<WebWasmClient, EnigmaUtils> {
-    ComputeQuerier::new(
-        WebWasmClient::new(url.into()),
+    let web_wasm_client = WebWasmClient::new(url.into());
+    let enigma_utils = if chain_id == "secretdev-1" {
+        EnigmaUtils::from_io_key(None, DEVNET_IO_PUBKEY).into()
+    } else {
         EnigmaUtils::new(None, chain_id)
             .expect("Failed to create EnigmaUtils")
-            .into(),
-    )
+            .into()
+    };
+
+    ComputeQuerier::new(web_wasm_client, enigma_utils)
 }
 
-// TODO: kinda awkward. it would be cooler to use those ILb* types but they take deps.querier. I
-// bet we could make a compatible QuerierWrapper, but that sounds advanced.
-
-// TODO: can we implement this Querier trait for something that performs the queries from the frontend?
-// use cosmwasm_std::QuerierWrapper;
-// use cosmwasm_std::Querier;
+// TODO: It would be cooler to use those same ILb* types as the contracts, but they take deps.querier.
+// I bet we could make a compatible cosmwasm_std::QuerierWrapper that performs queries from the frontend,
+// but that sounds advanced.
 
 pub trait Querier {
     async fn do_query(&self, contract: &cosmwasm_std::ContractInfo) -> Result<String, Error>;
@@ -72,10 +63,9 @@ impl<T: Serialize + Send + Sync> Querier for T {
 // TODO: Each response can be either the specific expected response struct, or any of the potential
 // error types within the contract. Figure out how to handle this.
 
-// this works somehow
 pub fn chain_query<T>(
-    code_hash: String,
-    contract_address: String,
+    code_hash: impl Into<String>,
+    contract_address: impl Into<String>,
     query: impl Serialize + Send + Sync + 'static,
 ) -> impl std::future::Future<Output = Result<T, Error>> + Send
 where
@@ -83,11 +73,39 @@ where
 {
     SendWrapper::new(async move {
         COMPUTE_QUERIER
-            .query_secret_contract(contract_address, code_hash, query)
+            .query_secret_contract(contract_address.into(), code_hash.into(), query)
             .await
             .inspect(|response| debug!("{response:?}"))
             .inspect_err(|e| error!("{e}"))
             .and_then(|response| Ok(serde_json::from_str::<T>(&response)?))
+            .map_err(Into::into)
+    })
+}
+
+pub fn chain_batch_query<T>(
+    queries: Vec<BatchQueryParams<T>>,
+) -> impl std::future::Future<Output = Result<BatchQueryParsedResponse, Error>> + Send
+where
+    T: Serialize + Send + Sync + 'static,
+{
+    // Get appropriate router based on the static CHAIN_ID
+    let router = get_batch_query_router(CHAIN_ID);
+    let batch_query = msg_batch_query(queries);
+
+    SendWrapper::new(async move {
+        COMPUTE_QUERIER
+            .query_secret_contract(
+                router.address.to_string(),
+                router.code_hash.clone(),
+                batch_query,
+            )
+            .await
+            .inspect(|response| debug!("{response:?}"))
+            .inspect_err(|e| error!("{e}"))
+            .and_then(|response| {
+                let batch_response = serde_json::from_str::<BatchQueryResponse>(&response)?;
+                Ok(parse_batch_query(batch_response))
+            })
             .map_err(Into::into)
     })
 }

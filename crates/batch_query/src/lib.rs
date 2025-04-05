@@ -36,6 +36,15 @@ pub struct BatchQueryRouter {
 // TODO: figure out how to make this better. it can't rely on a crate-wide static, now that
 // it's a separate crate.
 
+pub fn get_batch_query_router(chain_id: &str) -> &'static ContractInfo {
+    match chain_id {
+        "secretdev-1" => &BATCH_QUERY_ROUTER.localsecret,
+        "pulsar-3" => &BATCH_QUERY_ROUTER.pulsar,
+        "secret-4" => &BATCH_QUERY_ROUTER.mainnet,
+        _ => panic!("Unsupported chain ID: {}", chain_id),
+    }
+}
+
 pub static BATCH_QUERY_ROUTER: LazyLock<BatchQueryRouter> = LazyLock::new(|| {
     BatchQueryRouter {
         localsecret: ContractInfo {
