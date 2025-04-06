@@ -23,16 +23,22 @@ pub struct Token {
 pub static DEVNET_IO_PUBKEY: [u8; 32] =
     hex!("80171b6f3b84eb5975b72ca51ee86b6ae113c22938e4866e5c2300077a06cd3e");
 
-// pub static CHAIN_ID: &str = "secretdev-1";
-// pub static NODE: &str = "http://localhost:1317";
+// Compile-time configuration for chain and node details
+pub const CHAIN_ID: &'static str = if cfg!(feature = "mainnet") {
+    "secret-4"
+} else if cfg!(feature = "testnet") {
+    "pulsar-3"
+} else {
+    "secretdev-1"
+};
 
-pub static CHAIN_ID: &str = "pulsar-3";
-pub static NODE: &str = "https://pulsar.lcd.secretnodes.com";
-// pub static NODE: &str = "https://grpc.testnet.secretsaturn.net";
-
-// pub static CHAIN_ID: &str = "secret-4";
-// pub static NODE: &str = "https://lcd.mainnet.secretsaturn.net";
-// pub static NODE: &str = "https://grpc.mainnet.secretsaturn.net";
+pub const NODE: &'static str = if cfg!(feature = "mainnet") {
+    "https://lcd.mainnet.secretsaturn.net"
+} else if cfg!(feature = "testnet") {
+    "https://pulsar.lcd.secretnodes.com"
+} else {
+    "http://localhost:1317"
+};
 
 pub mod contracts {
     use crate::support::{ILbFactory, ILbQuoter};
@@ -45,22 +51,9 @@ pub mod contracts {
     // NOTE: I only need the LazyLock due to Addr::unchecked not being const... realistically we
     // shouldn't use the Addr type outside of contracts, but it's kinda pervasive.
 
-    // Extract ContractInfo statics
-    macro_rules! define_contract_static {
-        ($name:ident, $field:ident) => {
-            pub static $name: LazyLock<ContractInfo> =
-                LazyLock::new(|| get_deployed_contracts(CHAIN_ID).$field.clone());
-        };
-    }
-
-    // Define statics for specific contracts
-    // define_contract_static!(LB_QUOTER, lb_quoter);
-    define_contract_static!(LB_ROUTER, lb_router);
-    // define_contract_static!(LB_FACTORY, lb_factory);
-    // TODO: these 3 should not be needed!
-    define_contract_static!(LB_PAIR, lb_pair);
-    define_contract_static!(LB_AMBER, snip25);
-    define_contract_static!(LB_SSCRT, snip20);
+    // TODO: create a wrapper ILbRouter for this
+    pub static LB_ROUTER: LazyLock<ContractInfo> =
+        LazyLock::new(|| get_deployed_contracts(CHAIN_ID).lb_quoter.clone());
 
     pub static LB_QUOTER: LazyLock<ILbQuoter> =
         LazyLock::new(|| ILbQuoter(get_deployed_contracts(CHAIN_ID).lb_quoter.clone()));

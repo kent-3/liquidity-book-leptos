@@ -1,5 +1,6 @@
 use crate::error::Error;
 use crate::{chain_query, display_token_amount, get_token_decimals, shorten_address};
+use ammber_charts::{PoolDistributionChart, ReserveData};
 use ammber_sdk::contract_interfaces::lb_pair::{
     self, BinResponse, LbPair, ReservesResponse, StaticFeeParametersResponse,
 };
@@ -235,32 +236,16 @@ pub fn PoolAnalytics() -> impl IntoView {
             .collect()
     }
 
-    #[derive(Clone, Debug)]
-    pub struct MyData {
-        id: f64,
-        x: f64,
-        y: f64,
-    }
-
-    impl MyData {
-        fn new(id: u32, x: u128, y: u128) -> Self {
-            Self {
-                id: id as f64,
-                x: x as f64,
-                y: y as f64,
-            }
-        }
-    }
-
+    let debug = RwSignal::new(false);
     // FIXME: prevent this from running twice
     let chart_data = AsyncDerived::new(move || async move {
         debug!("gathering chart data");
         let bins = nearby_bins.await.unwrap_or_default();
 
-        let data: Vec<MyData> = bins
+        let data: Vec<ReserveData> = bins
             .iter()
             .map(|bin_response| {
-                MyData::new(
+                ReserveData::from_bin(
                     bin_response.bin_id,
                     bin_response.bin_reserve_x.u128(),
                     bin_response.bin_reserve_y.u128(),
@@ -268,7 +253,8 @@ pub fn PoolAnalytics() -> impl IntoView {
             })
             .collect();
 
-        format!("{data:?}")
+        // format!("{data:?}")
+        data
     });
 
     // TODO: make signals for delta liquidity, volume, and fees. toggle class by value.
@@ -512,26 +498,31 @@ pub fn PoolAnalytics() -> impl IntoView {
                 </div>
             </div>
             <div class="p-4 sm:p-8 bg-card rounded-lg border border-solid border-border">
-                <div class="relative">
-                    <div class="flex justify-between w-full">
-                        <div class="text-xl leading-tight font-semibold text-white">
-                            "Pool Distribution"
+                <div class="flex justify-between w-full">
+                    <div class="text-xl leading-tight font-semibold text-white">
+                        "Pool Distribution"
+                    </div>
+                    <div class="flex flex-row gap-2 items-center">
+                        <div class="flex flex-row gap-1 items-center">
+                            <div class="w-2 h-2 rounded-full bg-gold"></div>
+                            <p class="m-0">{move || token_x_symbol.get()}</p>
                         </div>
-                        <div class="flex flex-row gap-2 items-center">
-                            <div class="flex flex-row gap-1 items-center">
-                                <div class="w-2 h-2 rounded-full bg-gold"></div>
-                                <p class="m-0">{move || token_x_symbol.get()}</p>
-                            </div>
-                            <div class="flex flex-row gap-1 items-center">
-                                <div class="w-2 h-2 rounded-full bg-pine"></div>
-                                <p class="m-0">{move || token_y_symbol.get()}</p>
-                            </div>
+                        <div class="flex flex-row gap-1 items-center">
+                            <div class="w-2 h-2 rounded-full bg-pine"></div>
+                            <p class="m-0">{move || token_y_symbol.get()}</p>
                         </div>
                     </div>
+                </div>
+                <div class="flex justify-center w-full">
                     <Suspense fallback=|| {
                         view! { "Loading..." }
                     }>
-                        <div>{move || Suspend::new(async move { chart_data.await })}</div>
+                        {move || {
+                            Suspend::new(async move {
+                                let data = chart_data.await;
+                                view! { <PoolDistributionChart debug=debug.into() data=data.into() /> }
+                            })
+                        }}
                     </Suspense>
                 </div>
             </div>

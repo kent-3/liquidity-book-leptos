@@ -48,7 +48,7 @@ pub fn WalletMenu(
     let user_balance = Resource::new(
         move || keplr.key.get(),
         move |key| {
-            let client = Client::new(endpoint.get());
+            let client = Client::new(endpoint.get().to_string());
             SendWrapper::new(async move {
                 if let Some(Ok(key)) = key {
                     let bank = BankQuerier::new(client);

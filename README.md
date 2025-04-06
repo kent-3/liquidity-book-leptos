@@ -12,13 +12,6 @@ If you don’t already have it installed, you can install Trunk by running
 cargo install trunk
 ```
 
-To use nightly Rust, you can run
-
-```bash
-rustup toolchain install nightly
-rustup default nightly
-```
-
 Make sure you've added the `wasm32-unknown-unknown` target so that Rust can
 compile your code to WebAssembly to run in the browser.
 

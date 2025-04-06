@@ -549,7 +549,7 @@ pub fn SettingsMenu(
             // this means we can call`HtmlInputElement::value()`
             // to get the current value of the input
             .value();
-        endpoint.set(value);
+        endpoint.set(Box::leak(value.into_boxed_str()));
 
         let value = chain_id_input
             .get()

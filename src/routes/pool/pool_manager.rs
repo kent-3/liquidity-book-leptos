@@ -386,6 +386,8 @@ pub fn PoolManager() -> impl IntoView {
 
     // TODO: This is tough because the liquidity amounts are not useful for charting. We need to
     // figure out how many token_x and token_y the user has instead.
+    // Edit: I do think we should chart the liquidity (as in, the user's shares) but need to
+    // convert it from U256 to f64.
 
     // let my_data = Signal::derive(move || {
     //     if let Some(Ok((ids, amounts))) = my_liquidity.get().as_deref() {

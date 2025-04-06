@@ -63,7 +63,7 @@ pub fn Home() -> impl IntoView {
     let user_balance = Resource::new(
         move || keplr.key.track(),
         move |_| {
-            let client = Client::new(endpoint.get());
+            let client = Client::new(endpoint.get().to_string());
             SendWrapper::new(async move {
                 let bank = BankQuerier::new(client);
                 let key = keplr.key.await?;

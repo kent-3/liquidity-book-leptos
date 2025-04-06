@@ -438,9 +438,12 @@ pub fn Pool() -> impl IntoView {
                     </div>
 
                     <div class="relative">
-                        <button on:click=toggle_settings  class="inline-flex items-center justify-center
-                        ml-auto w-[46px] h-[46px] text-foreground
-                        rounded-md border border-solid border-border">
+                        <button
+                            on:click=toggle_settings
+                            class="inline-flex items-center justify-center
+                            ml-auto w-[46px] h-[46px] text-foreground
+                            rounded-md border border-solid border-border"
+                        >
                             <Settings2 size=18 />
                         </button>
                         <AddLiquiditySettings
@@ -540,7 +543,9 @@ fn AddLiquiditySettings(
                                             maxlength="79"
                                             type="text"
                                             pattern="^[0-9]*[.,]?[0-9]*$"
-                                            prop:value=move || { amount_slippage.0.get() as f64 / 100.0 }
+                                            prop:value=move || {
+                                                amount_slippage.0.get() as f64 / 100.0
+                                            }
                                             on:change=move |ev| {
                                                 let value = event_target_value(&ev)
                                                     .parse::<f64>()

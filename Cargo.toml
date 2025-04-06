@@ -3,6 +3,12 @@ name = "liquidity-book-leptos"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["testnet"]
+mainnet = []
+testnet = []
+devnet = []
+
 [workspace]
 members = ["crates/ammber_sdk", "crates/batch_query", "crates/keplr", "crates/charts"]
 resolver = "2"
@@ -43,7 +49,7 @@ lucide-leptos = "1.1.0"
 # Secret Network
 cosmwasm-std = { package = "secret-cosmwasm-std", version = "1.1.11" }
 secret-toolkit-snip20 = { version = "0.10.3" }
-secretrs = { version = "0.1.3", default-features = false }
+secretrs = { version = "0.1.4", default-features = false }
 rsecret = { git = "https://github.com/kent-3/secret-clients", branch = "main" }
 keplr-sys = "0.0.3"
 

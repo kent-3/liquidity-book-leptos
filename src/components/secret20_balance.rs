@@ -70,7 +70,7 @@ pub fn Secret20Balance(#[prop(into)] token_address: Signal<Option<String>>) -> i
                         .inspect_err(|err| error!("{err:?}"))
                         .map_err(|err| Error::Generic(err.to_string()))?;
                     debug!("Found viewing key for {}: {}", token.symbol, vk);
-                    query_snip20_balance(key, token.clone(), vk, endpoint).await
+                    query_snip20_balance(key, token.clone(), vk, endpoint.to_string()).await
                 }
             })
         },

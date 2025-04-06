@@ -23,13 +23,13 @@ use tracing::{debug, trace};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Endpoint {
-    pub url: RwSignal<String>,
+    pub url: RwSignal<&'static str>,
 }
 
 impl Endpoint {
     pub fn new(url: impl Into<String>) -> Self {
         Self {
-            url: RwSignal::new(url.into()),
+            url: RwSignal::new(Box::leak(url.into().into_boxed_str())),
         }
     }
 }
@@ -37,21 +37,20 @@ impl Endpoint {
 impl Default for Endpoint {
     fn default() -> Self {
         Self {
-            url: RwSignal::new(NODE.to_string()),
+            url: RwSignal::new(NODE),
         }
     }
 }
 
 impl Deref for Endpoint {
-    type Target = RwSignal<String>;
-
+    type Target = RwSignal<&'static str>;
     fn deref(&self) -> &Self::Target {
         &self.url
     }
 }
 
-impl AsRef<RwSignal<String>> for Endpoint {
-    fn as_ref(&self) -> &RwSignal<String> {
+impl AsRef<RwSignal<&'static str>> for Endpoint {
+    fn as_ref(&self) -> &RwSignal<&'static str> {
         &self.url
     }
 }

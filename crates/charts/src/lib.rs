@@ -1,16 +1,24 @@
 use leptos::prelude::*;
 use leptos_chartistry::*;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ReserveData {
+    id: f64,
     x: f64,
-    y1: f64,
-    y2: f64,
+    y: f64,
 }
 
 impl ReserveData {
-    pub fn new(x: f64, y1: f64, y2: f64) -> Self {
-        Self { x, y1, y2 }
+    pub fn new(id: f64, x: f64, y: f64) -> Self {
+        Self { id, x, y }
+    }
+
+    pub fn from_bin(id: u32, x: u128, y: u128) -> Self {
+        Self {
+            id: id as f64,
+            x: x as f64,
+            y: y as f64,
+        }
     }
 }
 
@@ -104,19 +112,19 @@ pub fn load_data() -> Signal<Vec<ReserveData>> {
 
 #[component]
 pub fn LiquidityChart(debug: Signal<bool>, data: Signal<Vec<ReserveData>>) -> impl IntoView {
-    let series = Series::new(|data: &ReserveData| data.x)
+    let series = Series::new(|data: &ReserveData| data.id)
         .with_min_y(0.00)
         .with_colours([
             Colour::from_rgb(246, 193, 119),
             Colour::from_rgb(49, 116, 143),
         ])
         .bar(
-            Bar::new(|data: &ReserveData| data.y1).with_name("Token Y"), // .with_group_gap(0.05)
-                                                                         // .with_gap(0.1),
+            Bar::new(|data: &ReserveData| data.x).with_name("Token Y"), // .with_group_gap(0.05)
+                                                                        // .with_gap(0.1),
         )
         .bar(
-            Bar::new(|data: &ReserveData| data.y2).with_name("Token X"), // .with_group_gap(0.05)
-                                                                         // .with_gap(0.1),
+            Bar::new(|data: &ReserveData| data.y).with_name("Token X"), // .with_group_gap(0.05)
+                                                                        // .with_gap(0.1),
         );
 
     view! {
@@ -130,6 +138,44 @@ pub fn LiquidityChart(debug: Signal<bool>, data: Signal<Vec<ReserveData>>) -> im
 
             // left=TickLabels::aligned_floats()
             inner=[]
+            bottom=TickLabels::aligned_floats()
+            tooltip=Tooltip::left_cursor()
+        />
+    }
+}
+
+#[component]
+pub fn PoolDistributionChart(debug: Signal<bool>, data: Signal<Vec<ReserveData>>) -> impl IntoView {
+    let series = Series::new(|data: &ReserveData| data.id)
+        .with_min_y(0.00)
+        .with_colours([
+            Colour::from_rgb(246, 193, 119),
+            Colour::from_rgb(49, 116, 143),
+        ])
+        .bar(
+            Bar::new(|data: &ReserveData| data.x).with_name("Token Y"), // .with_group_gap(0.05)
+                                                                        // .with_gap(0.1),
+        )
+        .bar(
+            Bar::new(|data: &ReserveData| data.y).with_name("Token X"), // .with_group_gap(0.05)
+                                                                        // .with_gap(0.1),
+        );
+
+    view! {
+        <Chart
+            aspect_ratio=AspectRatio::from_outer_ratio(1000.0, 200.0)
+            debug=debug
+            series=series
+            data=data
+            font_width=10.0
+            font_height=14.0
+
+            // left=TickLabels::aligned_floats()
+            inner=[
+                AxisMarker::bottom_edge().into_inner(),
+                YGuideLine::over_mouse().into_inner(),
+                XGuideLine::over_data().into_inner(),
+            ]
             bottom=TickLabels::aligned_floats()
             tooltip=Tooltip::left_cursor()
         />
