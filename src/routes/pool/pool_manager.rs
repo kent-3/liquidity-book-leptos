@@ -3,7 +3,6 @@ use crate::{
     prelude::*,
     state::*,
     support::{chain_query, ILbPair, Querier, COMPUTE_QUERIER},
-    BASE_URL,
 };
 use ammber_sdk::contract_interfaces::lb_pair::{self, BinResponse, LbPair};
 use batch_query::{
@@ -429,7 +428,7 @@ pub fn PoolManager() -> impl IntoView {
                                         <div class="flex items-center flex-row flex-1 gap-2">
                                             <img
                                                 // src=move || token_a()
-                                                src=format!("{BASE_URL}{}", "/icons/amber.svg")
+                                                src=format!("icons/amber.svg")
                                                 class="w-8 h-8 rounded-full"
                                             />
                                             <div class="flex flex-col items-start gap-0">
@@ -449,7 +448,7 @@ pub fn PoolManager() -> impl IntoView {
                                     <div class="flex items-center bg-muted px-4 py-3 h-16 border border-none rounded-md">
                                         <div class="flex items-center flex-row flex-1 gap-2">
                                             <img
-                                                src=format!("{BASE_URL}{}", "/icons/uscrt.png")
+                                                src=format!("icons/uscrt.png")
                                                 class="w-8 h-8 rounded-full"
                                             />
                                             <div class="flex flex-col items-start gap-0">

@@ -5,7 +5,7 @@ use crate::{
     state::{ChainId, Endpoint, KeplrSignals, TokenMap},
     types::Coin,
     utils::*,
-    Error, BASE_URL,
+    Error,
 };
 use keplr::Keplr;
 use leptos::{either::Either, html, logging::*, prelude::*};
@@ -159,7 +159,7 @@ pub fn WalletMenu(
                         <div class="w-8 h-8 flex items-center justify-center bg-transparent outline outline-[1.5px] outline-foam shadow-foam-glow rounded-full">
                             <img
                                 class="w-5 h-5"
-                                src=format!("{BASE_URL}{}", "/icons/SECRET_FOAM-ICON_RGB.svg")
+                                src=format!("icons/SECRET_FOAM-ICON_RGB.svg")
                             />
                         </div>
                         <div>
@@ -221,7 +221,7 @@ pub fn WalletMenu(
                     // <!-- Token Item -->
                     <div class="flex items-center justify-between px-3 py-2 rounded hover:bg-secondary">
                         <div class="flex items-center gap-3">
-                            <img src=format!("{BASE_URL}{}", "/icons/uscrt.png") class="w-6 h-6" />
+                            <img src=format!("icons/uscrt.png") class="w-6 h-6" />
                             <div>
                                 <div class="text-sm font-semibold">SCRT</div>
                                 <div class="text-xs text-muted-foreground">Secret</div>
@@ -257,7 +257,7 @@ pub fn WalletMenu(
                     // <!-- Token Item -->
                     <div class="flex items-center justify-between px-3 py-2 rounded hover:bg-secondary">
                         <div class="flex items-center gap-3">
-                            <img src=format!("{BASE_URL}{}", "/icons/amber.svg") class="w-6 h-6" />
+                            <img src=format!("icons/amber.svg") class="w-6 h-6" />
                             <div>
                                 <div class="text-sm font-semibold">AMBER</div>
                                 <div class="text-xs text-muted-foreground">Amber</div>

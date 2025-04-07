@@ -42,10 +42,6 @@ use error::Error;
 use routes::{nav::Nav, pool::*, trade::*};
 use state::{ChainId, Endpoint, KeplrSignals, TokenMap};
 
-// TODO: configure this to be different in dev mode
-// pub static BASE_URL: &str = "";
-pub static BASE_URL: &str = "/liquidity-book-leptos";
-
 // TODO: If possible, use batch queries for resources. Combine the outputs in a struct
 // and use that as the return type of the Resource.
 
@@ -384,7 +380,7 @@ pub fn App() -> impl IntoView {
                 <div class="p-4 flex justify-between items-center border-b">
                     <div class="flex flex-row items-center gap-4">
                         <img
-                            src=format!("{BASE_URL}{}", "/icons/logo-2.png")
+                            src=format!("icons/logo-2.png")
                             class="h-8 hover:rotate-3 transition-transform duration-300 cursor-default"
                         />
                         // <div

@@ -1,4 +1,3 @@
-use crate::BASE_URL;
 use ammber_sdk::utils::u128_to_string_with_precision;
 use liquidity_book::libraries::PriceHelper;
 use lucide_leptos::{Info, Settings2, X};
@@ -335,7 +334,7 @@ pub fn Pool() -> impl IntoView {
                 <div class="flex flex-row gap-x-2 items-center">
                     <div class="flex flex-row gap-x-2 items-center">
                         <img
-                            src=format!("{BASE_URL}{}", "/icons/amber.svg")
+                            src=format!("icons/amber.svg")
                             class="w-9 h-9 rounded-full"
                         />
                         <h2 class="m-0 text-white text-3xl font-bold">
@@ -347,7 +346,7 @@ pub fn Pool() -> impl IntoView {
 
                     <div class="flex flex-row gap-x-2 items-center">
                         <img
-                            src=format!("{BASE_URL}{}", "/icons/uscrt.png")
+                            src=format!("icons/uscrt.png")
                             class="w-9 h-9 rounded-full"
                         />
                         <h2 class="m-0 text-white text-3xl font-bold">
