@@ -4,10 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["testnet"]
 mainnet = []
 testnet = []
 devnet = []
+charts = []
+default = ["testnet"]
 
 [workspace]
 members = ["crates/ammber_sdk", "crates/batch_query", "crates/keplr", "crates/charts"]

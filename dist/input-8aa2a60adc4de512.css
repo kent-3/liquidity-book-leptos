@@ -1246,6 +1246,10 @@ h3 {
   height: 2.25rem;
 }
 
+.h-\[160px\] {
+  height: 160px;
+}
+
 .h-\[46px\] {
   height: 46px;
 }
@@ -2342,20 +2346,18 @@ html {
   rx: 2px;
 }
 
-._chartistry svg g g rect:hover {
-  --tw-brightness: brightness(1.5);
-  filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
-}
+/* ._chartistry svg g g rect:hover { */
+
+/*   @apply brightness-150; */
+
+/* } */
 
 ._chartistry aside table tbody tr td ._chartistry_snippet ._chartistry_taster {
   display: none;
 }
 
 ._chartistry_tick_label {
-  fill: #737373;
-  stroke: #737373;
-  --tw-text-opacity: 1;
-  color: rgb(229 229 229 / var(--tw-text-opacity));
+  fill: oklch(var(--muted-foreground));
 }
 
 ._chartistry_tooltip {
@@ -2476,6 +2478,7 @@ nav a {
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
+  transition: all 500ms ease-in-out;
 }
 
 /* NOTE: glow effect behind something */

@@ -379,7 +379,7 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Router>
-            <div id="background"></div>
+            // <div id="background"></div>
             <header class="bg-background z-40">
                 <div class="p-4 flex justify-between items-center border-b">
                     <div class="flex flex-row items-center gap-4">

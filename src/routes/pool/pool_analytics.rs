@@ -162,7 +162,7 @@ pub fn PoolAnalytics() -> impl IntoView {
             let id = active_id.await?;
             let mut ids = Vec::new();
 
-            let radius = 50;
+            let radius = 49;
 
             for i in 0..(radius * 2 + 1) {
                 let offset_id = if i < radius {
@@ -247,15 +247,53 @@ pub fn PoolAnalytics() -> impl IntoView {
             .map(|bin_response| {
                 ReserveData::from_bin(
                     bin_response.bin_id,
-                    bin_response.bin_reserve_x.u128(),
                     bin_response.bin_reserve_y.u128(),
+                    bin_response.bin_reserve_x.u128(),
                 )
             })
             .collect();
 
-        // format!("{data:?}")
+        debug!("{data:?}");
+
         data
     });
+
+    let token_labels = AsyncDerived::new(move || async move {
+        let token_x = token_x_symbol.await;
+        let token_y = token_y_symbol.await;
+
+        (token_x, token_y)
+    });
+
+    #[cfg(feature = "charts")]
+    let chart_element = view! {
+        <div class="flex justify-center w-full">
+            <Suspense fallback=|| {
+                view! { "Loading..." }
+            }>
+                {move || {
+                    Suspend::new(async move {
+                        let data = chart_data.await;
+                        let token_labels = token_labels.await;
+                        view! {
+                            <PoolDistributionChart
+                                debug=debug.into()
+                                data=data.into()
+                                token_labels=token_labels.into()
+                            />
+                        }
+                    })
+                }}
+            </Suspense>
+        </div>
+    };
+
+    #[cfg(not(feature = "charts"))]
+    let chart_element = view! {
+        <div class="flex items-center justify-center w-full h-[160px]">
+            <code>"Charts disabled"</code>
+        </div>
+    };
 
     // TODO: make signals for delta liquidity, volume, and fees. toggle class by value.
 
@@ -505,25 +543,16 @@ pub fn PoolAnalytics() -> impl IntoView {
                     <div class="flex flex-row gap-2 items-center">
                         <div class="flex flex-row gap-1 items-center">
                             <div class="w-2 h-2 rounded-full bg-gold"></div>
-                            <p class="m-0">{move || token_x_symbol.get()}</p>
+                            <p class="m-0">{move || token_y_symbol.get()}</p>
                         </div>
                         <div class="flex flex-row gap-1 items-center">
                             <div class="w-2 h-2 rounded-full bg-pine"></div>
-                            <p class="m-0">{move || token_y_symbol.get()}</p>
+                            <p class="m-0">{move || token_x_symbol.get()}</p>
                         </div>
                     </div>
                 </div>
                 <div class="flex justify-center w-full">
-                    <Suspense fallback=|| {
-                        view! { "Loading..." }
-                    }>
-                        {move || {
-                            Suspend::new(async move {
-                                let data = chart_data.await;
-                                view! { <PoolDistributionChart debug=debug.into() data=data.into() /> }
-                            })
-                        }}
-                    </Suspense>
+                    {chart_element}
                 </div>
             </div>
         </div>

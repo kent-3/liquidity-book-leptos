@@ -43,9 +43,40 @@ trunk serve --open
 To create a production version of your app:
 
 ```bash
-trunk build --release --public-url "https://kent-3.github.io/liquidity-book-leptos/"
+trunk build --features charts --release --public-url "https://kent-3.github.io/liquidity-book-leptos/"
 ```
 
 `trunk build` will create a number of build artifacts in a `dist/` directory.
 Publishing `dist` somewhere online should be all you need to deploy your app.
 This should work very similarly to deploying any JavaScript application.
+
+## Features
+
+### Chart Visualization
+
+Charts functionality is optional and gated behind the charts feature flag to optimize compilation times.
+Enable charts by adding the --features charts flag to your build or serve commands.
+
+#### Chart Development
+
+To work on charts independently from the main application:
+
+```bash
+cd crates/charts
+trunk serve --open
+```
+
+This launches a standalone development environment specifically for chart components, allowing for faster iteration and testing of chart functionality.
+The chart development server runs on 127.0.0.1:8081, enabling you to run it concurrently with the main application's development server.
+
+### Network Configuration
+
+Configure which blockchain network the application connects to using feature flags:
+
+```bash
+# For development network
+trunk serve --features devnet
+
+# With charts enabled on development network
+trunk serve --features "devnet charts"
+```

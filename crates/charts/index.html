@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ammber Charts Demo</title>
+    <link data-trunk rel="rust" data-bin="demo" data-wasm-opt="z" />
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Oxygen,
+          Ubuntu,
+          Cantarell,
+          "Open Sans",
+          "Helvetica Neue",
+          sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        background-color: #f8f9fa;
+        color: #212529;
+      }
+      h1 {
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #dee2e6;
+        padding-bottom: 0.5rem;
+      }
+      h2 {
+        margin-top: 0;
+      }
+      .chart-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+      }
+      .chart-container {
+        margin: 0 auto;
+        max-width: 1024;
+        width: 100%;
+        padding: 0 16px;
+        box-sizing: border-box;
+      }
+      .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .controls {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        justify-content: flex-end;
+      }
+      button {
+        padding: 0.5rem 1rem;
+        background-color: #4b6bfb;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #3b5bfb;
+      }
+      ._chartistry svg g g rect {
+        rx: 2px;
+      }
+      ._chartistry
+        aside
+        table
+        tbody
+        tr
+        td
+        ._chartistry_snippet
+        ._chartistry_taster {
+        display: none;
+      }
+      ._chartistry_tooltip {
+        transform: translateY(-50%) translateX(120%) !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="main"></div>
+  </body>
+</html>
