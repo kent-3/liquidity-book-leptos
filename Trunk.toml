@@ -1,6 +1,4 @@
 [serve]
+addresses = ["127.0.0.1"]
 port = 8080
-serve_base = "/liquidity-book-leptos/"
-
-[build]
-public_url = "/liquidity-book-leptos/"
+open = false
