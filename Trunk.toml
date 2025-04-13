@@ -3,4 +3,5 @@ port = 8080
 serve_base = "/liquidity-book-leptos/"
 
 [build]
+target = "app/index.html"
 public_url = "/liquidity-book-leptos/"

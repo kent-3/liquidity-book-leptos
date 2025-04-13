@@ -4,7 +4,7 @@ const defaultTheme = require("tailwindcss/defaultTheme");
 module.exports = {
   darkMode: "media", // or 'class' if you want to toggle with a class
   content: {
-    files: ["*.html", "./src/**/*.rs"],
+    files: ["./app/*.html", "./app/src/**/*.rs"],
   },
   theme: {
     extend: {

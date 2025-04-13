@@ -1,41 +1,6 @@
-[package]
-name = "liquidity-book-leptos"
-version = "0.1.0"
-edition = "2021"
-
-[features]
-mainnet = []
-testnet = []
-devnet = []
-charts = []
-default = ["testnet"]
-
 [workspace]
-members = ["crates/ammber_sdk", "crates/batch_query", "crates/keplr", "crates/charts"]
 resolver = "2"
-
-[workspace.lints.clippy]
-too_many_arguments = "allow"
-
-[profile.dev]
-# Potential to opt-in on higher optimization for our code. This may increase incremental compilation times, but will reduce binary size.
-opt-level = 0
-[profile.dev.package."*"]
-# High optimization for our dependencies. This should increase performance drastically whithout hitting our incremental compilation times.
-# This will lead to obscure error messages from third party libraries. Comment this out when experiencing a tricky bug.
-opt-level = 3
-
-[profile.release]
-opt-level = "z"
-lto = "fat"
-debug = 0
-strip = true
-codegen-units = 1
-
-[build-dependencies]
-git2 = "0.20"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+members = ["app", "crates/ammber_sdk", "crates/batch_query", "crates/keplr", "crates/charts"]
 
 [workspace.dependencies]
 # Leptos and friends
@@ -85,66 +50,11 @@ prost = { version = "0.13.5" }
 # liquidity Book
 liquidity-book = { git = "https://github.com/kent-3/liquidity-book.git" }
 
-[dependencies]
-# Workspace crates
-ammber-sdk = { path = "./crates/ammber_sdk" }
-batch-query = { path = "./crates/batch_query", package = "secret-batch-query" }
-keplr = { path = "./crates/keplr" }
-ammber-charts = { path = "./crates/charts" }
 
-# Leptos and related
-leptos = { workspace = true }
-leptos_router = { workspace = true }
-leptos_router_macro = { workspace = true }
-leptos_meta = { workspace = true }
-leptos-use = { workspace = true }
-reactive_stores = { workspace = true }
-lucide-leptos = { workspace = true }
-codee = { workspace = true }
-
-# Secret Network
-cosmwasm-std = { workspace = true }
-secret-toolkit-snip20 = { workspace = true }
-secretrs = { workspace = true }
-rsecret = { workspace = true }
-keplr-sys = { workspace = true }
-
-# Web support
-web-sys = { workspace = true }
-wasm-bindgen-futures = { workspace = true }
-send_wrapper = { workspace = true }
-serde-wasm-bindgen = { workspace = true }
-tonic-web-wasm-client = { workspace = true }
-console_error_panic_hook = { workspace = true }
-
-# Serialization
-serde = { workspace = true }
-serde_json = { workspace = true }
-serde-json-wasm = { workspace = true }
-base64 = { workspace = true }
-
-# Utilities
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true }
-tracing-subscriber-wasm = { workspace = true }
-futures = { workspace = true }
-async-trait = { workspace = true }
-thiserror = { workspace = true }
-ethnum = { workspace = true }
-hex-literal = "1.0.0"
-
-# gRPC
-tonic = { workspace = true }
-prost = { workspace = true }
-
-# Liquidity Book
-liquidity-book = { workspace = true }
-
-[patch.crates-io]
-secret-sdk-proto = { git = "https://github.com/kent-3/secret-rust", branch = "main" }
-secretrs = { git = "https://github.com/kent-3/secret-rust", branch = "main" }
-
-# Uncomment during local development
+# [patch.crates-io]
+# keplr-sys = { path = "../keplr/keplr-sys" }
+# secret-sdk-proto = { path = "../secret-rust/secret-sdk-proto/" }
+# secretrs = { path = "../secret-rust/secretrs" }
 
 # [patch."https://github.com/kent-3/secret-clients.git"]
 # rsecret = { path = "../secret-clients/rsecret" }
@@ -152,6 +62,22 @@ secretrs = { git = "https://github.com/kent-3/secret-rust", branch = "main" }
 # [patch."https://github.com/kent-3/liquidity-book.git"]
 # liquidity-book = { path = "../liquidity-book/packages/liquidity-book" }
 
-# [patch.crates-io]
-# keplr-sys = { path = "../keplr/keplr-sys" }
-# secretrs = { path = "../secret-rust/secretrs" }
+
+# Potential to opt-in on higher optimization for our code. This may increase incremental compilation times, but will reduce binary size.
+[profile.dev]
+opt-level = 0
+
+# High optimization for our dependencies. This should increase performance drastically without hitting our incremental compilation times.
+# This will lead to obscure error messages from third party libraries. Comment this out when experiencing a tricky bug.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = "z"
+debug = 0
+strip = true
+
+[workspace.lints.clippy]
+too_many_arguments = "allow"
