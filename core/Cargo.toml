@@ -7,7 +7,6 @@ edition = "2021"
 mainnet = []
 testnet = []
 devnet = []
-default = ["testnet"]
 
 [build-dependencies]
 git2 = "0.20"
@@ -21,44 +20,29 @@ batch-query.workspace = true
 keplr.workspace = true
 
 # Leptos and related
-leptos = { workspace = true }
-reactive_stores = { workspace = true }
-lucide-leptos = { workspace = true }
+leptos.workspace = true
+reactive_stores.workspace = true
 
 # Secret Network
-cosmwasm-std = { workspace = true }
-secret-toolkit-snip20 = { workspace = true }
-secretrs = { workspace = true }
-rsecret = { workspace = true }
-keplr-sys = { workspace = true }
+cosmwasm-std.workspace = true
+secretrs.workspace = true
+rsecret.workspace = true
 
 # Web support
-web-sys = { workspace = true }
-wasm-bindgen-futures = { workspace = true }
-send_wrapper = { workspace = true }
-serde-wasm-bindgen = { workspace = true }
-tonic-web-wasm-client = { workspace = true }
-console_error_panic_hook = { workspace = true }
+web-sys.workspace = true
+send_wrapper.workspace = true
+serde-wasm-bindgen.workspace = true
+tonic-web-wasm-client.workspace = true
 
 # Serialization
-serde = { workspace = true }
-serde_json = { workspace = true }
-serde-json-wasm = { workspace = true }
-base64 = { workspace = true }
+serde.workspace = true
+serde_json.workspace = true
 
 # Utilities
-tracing = { workspace = true }
-tracing-subscriber = { workspace = true }
-tracing-subscriber-wasm = { workspace = true }
-futures = { workspace = true }
-async-trait = { workspace = true }
-thiserror = { workspace = true }
-ethnum = { workspace = true }
-hex-literal = "1.0.0"
-
-# gRPC
-tonic = { workspace = true }
-prost = { workspace = true }
+tracing.workspace = true
+async-trait.workspace = true
+thiserror.workspace = true
+hex-literal.workspace = true
 
 # Liquidity Book
-liquidity-book = { workspace = true }
+liquidity-book.workspace = true
