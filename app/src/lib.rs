@@ -1,4 +1,4 @@
-// #![allow(unused)]
+#![allow(unused)]
 
 use crate::prelude::*;
 use ammber_components::{Spinner2, SuggestChains, WalletMenu};

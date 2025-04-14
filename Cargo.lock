@@ -133,10 +133,48 @@ dependencies = [
 [[package]]
 name = "ammber-feature-pool"
 version = "0.1.0"
-
-[[package]]
-name = "ammber-feature-swap"
-version = "0.1.0"
+dependencies = [
+ "ammber-charts",
+ "ammber-components",
+ "ammber-core",
+ "ammber-sdk",
+ "async-trait",
+ "base64 0.22.1",
+ "codee",
+ "console_error_panic_hook",
+ "ethnum",
+ "futures",
+ "hex-literal 1.0.0",
+ "keplr",
+ "keplr-sys",
+ "leptos",
+ "leptos-use",
+ "leptos_meta",
+ "leptos_router",
+ "leptos_router_macro",
+ "liquidity-book",
+ "lucide-leptos",
+ "prost",
+ "reactive_stores",
+ "rsecret",
+ "secret-batch-query",
+ "secret-cosmwasm-std",
+ "secret-toolkit-snip20",
+ "secretrs",
+ "send_wrapper",
+ "serde",
+ "serde-json-wasm 1.0.1",
+ "serde-wasm-bindgen 0.6.5",
+ "serde_json",
+ "thiserror 2.0.12",
+ "tonic",
+ "tonic-web-wasm-client",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-subscriber-wasm",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
 
 [[package]]
 name = "ammber-sdk"
@@ -150,6 +188,52 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
+]
+
+[[package]]
+name = "ammber-swap"
+version = "0.1.0"
+dependencies = [
+ "ammber-charts",
+ "ammber-components",
+ "ammber-core",
+ "ammber-sdk",
+ "async-trait",
+ "base64 0.22.1",
+ "codee",
+ "console_error_panic_hook",
+ "ethnum",
+ "futures",
+ "hex-literal 1.0.0",
+ "keplr",
+ "keplr-sys",
+ "leptos",
+ "leptos-use",
+ "leptos_meta",
+ "leptos_router",
+ "leptos_router_macro",
+ "liquidity-book",
+ "lucide-leptos",
+ "prost",
+ "reactive_stores",
+ "rsecret",
+ "secret-batch-query",
+ "secret-cosmwasm-std",
+ "secret-toolkit-snip20",
+ "secretrs",
+ "send_wrapper",
+ "serde",
+ "serde-json-wasm 1.0.1",
+ "serde-wasm-bindgen 0.6.5",
+ "serde_json",
+ "thiserror 2.0.12",
+ "tonic",
+ "tonic-web-wasm-client",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-subscriber-wasm",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]
@@ -2629,6 +2713,7 @@ dependencies = [
  "ammber-components",
  "ammber-core",
  "ammber-sdk",
+ "ammber-swap",
  "async-trait",
  "base64 0.22.1",
  "codee",
