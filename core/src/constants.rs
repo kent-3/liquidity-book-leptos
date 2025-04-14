@@ -1,3 +1,4 @@
+use cosmwasm_std::{Addr, ContractInfo};
 use hex_literal::hex;
 use keplr::tokens::KeplrToken;
 use serde::{Deserialize, Serialize};
@@ -6,6 +7,7 @@ use std::{
     sync::{Arc, LazyLock},
 };
 
+// TODO: add token icon url metadata
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Token {
     pub contract_address: String,
@@ -16,6 +18,15 @@ pub struct Token {
     pub display_name: Option<String>,
     pub denom: Option<String>,
     pub version: Option<String>,
+}
+
+impl From<&Token> for ContractInfo {
+    fn from(token: &Token) -> ContractInfo {
+        ContractInfo {
+            address: Addr::unchecked(token.contract_address.clone()),
+            code_hash: token.code_hash.clone(),
+        }
+    }
 }
 
 // WARN: This key is randomly generated when localsecret is started for the first time.

@@ -119,6 +119,7 @@ dependencies = [
  "rsecret",
  "secret-batch-query",
  "secret-cosmwasm-std",
+ "secret-toolkit-snip20",
  "secretrs",
  "send_wrapper",
  "serde",

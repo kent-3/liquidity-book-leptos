@@ -7,7 +7,7 @@ edition = "2021"
 mainnet = []
 testnet = ["ammber-core/testnet"]
 devnet = []
-charts = []
+charts = ["ammber-pool/charts"]
 default = ["testnet"]
 
 [dependencies]

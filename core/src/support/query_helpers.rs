@@ -18,7 +18,7 @@ use send_wrapper::SendWrapper;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::sync::{Arc, LazyLock};
 use tonic_web_wasm_client::Client as WebWasmClient;
-use tracing::{debug, error};
+use tracing::{debug, error, trace};
 
 pub static COMPUTE_QUERIER: LazyLock<ComputeQuerier<WebWasmClient, EnigmaUtils>> =
     LazyLock::new(|| get_compute_querier(NODE, CHAIN_ID));
@@ -75,7 +75,7 @@ where
         COMPUTE_QUERIER
             .query_secret_contract(contract_address.into(), code_hash.into(), query)
             .await
-            .inspect(|response| debug!("{response:?}"))
+            .inspect(|response| debug!("{response}"))
             .inspect_err(|e| error!("{e}"))
             .and_then(|response| Ok(serde_json::from_str::<T>(&response)?))
             .map_err(Into::into)
@@ -100,7 +100,7 @@ where
                 batch_query,
             )
             .await
-            .inspect(|response| debug!("{response:?}"))
+            .inspect(|response| debug!("{response}"))
             .inspect_err(|e| error!("{e}"))
             .and_then(|response| {
                 let batch_response = serde_json::from_str::<BatchQueryResponse>(&response)?;

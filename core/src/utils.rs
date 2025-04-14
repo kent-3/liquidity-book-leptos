@@ -1,7 +1,10 @@
-use crate::{error::Error, TOKEN_MAP};
+use crate::{
+    constants::Token,
+    error::Error,
+    support::{chain_query, COMPUTE_QUERIER},
+    TOKEN_MAP,
+};
 use leptos::prelude::window;
-use rsecret::query::tendermint::TendermintQuerier;
-use tonic_web_wasm_client::Client;
 
 pub fn alert(msg: impl AsRef<str>) {
     let _ = window().alert_with_message(msg.as_ref());
@@ -99,10 +102,38 @@ pub fn parse_token_amount(amount: impl AsRef<str>, decimals: impl Into<u32>) -> 
     whole_part * factor + fractional_part
 }
 
-pub async fn latest_block(tendermint: TendermintQuerier<Client>) -> Result<u64, Error> {
-    tendermint
-        .get_latest_block()
+// TODO: utilites that involve chain queries should probably go somewhere else
+
+/// Queries the chain for the code hash and token info if not in the token map.
+pub async fn addr_2_token(address: impl Into<String>) -> Token {
+    let contract_address = address.into();
+
+    if let Some(token) = TOKEN_MAP.get(&contract_address) {
+        return token.clone();
+    }
+
+    let code_hash = COMPUTE_QUERIER
+        .code_hash_by_contract_address(&contract_address)
         .await
-        .map(|block| block.header.height.value())
-        .map_err(Error::from)
+        .expect("code_hash_by_contract_address query failed");
+
+    let token_info = chain_query::<secret_toolkit_snip20::TokenInfoResponse>(
+        contract_address.clone(),
+        code_hash.clone(),
+        secret_toolkit_snip20::QueryMsg::TokenInfo {},
+    )
+    .await
+    .map(|response| response.token_info)
+    .expect("token_info query failed");
+
+    Token {
+        contract_address,
+        code_hash,
+        decimals: token_info.decimals,
+        name: token_info.name,
+        symbol: token_info.symbol,
+        display_name: None,
+        denom: None,
+        version: None,
+    }
 }

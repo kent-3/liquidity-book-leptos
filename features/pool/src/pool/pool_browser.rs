@@ -1,6 +1,4 @@
-use ammber_core::prelude::*;
-use ammber_core::support::chain_query;
-use ammber_core::Error;
+use ammber_core::{prelude::*, support::chain_query, Error};
 use ammber_sdk::contract_interfaces::lb_pair::LbPair;
 use leptos::prelude::*;
 use leptos_router::components::A;

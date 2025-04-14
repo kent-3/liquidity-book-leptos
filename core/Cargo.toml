@@ -25,6 +25,7 @@ reactive_stores.workspace = true
 
 # Secret Network
 cosmwasm-std.workspace = true
+secret-toolkit-snip20.workspace = true
 secretrs.workspace = true
 rsecret.workspace = true
 

@@ -1,3 +1,3 @@
-pub mod basic;
+pub mod coin;
 
-pub use basic::Coin;
+pub use coin::Coin;

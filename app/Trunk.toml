@@ -6,3 +6,6 @@ serve_base = "/liquidity-book-leptos/"
 target = "index.html"
 dist = "../dist/"
 public_url = "/liquidity-book-leptos/"
+
+[watch]
+watch = ["../components/", "../features/", "../core/"]

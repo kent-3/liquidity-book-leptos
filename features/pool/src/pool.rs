@@ -1,7 +1,19 @@
-use ammber_core::BASE_URL;
-use ammber_sdk::utils::u128_to_string_with_precision;
+use ammber_core::{
+    prelude::*,
+    support::{chain_query, ILbPair, COMPUTE_QUERIER},
+    Error, BASE_URL,
+};
+use ammber_sdk::{contract_interfaces::lb_pair::LbPair, utils::u128_to_string_with_precision};
+use codee::string::FromToStringCodec;
+use cosmwasm_std::{Addr, ContractInfo};
+use leptos::{ev, html, prelude::*};
+use leptos_router::{components::A, hooks::use_params_map, nested_router::Outlet};
+use leptos_use::storage::use_local_storage;
 use liquidity_book::libraries::PriceHelper;
-use lucide_leptos::{Info, Settings2, X};
+use lucide_leptos::{ArrowLeft, ExternalLink, Info, Settings2, X};
+use secret_toolkit_snip20::TokenInfoResponse;
+use send_wrapper::SendWrapper;
+use tracing::{debug, info};
 
 mod pool_analytics;
 mod pool_browser;
@@ -13,12 +25,6 @@ pub use pool_browser::PoolBrowser;
 pub use pool_creator::PoolCreator;
 pub use pool_manager::{AddLiquidity, PoolManager, RemoveLiquidity};
 
-use leptos::ev;
-use leptos::html;
-use leptos::prelude::*;
-use leptos_router::nested_router::Outlet;
-use tracing::info;
-
 #[component]
 pub fn Pools() -> impl IntoView {
     info!("rendering <Pools/>");
@@ -27,18 +33,6 @@ pub fn Pools() -> impl IntoView {
         info!("cleaning up <Pools/>");
     });
 
-    // Resources in this component can be shared with all children, so they only run once and are
-    // persistent. This is just an example:
-    // let resource = LocalResource::new(move || {
-    //     SendWrapper::new(async move {
-    //         QueryMsg::GetNumberOfLbPairs {}
-    //             .do_query(&LB_FACTORY)
-    //             .await
-    //     })
-    // });
-
-    // provide_context(resource);
-
     view! {
         <div class="pools-group">
             <Outlet />
@@ -46,31 +40,25 @@ pub fn Pools() -> impl IntoView {
     }
 }
 
+// TODO: use a single struct for pool context?
+// Currently providing all these separately:
+// token symbols, lb_pair, active_id, total_reserves, static_fee_parameters
+//
+// Flow:
+//     1) Get token addresses from the URL params
+//     2) Convert them into ContractInfo (use addr_2_token helper function)
+//     3) Query the LbPair from the given token contracts and bin step
+//         (cache this in local storage - it's not likely to ever change)
+//     4) Query the LbPair contract for the active_id, total_reserves, and static_fee_parameters
+//         (These could be batched)
+
 #[component]
 pub fn Pool() -> impl IntoView {
     info!("rendering <Pool/>");
 
-    use ammber_core::support::{chain_query, ILbPair, Querier, COMPUTE_QUERIER};
-    use ammber_core::{prelude::*, Error};
-    use ammber_sdk::contract_interfaces::lb_pair::{BinResponse, LbPair};
-    use batch_query::{
-        msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQueryParams,
-        BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
-    };
-    use codee::string::FromToStringCodec;
-    use cosmwasm_std::{Addr, ContractInfo};
-    use leptos::prelude::*;
-    use leptos_router::{components::A, hooks::use_params_map, nested_router::Outlet};
-    use leptos_use::storage::use_local_storage;
-    use lucide_leptos::{ArrowLeft, ExternalLink};
-    use secret_toolkit_snip20::TokenInfoResponse;
-    use send_wrapper::SendWrapper;
-    use serde::Serialize;
-    use tracing::{debug, info, trace};
-
-    // TODO: I should provide a context here with all the pool information. that way child
-    // components like the Add/Remove liquidity ones can access it. I don't think putting the
-    // active_id as a query param in the url is a good idea (it should be updated frequently).
+    on_cleanup(move || {
+        info!("cleaning up <Pool/>");
+    });
 
     let params = use_params_map();
     // TODO: decide on calling these a/b or x/y
@@ -100,6 +88,7 @@ pub fn Pool() -> impl IntoView {
     let (price_slippage, set_price_slippage, _) =
         use_local_storage::<u16, FromToStringCodec>("price_slippage");
 
+    // initialize local storage to default values
     if amount_slippage.get() == 0 {
         set_amount_slippage.set(50u16);
     }
@@ -149,43 +138,16 @@ pub fn Pool() -> impl IntoView {
         .unwrap_or(address)
     }
 
+    // TODO: fine for now but I should convert the address to a Token, not only the symbol
+
     let token_a_symbol =
         AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_a()).await });
 
     let token_b_symbol =
         AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_b()).await });
 
+    // TODO: this is super weird
     provide_context((token_a_symbol, token_b_symbol));
-
-    // TODO: how about instead, we have a contract query that can return the nearby liquidity, so
-    // we don't have to mess with the complicated batch query router? That might be the purpose of
-    // the LiquidityHelper contract (I haven't looked at it yet)
-
-    async fn query_nearby_bins<T: Serialize>(
-        queries: Vec<BatchQueryParams<T>>,
-    ) -> Result<Vec<BinResponse>, Error> {
-        msg_batch_query(queries)
-            .do_query(&BATCH_QUERY_ROUTER.pulsar)
-            .await
-            .inspect(|response| trace!("{:?}", response))
-            .and_then(|response| Ok(serde_json::from_str::<BatchQueryResponse>(&response)?))
-            .map(parse_batch_query)
-            .map(extract_bins_from_batch_response)
-    }
-
-    fn extract_bins_from_batch_response(
-        batch_response: BatchQueryParsedResponse,
-    ) -> Vec<BinResponse> {
-        batch_response
-            .items
-            .into_iter()
-            .filter(|item| item.status == BatchItemResponseStatus::SUCCESS)
-            .map(|item| {
-                serde_json::from_str::<BinResponse>(&item.response)
-                    .expect("Invalid BinResponse JSON")
-            })
-            .collect()
-    }
 
     // SendWrapper required due to addr_2_contract function
     let lb_pair: Resource<Result<LbPair, Error>> = Resource::new(
@@ -216,9 +178,6 @@ pub fn Pool() -> impl IntoView {
                                     &serde_json::to_string(&lb_pair).unwrap(),
                                 )
                             });
-
-                        // let _ = storage
-                        //     .set_item(&storage_key, &serde_json::to_string(&lb_pair).unwrap());
 
                         lb_pair
                     }
@@ -255,8 +214,8 @@ pub fn Pool() -> impl IntoView {
             .map(|price| u128_to_string_with_precision(price.as_u128()))
     });
 
-    provide_context(active_id);
     provide_context(lb_pair);
+    provide_context(active_id);
 
     // TODO: decide if these queries should go here or in the analytics component
     let total_reserves = Resource::new(
