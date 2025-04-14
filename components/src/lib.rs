@@ -1,5 +1,6 @@
 // #![allow(unused)]
 
+mod loading_modal;
 mod secret20_balance;
 mod secret_query;
 mod spinner;
@@ -7,6 +8,7 @@ mod spinner2;
 mod suggest_chains;
 mod user_menu;
 
+pub use loading_modal::LoadingModal;
 pub use secret20_balance::Secret20Balance;
 pub use secret_query::SecretQuery;
 pub use spinner::Spinner;
