@@ -131,7 +131,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ammber-feature-pool"
+name = "ammber-pool"
 version = "0.1.0"
 dependencies = [
  "ammber-charts",
@@ -2712,6 +2712,7 @@ dependencies = [
  "ammber-charts",
  "ammber-components",
  "ammber-core",
+ "ammber-pool",
  "ammber-sdk",
  "ammber-swap",
  "async-trait",

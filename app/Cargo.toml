@@ -15,6 +15,7 @@ default = ["testnet"]
 ammber-core.workspace = true
 ammber-components.workspace = true
 ammber-swap.workspace = true
+ammber-pool.workspace = true
 ammber-sdk.workspace = true
 batch-query.workspace = true
 keplr.workspace = true

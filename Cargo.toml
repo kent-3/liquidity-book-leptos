@@ -18,6 +18,7 @@ ammber-core = { path = "core" }
 ammber-components = { path = "components" }
 ammber-charts = { path = "crates/charts" }
 ammber-swap = { path = "features/swap" }
+ammber-pool = { path = "features/pool" }
 ammber-sdk = { path = "crates/ammber_sdk" }
 batch-query = { path = "crates/batch_query", package = "secret-batch-query" }
 keplr = { path = "crates/keplr" }
