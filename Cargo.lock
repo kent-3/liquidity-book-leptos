@@ -87,34 +87,20 @@ name = "ammber-components"
 version = "0.1.0"
 dependencies = [
  "ammber-core",
- "async-trait",
- "base64 0.22.1",
- "console_error_panic_hook",
- "ethnum",
- "futures",
- "hex-literal 1.0.0",
  "keplr",
- "keplr-sys",
  "leptos",
  "liquidity-book",
  "lucide-leptos",
- "prost",
  "rsecret",
  "secret-cosmwasm-std",
  "secret-toolkit-snip20",
  "secretrs",
  "send_wrapper",
  "serde",
- "serde-json-wasm 1.0.1",
- "serde-wasm-bindgen 0.6.5",
  "serde_json",
  "thiserror 2.0.12",
- "tonic",
  "tonic-web-wasm-client",
  "tracing",
- "tracing-subscriber",
- "tracing-subscriber-wasm",
- "wasm-bindgen-futures",
  "web-sys",
 ]
 
@@ -124,36 +110,23 @@ version = "0.1.0"
 dependencies = [
  "ammber-sdk",
  "async-trait",
- "base64 0.22.1",
- "console_error_panic_hook",
- "ethnum",
- "futures",
  "git2",
  "hex-literal 1.0.0",
  "keplr",
- "keplr-sys",
  "leptos",
  "liquidity-book",
- "lucide-leptos",
- "prost",
  "reactive_stores",
  "rsecret",
  "secret-batch-query",
  "secret-cosmwasm-std",
- "secret-toolkit-snip20",
  "secretrs",
  "send_wrapper",
  "serde",
- "serde-json-wasm 1.0.1",
  "serde-wasm-bindgen 0.6.5",
  "serde_json",
  "thiserror 2.0.12",
- "tonic",
  "tonic-web-wasm-client",
  "tracing",
- "tracing-subscriber",
- "tracing-subscriber-wasm",
- "wasm-bindgen-futures",
  "web-sys",
 ]
 
@@ -3368,7 +3341,7 @@ dependencies = [
 [[package]]
 name = "rsecret"
 version = "0.1.0"
-source = "git+https://github.com/kent-3/secret-clients?branch=main#c56d0aa642169ccb3b7113e23462a5a2ca765883"
+source = "git+https://github.com/kent-3/secret-clients#c56d0aa642169ccb3b7113e23462a5a2ca765883"
 dependencies = [
  "aes-siv",
  "async-trait",

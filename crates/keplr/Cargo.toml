@@ -3,24 +3,21 @@ name = "keplr"
 version = "0.1.0"
 edition = "2021"
 
-# TODO: eventually this should become its own crate, separate from this workspace
-
 [dependencies]
-keplr-sys = "0.0.3"
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.140"
-base64 = "0.22.1"
-thiserror = "2.0.12"
+keplr-sys.workspace = true
 
-async-trait = "0.1.88"
-send_wrapper = { version = "0.6.0", features = ["futures"] }
+cosmwasm-std.workspace = true
+secretrs.workspace = true
+rsecret.workspace = true
 
-cosmwasm-std = { package = "secret-cosmwasm-std", version = "1.1.11" }
+web-sys.workspace = true
+send_wrapper.workspace = true
+serde-wasm-bindgen.workspace = true
 
-secretrs = { version = "0.1.4" }
-rsecret = { git = "https://github.com/kent-3/secret-clients", branch = "main" } # TODO: shouldn't keplr not depend on this?
+serde.workspace = true
+serde_json.workspace = true
+base64.workspace = true
 
-serde-wasm-bindgen = "0.6.5"
-web-sys = "0.3.77"
-
-tracing = "0.1.41"
+tracing.workspace = true
+async-trait.workspace = true
+thiserror.workspace = true

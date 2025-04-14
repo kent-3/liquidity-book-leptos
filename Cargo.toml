@@ -16,10 +16,10 @@ members = [
 # Workspace crates
 ammber-core = { path = "core" }
 ammber-components = { path = "components" }
+ammber-charts = { path = "crates/charts" }
 ammber-sdk = { path = "crates/ammber_sdk" }
 batch-query = { path = "crates/batch_query", package = "secret-batch-query" }
 keplr = { path = "crates/keplr" }
-ammber-charts = { path = "crates/charts" }
 
 # Leptos and friends
 leptos = { version = "0.7.8", features = ["csr"] }
@@ -34,7 +34,7 @@ lucide-leptos = "1.1.0"
 cosmwasm-std = { package = "secret-cosmwasm-std", version = "1.1.11" }
 secret-toolkit-snip20 = { version = "0.10.3" }
 secretrs = { version = "0.1.4", default-features = false }
-rsecret = { git = "https://github.com/kent-3/secret-clients", branch = "main" }
+rsecret = { git = "https://github.com/kent-3/secret-clients" }
 keplr-sys = "0.0.3"
 
 # Web & WASM
@@ -65,6 +65,7 @@ codee = { version = "0.3.0", features = [
   "prost",
 ] }
 ethnum = "1.5.0"
+hex-literal = "1.0.0"
 
 # gRPC
 tonic = { version = "0.12.2", default-features = false }
@@ -103,4 +104,4 @@ debug = 0
 strip = true
 
 [workspace.lints.clippy]
-too_many_arguments = "allow"
+# too_many_arguments = "allow"
