@@ -1,3 +1,8 @@
 mod pool;
+mod routes;
 
-pub use pool::{Pool, PoolAnalytics, PoolCreator, PoolManager, Pools};
+pub use pool::{
+    AddLiquidity, Pool, PoolAnalytics, PoolBrowser, PoolCreator, PoolManager, Pools,
+    RemoveLiquidity,
+};
+pub use routes::PoolRoutes;

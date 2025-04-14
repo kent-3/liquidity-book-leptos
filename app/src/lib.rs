@@ -1,17 +1,19 @@
 #![allow(unused)]
 
 use crate::prelude::*;
-use ammber_components::{Spinner2, SuggestChains, WalletMenu};
+use ammber_components::{LoadingModal, Spinner2, SuggestChains, WalletMenu};
 use ammber_core::{
     constants::{CHAIN_ID, NODE, TOKEN_MAP},
     state::{ChainId, Endpoint, KeplrSignals, TokenMap},
     support::{chain_batch_query, chain_query},
     Error,
 };
+use ammber_pool::PoolRoutes;
 use ammber_sdk::contract_interfaces::{
     lb_factory::{self, LbPairAtIndexResponse},
     lb_pair::LbPair,
 };
+use ammber_swap::SwapRoutes;
 use batch_query::{BatchItemResponseStatus, BatchQueryParams, BatchQueryParsedResponse};
 use keplr::{Keplr, Key};
 use leptos::{
@@ -37,15 +39,12 @@ mod error;
 mod prelude;
 mod routes;
 
-use routes::{nav::Nav, pool::*, trade::*};
+use routes::{nav::Nav, pool::Pools, trade::*};
 
 pub const BASE_URL: &str = "/liquidity-book-leptos";
 
 // TODO: If possible, use batch queries for resources. Combine the outputs in a struct
 // and use that as the return type of the Resource.
-
-#[derive(Clone)]
-pub struct NumberOfLbPairs(pub LocalResource<u32>);
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -260,7 +259,7 @@ pub fn App() -> impl IntoView {
             .collect()
     }
 
-    provide_context(NumberOfLbPairs(number_of_lb_pairs));
+    provide_context(number_of_lb_pairs);
     provide_context(all_lb_pairs);
 
     Effect::new(move |_| {
@@ -378,10 +377,12 @@ pub fn App() -> impl IntoView {
             <header class="bg-background z-40">
                 <div class="p-4 flex justify-between items-center border-b">
                     <div class="flex flex-row items-center gap-4">
+                    <a href="https://amberdao.website" target="_blank" rel="noopener">
                         <img
                             src=format!("{BASE_URL}{}", "/icons/logo-2.png")
                             class="h-8 hover:rotate-3 transition-transform duration-300 cursor-default"
                         />
+                    </a>
                         // <div
                         // id="mainTitle"
                         // class="m-0 font-bold text-3xl line-clamp-1 transition-transform duration-300 cursor-default"
@@ -389,6 +390,7 @@ pub fn App() -> impl IntoView {
                         // >
                         // "Liquidity Book"
                         // </div>
+                    <A href="/liquidity-book-leptos/">
                         <svg
                             class="h-8 fill-foreground -translate-y-0.5"
                             viewBox="0 0 214 48"
@@ -400,6 +402,7 @@ pub fn App() -> impl IntoView {
                             <path d="M137.816 47.9317C134.818 47.9317 132.513 47.4171 130.902 46.3877C129.291 45.3584 128.105 44.2171 127.344 42.964H126.136V46.9919H117.811V0H126.27V17.5213H127.478C127.971 16.7157 128.619 15.9549 129.425 15.2388C130.275 14.5227 131.372 13.9409 132.714 13.4934C134.102 13.0011 135.803 12.7549 137.816 12.7549C140.502 12.7549 142.986 13.4263 145.268 14.7689C147.551 16.0668 149.385 17.9912 150.773 20.5422C152.16 23.0932 152.854 26.1812 152.854 29.8063V30.8804C152.854 34.5055 152.16 37.5935 150.773 40.1445C149.385 42.6955 147.551 44.6423 145.268 45.9849C142.986 47.2828 140.502 47.9317 137.816 47.9317ZM135.265 40.5473C137.861 40.5473 140.032 39.7193 141.777 38.0634C143.523 36.3628 144.395 33.9013 144.395 30.679V30.0077C144.395 26.7854 143.523 24.3463 141.777 22.6904C140.077 20.9897 137.906 20.1394 135.265 20.1394C132.67 20.1394 130.499 20.9897 128.754 22.6904C127.008 24.3463 126.136 26.7854 126.136 30.0077V30.679C126.136 33.9013 127.008 36.3628 128.754 38.0634C130.499 39.7193 132.67 40.5473 135.265 40.5473Z" />
                             <path d="M43.243 46.9914V13.6943H51.5673V17.3194H52.7757C53.3575 16.2005 54.3197 15.2383 55.6623 14.4327C57.005 13.5824 58.7728 13.1572 60.9657 13.1572C63.3377 13.1572 65.2397 13.6271 66.6719 14.567C68.104 15.4621 69.2005 16.6481 69.9613 18.1249H71.1697C71.9305 16.6928 73.0046 15.5068 74.392 14.567C75.7793 13.6271 77.7485 13.1572 80.2995 13.1572L80.9216 13.1574C83.2936 13.1574 85.1957 13.6273 86.6278 14.5672C88.0599 15.4623 89.1564 16.6483 89.9172 18.1251H91.1256C91.8864 16.693 92.9605 15.507 94.3479 14.5672C95.7353 13.6273 97.7045 13.1574 100.255 13.1574C102.314 13.1574 104.171 13.605 105.827 14.5001C107.528 15.3504 108.871 16.6706 109.855 18.4608C110.885 20.2062 111.399 22.4215 111.399 25.1068V46.9916H102.941V25.711C102.941 23.8761 102.471 22.5111 101.531 21.616C100.591 20.6761 99.2709 20.2062 97.5702 20.2062C95.6458 20.2062 94.1465 20.8328 93.0724 22.0859C92.0431 23.2943 91.5284 25.0397 91.5284 27.3221V46.9916L82.9848 46.9914V25.7108C82.9848 23.8759 82.5149 22.5109 81.575 21.6158C80.6352 20.6759 79.3149 20.206 77.6143 20.206C75.6898 20.206 74.2756 20.8328 73.2015 22.0859C72.1722 23.2943 71.6575 25.0397 71.6575 27.3221V46.9916L63.1139 46.9914V25.7108C63.1139 23.8759 62.644 22.5109 61.7041 21.6158C60.7643 20.6759 59.4441 20.206 57.7434 20.206C55.819 20.206 54.3197 20.8326 53.2456 22.0857C52.2163 23.2941 51.7016 25.0395 51.7016 27.3219V46.9914H43.243Z" />
                         </svg>
+                    </A>
                         <div class="hidden sm:inline-flex">
                             <Nav />
                         </div>
@@ -455,56 +458,15 @@ pub fn App() -> impl IntoView {
             </header>
             <main class="flex-1 px-2.5 lg:px-8 py-3 overflow-x-auto">
                 <Routes transition=true fallback=|| "This page could not be found.">
-                    <Route path=path!("liquidity-book-leptos") view=Trade />
-                    <ParentRoute path=path!("/liquidity-book-leptos/pool") view=Pools>
-                        <Route path=path!("") view=PoolBrowser />
-                        <Route path=path!("create") view=PoolCreator />
-                        <ParentRoute path=path!("/:token_a/:token_b/:bps") view=Pool>
-                            <Route path=path!("") view=|| view! { <Redirect path="manage" /> } />
-                            <ParentRoute path=path!("/manage") view=PoolManager>
-                                <Route path=path!("") view=|| view! { <Redirect path="add" /> } />
-                                <Route path=path!("add") view=AddLiquidity />
-                                <Route path=path!("remove") view=RemoveLiquidity />
-                            </ParentRoute>
-                            <Route path=path!("analytics") view=PoolAnalytics />
-                        </ParentRoute>
-                    </ParentRoute>
+                    <Route path=path!("/liquidity-book-leptos") view=|| view! { <Redirect path="/liquidity-book-leptos/trade" /> } />
+                    // <Route path=path!("/liquidity-book-leptos") view=|| view! { "Nothing to see here" } />
+                    <SwapRoutes />
+                    <PoolRoutes />
                 </Routes>
             </main>
             <LoadingModal when=enable_keplr_action.pending() message="Requesting Connection" />
             <SettingsMenu dialog_ref=options_dialog_ref toggle_menu=toggle_options_menu />
         </Router>
-    }
-}
-
-#[component]
-pub fn LoadingModal(when: Memo<bool>, #[prop(into)] message: String) -> impl IntoView {
-    let dialog_ref = NodeRef::<Dialog>::new();
-
-    Effect::new(move |_| match dialog_ref.get() {
-        Some(dialog) => match when.get() {
-            true => {
-                let _ = dialog.show_modal();
-            }
-            false => dialog.close(),
-        },
-        None => (),
-    });
-
-    view! {
-        <dialog node_ref=dialog_ref>
-            // prevent focus ring from showing around the main div
-            <div tabindex="0"></div>
-            // NOTE: when 'display: none' is toggled on/off, some of the animation gets lost,
-            // so it's better to use 'visibility: hidden' instead of 'display: none'.
-            // Tailwind's 'invisible' = 'visibility: hidden' and 'hidden' = 'display: none'
-            // The svg will be spinning invisibly, but it's worth it for the nicer animation.
-            // class=("invisible", move || !when.get())
-            <div class="align-middle inline-flex items-center justify-center gap-3">
-                <Spinner2 size="h-8 w-8" />
-                <div class="font-bold">{message}</div>
-            </div>
-        </dialog>
     }
 }
 

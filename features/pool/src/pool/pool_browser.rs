@@ -7,10 +7,6 @@ use leptos_router::components::A;
 use liquidity_book::core::TokenType;
 use tracing::{debug, info};
 
-// FIXME:
-#[derive(Clone)]
-pub struct NumberOfLbPairs(pub LocalResource<u32>);
-
 #[component]
 pub fn PoolBrowser() -> impl IntoView {
     info!("rendering <PoolBrowser/>");
@@ -19,9 +15,8 @@ pub fn PoolBrowser() -> impl IntoView {
         info!("cleaning up <PoolBrowser/>");
     });
 
-    let number_of_lb_pairs = use_context::<NumberOfLbPairs>()
-        .expect("missing the NumberOfLbPairsResponse resource context")
-        .0;
+    let number_of_lb_pairs = use_context::<LocalResource<u32>>()
+        .expect("missing the NumberOfLbPairsResponse resource context");
     let all_lb_pairs = use_context::<LocalResource<Vec<LbPair>>>()
         .expect("missing the Vec<LbPair> resource context");
 
