@@ -1,2 +1,4 @@
 [formatting]
-array_auto_expand = false
+column_width = 90
+array_auto_expand = true
+array_auto_collapse = true

@@ -1,6 +1,5 @@
 // #![allow(unused)]
 
-mod animated_show;
 mod secret20_balance;
 mod secret_query;
 mod spinner;

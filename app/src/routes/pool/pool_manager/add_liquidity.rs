@@ -1,10 +1,6 @@
-use crate::{
-    chain_query,
-    error::Error,
-    prelude::*,
-    state::*,
-    support::{Querier, COMPUTE_QUERIER},
-};
+use crate::{chain_query, error::Error, prelude::*};
+use ammber_core::state::*;
+use ammber_core::support::{Querier, COMPUTE_QUERIER};
 use ammber_sdk::{
     constants::liquidity_config::{
         LiquidityConfigurations, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,

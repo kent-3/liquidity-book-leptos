@@ -1,7 +1,9 @@
-use crate::{
-    alert,
-    constants::{CHAIN_ID, NODE, TOKEN_MAP},
+#![allow(unused)]
+
+use ammber_core::{
+    constants::{self, CHAIN_ID, NODE, TOKEN_MAP},
     state::{ChainId, Endpoint, KeplrSignals, TokenMap},
+    utils::alert,
 };
 use cosmwasm_std::Uint128;
 use keplr::Keplr;
@@ -193,7 +195,7 @@ pub fn Secret20Balance(#[prop(into)] token_address: Signal<Option<String>>) -> i
 
 pub async fn query_snip20_balance(
     key: keplr::Key,
-    token: crate::constants::Token,
+    token: ammber_core::constants::Token,
     viewing_key: String,
     endpoint: String,
 ) -> Result<String, Error> {

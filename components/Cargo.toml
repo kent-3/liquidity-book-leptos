@@ -1,33 +1,16 @@
 [package]
-name = "liquidity-book-leptos"
+name = "ammber-components"
 version = "0.1.0"
 edition = "2021"
-
-[features]
-mainnet = []
-testnet = ["ammber-core/testnet"]
-devnet = []
-charts = []
-default = ["testnet"]
 
 [dependencies]
 # Workspace crates
 ammber-core.workspace = true
-ammber-components.workspace = true
-ammber-sdk.workspace = true
-batch-query.workspace = true
 keplr.workspace = true
-ammber-charts.workspace = true
 
 # Leptos and related
 leptos = { workspace = true }
-leptos_router = { workspace = true }
-leptos_router_macro = { workspace = true }
-leptos_meta = { workspace = true }
-leptos-use = { workspace = true }
-reactive_stores = { workspace = true }
 lucide-leptos = { workspace = true }
-codee = { workspace = true }
 
 # Secret Network
 cosmwasm-std = { workspace = true }

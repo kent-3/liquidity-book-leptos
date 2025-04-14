@@ -1,4 +1,4 @@
-use crate::{state::*, types::Coin, Error, CHAIN_ID};
+use ammber_core::{state::*, types::Coin, Error, CHAIN_ID};
 use keplr::Keplr;
 use leptos::prelude::*;
 use rsecret::query::bank::BankQuerier;

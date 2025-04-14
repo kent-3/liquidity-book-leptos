@@ -1,4 +1,5 @@
 use crate::BASE_URL;
+use ammber_core::support::Querier;
 use ammber_sdk::utils::u128_to_string_with_precision;
 use liquidity_book::libraries::PriceHelper;
 use lucide_leptos::{Info, Settings2, X};
@@ -74,11 +75,8 @@ pub fn Pools() -> impl IntoView {
 pub fn Pool() -> impl IntoView {
     info!("rendering <Pool/>");
 
-    use crate::{
-        error::Error,
-        prelude::*,
-        support::{chain_query, ILbPair, Querier, COMPUTE_QUERIER},
-    };
+    use crate::{error::Error, prelude::*};
+    use ammber_core::support::{chain_query, ILbPair, Querier, COMPUTE_QUERIER};
     use ammber_sdk::contract_interfaces::lb_pair::{BinResponse, LbPair};
     use batch_query::{
         msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQueryParams,

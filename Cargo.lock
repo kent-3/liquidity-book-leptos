@@ -83,6 +83,89 @@ dependencies = [
 ]
 
 [[package]]
+name = "ammber-components"
+version = "0.1.0"
+dependencies = [
+ "ammber-core",
+ "async-trait",
+ "base64 0.22.1",
+ "console_error_panic_hook",
+ "ethnum",
+ "futures",
+ "hex-literal 1.0.0",
+ "keplr",
+ "keplr-sys",
+ "leptos",
+ "liquidity-book",
+ "lucide-leptos",
+ "prost",
+ "rsecret",
+ "secret-cosmwasm-std",
+ "secret-toolkit-snip20",
+ "secretrs",
+ "send_wrapper",
+ "serde",
+ "serde-json-wasm 1.0.1",
+ "serde-wasm-bindgen 0.6.5",
+ "serde_json",
+ "thiserror 2.0.12",
+ "tonic",
+ "tonic-web-wasm-client",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-subscriber-wasm",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "ammber-core"
+version = "0.1.0"
+dependencies = [
+ "ammber-sdk",
+ "async-trait",
+ "base64 0.22.1",
+ "console_error_panic_hook",
+ "ethnum",
+ "futures",
+ "git2",
+ "hex-literal 1.0.0",
+ "keplr",
+ "keplr-sys",
+ "leptos",
+ "liquidity-book",
+ "lucide-leptos",
+ "prost",
+ "reactive_stores",
+ "rsecret",
+ "secret-batch-query",
+ "secret-cosmwasm-std",
+ "secret-toolkit-snip20",
+ "secretrs",
+ "send_wrapper",
+ "serde",
+ "serde-json-wasm 1.0.1",
+ "serde-wasm-bindgen 0.6.5",
+ "serde_json",
+ "thiserror 2.0.12",
+ "tonic",
+ "tonic-web-wasm-client",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-subscriber-wasm",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "ammber-feature-pool"
+version = "0.1.0"
+
+[[package]]
+name = "ammber-feature-swap"
+version = "0.1.0"
+
+[[package]]
 name = "ammber-sdk"
 version = "0.1.0"
 dependencies = [
@@ -174,9 +257,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.97"
+version = "1.0.98"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcfed56ad506cb2c684a14971b8861fdc3baaaae314b9e5f9bb532cbe3ba7a4f"
+checksum = "e16d2d3311acee920a9eb8d33b8cbc1787ce4a264e85f964c2404b969bdcd487"
 
 [[package]]
 name = "anymap2"
@@ -1115,9 +1198,9 @@ checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
 
 [[package]]
 name = "either_of"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "169ae1dd00fb612cf27fd069b3b10f325ea60ac551f08e5b931b4413972a847d"
+checksum = "216d23e0ec69759a17f05e1c553f3a6870e5ec73420fbb07807a6f34d5d1d5a4"
 dependencies = [
  "paste",
  "pin-project-lite",
@@ -2180,9 +2263,9 @@ checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 
 [[package]]
 name = "jiff"
-version = "0.2.5"
+version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c102670231191d07d37a35af3eb77f1f0dbf7a71be51a962dcd57ea607be7260"
+checksum = "e5ad87c89110f55e4cd4dc2893a9790820206729eaf221555f742d540b0724a0"
 dependencies = [
  "jiff-static",
  "log",
@@ -2193,9 +2276,9 @@ dependencies = [
 
 [[package]]
 name = "jiff-static"
-version = "0.2.5"
+version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cdde31a9d349f1b1f51a0b3714a5940ac022976f4b49485fc04be052b183b4c"
+checksum = "d076d5b64a7e2fe6f0743f02c43ca4a6725c0f904203bfe276a5b3e793103605"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2570,6 +2653,8 @@ name = "liquidity-book-leptos"
 version = "0.1.0"
 dependencies = [
  "ammber-charts",
+ "ammber-components",
+ "ammber-core",
  "ammber-sdk",
  "async-trait",
  "base64 0.22.1",
@@ -2577,7 +2662,6 @@ dependencies = [
  "console_error_panic_hook",
  "ethnum",
  "futures",
- "git2",
  "hex-literal 1.0.0",
  "keplr",
  "keplr-sys",
@@ -2684,9 +2768,9 @@ checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
 name = "miniz_oxide"
-version = "0.8.7"
+version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff70ce3e48ae43fa075863cef62e8b43b71a4f2382229920e0df362592919430"
+checksum = "3be647b768db090acb35d5ec5db2b0e1f1de11133ca123b9eacf5137868f892a"
 dependencies = [
  "adler2",
 ]
@@ -3351,9 +3435,9 @@ dependencies = [
 
 [[package]]
 name = "rustls"
-version = "0.23.25"
+version = "0.23.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "822ee9188ac4ec04a2f0531e55d035fb2de73f18b41a63c70c2712503b6fb13c"
+checksum = "df51b5869f3a441595eac5e8ff14d486ff285f7b8c0df8770e49c3b56351f0f0"
 dependencies = [
  "log",
  "once_cell",
@@ -4153,9 +4237,9 @@ dependencies = [
 
 [[package]]
 name = "tendermint"
-version = "0.40.2"
+version = "0.40.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bed57bd840305efef8e83b752dd63dde3bb0fc1c35b6490f0a4de3a0ffd8dd9"
+checksum = "ab2972a56891bc9173eaebdd51290bc848e448aa281881f3a4712bd8fe1899b3"
 dependencies = [
  "bytes",
  "digest 0.10.7",
@@ -4183,9 +4267,9 @@ dependencies = [
 
 [[package]]
 name = "tendermint-proto"
-version = "0.40.2"
+version = "0.40.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a218320a6e92ac731ac094169cb742e3203a3ab24d30417b72cfdaab5d50c67"
+checksum = "ca44b9eaaa98e8440fbafe5593b8a32a1c395c094ac566b3eb50497f8bd2bee0"
 dependencies = [
  "bytes",
  "flex-error",
@@ -5058,9 +5142,9 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 
 [[package]]
 name = "winnow"
-version = "0.7.4"
+version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e97b544156e9bebe1a0ffbc03484fc1ffe3100cbce3ffb17eac35f7cdd7ab36"
+checksum = "63d3fcd9bba44b03821e7d699eeee959f3126dcc4aa8e4ae18ec617c2a5cea10"
 dependencies = [
  "memchr",
 ]

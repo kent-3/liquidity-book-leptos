@@ -1,7 +1,9 @@
-use crate::{
+#![allow(unused)]
+
+use ammber_core::{
     constants::{CHAIN_ID, NODE, TOKEN_MAP},
-    error::Error,
     state::{ChainId, Endpoint, KeplrSignals, TokenMap},
+    Error,
 };
 use keplr::Keplr;
 use leptos::either::Either;

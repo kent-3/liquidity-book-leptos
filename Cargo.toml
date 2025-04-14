@@ -1,8 +1,26 @@
 [workspace]
 resolver = "2"
-members = ["app", "crates/ammber_sdk", "crates/batch_query", "crates/keplr", "crates/charts"]
+members = [
+  "app",
+  "core",
+  "components",
+  "features/pool",
+  "features/swap",
+  "crates/ammber_sdk",
+  "crates/batch_query",
+  "crates/keplr",
+  "crates/charts",
+]
 
 [workspace.dependencies]
+# Workspace crates
+ammber-core = { path = "core" }
+ammber-components = { path = "components" }
+ammber-sdk = { path = "crates/ammber_sdk" }
+batch-query = { path = "crates/batch_query", package = "secret-batch-query" }
+keplr = { path = "crates/keplr" }
+ammber-charts = { path = "crates/charts" }
+
 # Leptos and friends
 leptos = { version = "0.7.8", features = ["csr"] }
 leptos_router = { version = "0.7.8" }
@@ -40,7 +58,12 @@ tracing-subscriber-wasm = "0.1.0"
 futures = "0.3.31"
 async-trait = "0.1.88"
 thiserror = "2.0.12"
-codee = { version = "0.3.0", features = ["json_serde", "json_serde_wasm", "base64", "prost"] }
+codee = { version = "0.3.0", features = [
+  "json_serde",
+  "json_serde_wasm",
+  "base64",
+  "prost",
+] }
 ethnum = "1.5.0"
 
 # gRPC

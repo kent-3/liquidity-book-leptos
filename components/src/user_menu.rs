@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use crate::{
+use ammber_core::{
     constants::{CHAIN_ID, NODE, TOKEN_MAP},
     state::{ChainId, Endpoint, KeplrSignals, TokenMap},
     types::Coin,
