@@ -246,36 +246,6 @@ pub fn PoolManager() -> impl IntoView {
     let token_a_symbol = Signal::derive(move || token_a().symbol.clone());
     let token_b_symbol = Signal::derive(move || token_b().symbol.clone());
 
-    // TODO: how about instead, we have a contract query that can return the nearby liquidity, so
-    // we don't have to mess with the complicated batch query router? That might be the purpose of
-    // the LiquidityHelper contract (I haven't looked at it yet)
-
-    async fn query_nearby_bins<T: Serialize>(
-        queries: Vec<BatchQueryParams<T>>,
-    ) -> Result<Vec<BinResponse>, Error> {
-        msg_batch_query(queries)
-            .do_query(&BATCH_QUERY_ROUTER.pulsar)
-            .await
-            .inspect(|response| trace!("{:?}", response))
-            .and_then(|response| Ok(serde_json::from_str::<BatchQueryResponse>(&response)?))
-            .map(parse_batch_query)
-            .map(extract_bins_from_batch_response)
-    }
-
-    fn extract_bins_from_batch_response(
-        batch_response: BatchQueryParsedResponse,
-    ) -> Vec<BinResponse> {
-        batch_response
-            .items
-            .into_iter()
-            .filter(|item| item.status == BatchItemResponseStatus::SUCCESS)
-            .map(|item| {
-                serde_json::from_str::<BinResponse>(&item.response)
-                    .expect("Invalid BinResponse JSON")
-            })
-            .collect()
-    }
-
     let lb_pair = use_context::<Resource<Result<LbPair, Error>>>()
         .expect("missing the LbPair resource context");
     let active_id = use_context::<Resource<Result<u32, Error>>>()
@@ -286,53 +256,6 @@ pub fn PoolManager() -> impl IntoView {
         scroll: false,
         ..Default::default()
     };
-
-    // NOTE: We have a lot of Resources depending on other Resources.
-    //       It works, but I wonder if there is a better way.
-
-    // TODO: I don't think there's any need to track signals. These should all be
-    //       LocalResources that only run once on page load.
-
-    // let total_reserves = Resource::new(
-    //     move || (),
-    //     move |_| async move { ILbPair(lb_pair.await.contract).get_reserves().await },
-    // );
-    //
-    // let bin_reserves = Resource::new(
-    //     move || (),
-    //     move |_| async move {
-    //         let lb_pair = ILbPair(lb_pair.await.contract);
-    //         let id = active_id.await?;
-    //
-    //         lb_pair.get_bin(id).await
-    //     },
-    // );
-    //
-    // let nearby_bins = LocalResource::new(move || {
-    //     async move {
-    //         let lb_pair_contract = lb_pair.await.contract;
-    //         let id = active_id.await?;
-    //         let mut batch = Vec::new();
-    //
-    //         let radius = 49;
-    //
-    //         for i in 0..(radius * 2 + 1) {
-    //             let offset_id = if i < radius {
-    //                 id - (radius - i) as u32 // Subtract for the first half
-    //             } else {
-    //                 id + (i - radius) as u32 // Add for the second half
-    //             };
-    //
-    //             batch.push(BatchQueryParams {
-    //                 id: offset_id.to_string(),
-    //                 contract: lb_pair_contract.clone(),
-    //                 query_msg: lb_pair::QueryMsg::GetBin { id: offset_id },
-    //             });
-    //         }
-    //
-    //         query_nearby_bins(batch).await
-    //     }
-    // });
 
     let my_liquidity = LocalResource::new(move || {
         let url = NODE;
