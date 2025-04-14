@@ -1,17 +1,11 @@
-use ammber_core::{
-    prelude::*,
-    support::{chain_query, ILbPair, COMPUTE_QUERIER},
-    Error, BASE_URL,
-};
+use ammber_core::{prelude::*, support::ILbPair, utils::addr_2_symbol, Error, BASE_URL};
 use ammber_sdk::{contract_interfaces::lb_pair::LbPair, utils::u128_to_string_with_precision};
 use codee::string::FromToStringCodec;
-use cosmwasm_std::{Addr, ContractInfo};
 use leptos::{ev, html, prelude::*};
 use leptos_router::{components::A, hooks::use_params_map, nested_router::Outlet};
 use leptos_use::storage::use_local_storage;
 use liquidity_book::libraries::PriceHelper;
 use lucide_leptos::{ArrowLeft, ExternalLink, Info, Settings2, X};
-use secret_toolkit_snip20::TokenInfoResponse;
 use send_wrapper::SendWrapper;
 use tracing::{debug, info};
 
@@ -62,25 +56,25 @@ pub fn Pool() -> impl IntoView {
 
     let params = use_params_map();
     // TODO: decide on calling these a/b or x/y
-    let token_a = move || {
+    let token_a = Signal::derive(move || {
         params
             .read()
             .get("token_a")
             .expect("Missing token_a URL param")
-    };
-    let token_b = move || {
+    });
+    let token_b = Signal::derive(move || {
         params
             .read()
             .get("token_b")
             .expect("Missing token_b URL param")
-    };
-    let basis_points = move || {
+    });
+    let basis_points = Signal::derive(move || {
         params
             .read()
             .get("bps")
             .and_then(|value| value.parse::<u16>().ok())
             .expect("Missing bps URL param")
-    };
+    });
 
     // slippage is in basis points. smallest supported slippage = 0.01%
     let (amount_slippage, set_amount_slippage, _) =
@@ -96,62 +90,18 @@ pub fn Pool() -> impl IntoView {
         set_price_slippage.set(5u16);
     }
 
-    // TODO: these 2 functions feel very convoluted
-
-    async fn addr_2_contract(contract_address: impl Into<String>) -> Result<ContractInfo, Error> {
-        let contract_address = contract_address.into();
-
-        if let Some(token) = TOKEN_MAP.get(&contract_address) {
-            Ok(ContractInfo {
-                address: Addr::unchecked(token.contract_address.clone()),
-                code_hash: token.code_hash.clone(),
-            })
-        } else {
-            COMPUTE_QUERIER
-                .code_hash_by_contract_address(&contract_address)
-                .await
-                .map_err(Error::from)
-                .map(|code_hash| ContractInfo {
-                    address: Addr::unchecked(contract_address),
-                    code_hash,
-                })
-        }
-    }
-
-    async fn token_symbol_convert(address: String) -> String {
-        if let Some(token) = TOKEN_MAP.get(&address) {
-            if let Some(ref display_name) = token.display_name {
-                return display_name.clone();
-            } else {
-                return token.symbol.clone();
-            }
-        }
-        let contract = addr_2_contract(&address).await.unwrap();
-
-        chain_query::<TokenInfoResponse>(
-            contract.address.to_string(),
-            contract.code_hash,
-            secret_toolkit_snip20::QueryMsg::TokenInfo {},
-        )
-        .await
-        .map(|x| x.token_info.symbol)
-        .unwrap_or(address)
-    }
-
     // TODO: fine for now but I should convert the address to a Token, not only the symbol
 
     let token_a_symbol =
-        AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_a()).await });
-
+        AsyncDerived::new_unsync(move || async move { addr_2_symbol(token_a.get()).await });
     let token_b_symbol =
-        AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_b()).await });
+        AsyncDerived::new_unsync(move || async move { addr_2_symbol(token_b.get()).await });
 
-    // TODO: this is super weird
     provide_context((token_a_symbol, token_b_symbol));
 
     // SendWrapper required due to addr_2_contract function
     let lb_pair: Resource<Result<LbPair, Error>> = Resource::new(
-        move || (token_a(), token_b(), basis_points()),
+        move || (token_a.get(), token_b.get(), basis_points.get()),
         |(token_a, token_b, basis_points)| {
             debug!("run lb_pair resource");
             SendWrapper::new(async move {
@@ -209,7 +159,7 @@ pub fn Pool() -> impl IntoView {
         active_id
             .await
             .ok()
-            .and_then(|id| PriceHelper::get_price_from_id(id, basis_points()).ok())
+            .and_then(|id| PriceHelper::get_price_from_id(id, basis_points.get()).ok())
             .and_then(|price| PriceHelper::convert128x128_price_to_decimal(price).ok())
             .map(|price| u128_to_string_with_precision(price.as_u128()))
     });

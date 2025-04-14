@@ -4,6 +4,7 @@ use crate::{
     support::{chain_query, COMPUTE_QUERIER},
     TOKEN_MAP,
 };
+use cosmwasm_std::{Addr, ContractInfo};
 use leptos::prelude::window;
 
 pub fn alert(msg: impl AsRef<str>) {
@@ -103,6 +104,46 @@ pub fn parse_token_amount(amount: impl AsRef<str>, decimals: impl Into<u32>) -> 
 }
 
 // TODO: utilites that involve chain queries should probably go somewhere else
+
+pub async fn addr_2_contract(contract_address: impl Into<String>) -> Result<ContractInfo, Error> {
+    let contract_address = contract_address.into();
+
+    if let Some(token) = TOKEN_MAP.get(&contract_address) {
+        Ok(ContractInfo {
+            address: Addr::unchecked(token.contract_address.clone()),
+            code_hash: token.code_hash.clone(),
+        })
+    } else {
+        COMPUTE_QUERIER
+            .code_hash_by_contract_address(&contract_address)
+            .await
+            .map_err(Error::from)
+            .map(|code_hash| ContractInfo {
+                address: Addr::unchecked(contract_address),
+                code_hash,
+            })
+    }
+}
+
+pub async fn addr_2_symbol(address: String) -> String {
+    if let Some(token) = TOKEN_MAP.get(&address) {
+        if let Some(ref display_name) = token.display_name {
+            return display_name.clone();
+        } else {
+            return token.symbol.clone();
+        }
+    }
+    let contract = addr_2_contract(&address).await.unwrap();
+
+    chain_query::<secret_toolkit_snip20::TokenInfoResponse>(
+        contract.address.to_string(),
+        contract.code_hash,
+        secret_toolkit_snip20::QueryMsg::TokenInfo {},
+    )
+    .await
+    .map(|x| x.token_info.symbol)
+    .unwrap_or(address)
+}
 
 /// Queries the chain for the code hash and token info if not in the token map.
 pub async fn addr_2_token(address: impl Into<String>) -> Token {
