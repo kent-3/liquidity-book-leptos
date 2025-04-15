@@ -1,12 +1,11 @@
 use ammber_core::{prelude::*, support::ILbPair, utils::addr_2_symbol, Error, BASE_URL};
 use ammber_sdk::{contract_interfaces::lb_pair::LbPair, utils::u128_to_string_with_precision};
 use codee::string::FromToStringCodec;
-use leptos::{ev, html, prelude::*};
+use leptos::{ev, html, prelude::*, task::spawn_local};
 use leptos_router::{components::A, hooks::use_params_map, nested_router::Outlet};
 use leptos_use::storage::use_local_storage;
 use liquidity_book::libraries::PriceHelper;
 use lucide_leptos::{ArrowLeft, ExternalLink, Info, Settings2, X};
-use send_wrapper::SendWrapper;
 use tracing::{debug, info};
 
 mod pool_analytics;
@@ -18,6 +17,8 @@ pub use pool_analytics::PoolAnalytics;
 pub use pool_browser::PoolBrowser;
 pub use pool_creator::PoolCreator;
 pub use pool_manager::{AddLiquidity, PoolManager, RemoveLiquidity};
+
+use crate::state::PoolStateStoreFields;
 
 #[component]
 pub fn Pools() -> impl IntoView {
@@ -33,18 +34,6 @@ pub fn Pools() -> impl IntoView {
         </div>
     }
 }
-
-// TODO: use a single struct for pool context?
-// Currently providing all these separately:
-// token symbols, lb_pair, active_id, total_reserves, static_fee_parameters
-//
-// Flow:
-//     1) Get token addresses from the URL params
-//     2) Convert them into ContractInfo (use addr_2_token helper function)
-//     3) Query the LbPair from the given token contracts and bin step
-//         (cache this in local storage - it's not likely to ever change)
-//     4) Query the LbPair contract for the active_id, total_reserves, and static_fee_parameters
-//         (These could be batched)
 
 #[component]
 pub fn Pool() -> impl IntoView {
@@ -155,6 +144,63 @@ pub fn Pool() -> impl IntoView {
     provide_context(lb_pair);
     provide_context(active_id);
 
+    // --- Store demonstration
+
+    // A Store can be initialized with whatever starting values, and then a series of spawn_local
+    // tasks can update the values of the stores asynchronously. These would all run once, before
+    // the component mounts. See here for a great explanation:
+    // https://book.leptos.dev/appendix_life_cycle.html?highlight=mount#component-life-cycle
+
+    use crate::PoolState;
+
+    let store = reactive_stores::Store::new(PoolState {
+        lb_pair: Err(Error::generic("lb_pair resource is not available yet")),
+        active_id: Err(Error::generic("lb_pair resource is not available yet")),
+    });
+
+    spawn_local(async move {
+        let token_x = addr_2_contract(token_a.get()).await.unwrap();
+        let token_y = addr_2_contract(token_b.get()).await.unwrap();
+        let bin_step = basis_points.get();
+
+        let storage = window()
+            .local_storage()
+            .expect("local storage not available?")
+            .expect("local storage returned none?");
+
+        let storage_key = format!("{}_{}_{}", token_x.address, token_y.address, bin_step);
+
+        let lb_pair = match storage.get_item(&storage_key) {
+            Ok(None) => {
+                let lb_pair = LB_FACTORY
+                    .get_lb_pair_information(token_x, token_y, bin_step)
+                    .await
+                    .map(|lb_pair_information| lb_pair_information.lb_pair)
+                    .inspect(|lb_pair| {
+                        _ = storage
+                            .set_item(&storage_key, &serde_json::to_string(&lb_pair).unwrap())
+                    });
+
+                lb_pair
+            }
+            Ok(Some(lb_pair)) => Ok(serde_json::from_str(&lb_pair).unwrap()),
+            _ => todo!(),
+        };
+
+        store.lb_pair().set(lb_pair.map(|pair| pair.contract))
+    });
+
+    spawn_local(async move {
+        let active_id = match lb_pair.await {
+            Ok(pair) => ILbPair(pair.contract).get_active_id().await,
+            Err(_) => Err(Error::generic("lb_pair resource is not available")),
+        };
+
+        store.active_id().set(active_id)
+    });
+
+    // --- end Store demonstration
+
     // TODO: decide if these queries should go here or in the analytics component
     let total_reserves =
         LocalResource::new(
@@ -165,6 +211,7 @@ pub fn Pool() -> impl IntoView {
             .get_static_fee_parameters()
             .await
     });
+
     provide_context(total_reserves);
     provide_context(static_fee_parameters);
 
@@ -192,6 +239,18 @@ pub fn Pool() -> impl IntoView {
             <ArrowLeft size=14 />
             "Back to pools list"
         </a>
+
+        { move || {
+            let result = store.lb_pair().get();
+
+            result.map(|x| x.address.to_string())
+        }}
+
+        { move || {
+            let result = store.active_id().get();
+
+            result
+        }}
 
         // page title with the token symbols
         <div class="md:h-10 flex flex-col md:flex-row items-start md:items-center gap-x-4 gap-y-3">
