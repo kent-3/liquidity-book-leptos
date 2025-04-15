@@ -100,62 +100,50 @@ pub fn Pool() -> impl IntoView {
     provide_context((token_a_symbol, token_b_symbol));
 
     // SendWrapper required due to addr_2_contract function
-    let lb_pair: Resource<Result<LbPair, Error>> = Resource::new(
-        move || (token_a.get(), token_b.get(), basis_points.get()),
-        |(token_a, token_b, basis_points)| {
-            debug!("run lb_pair resource");
-            SendWrapper::new(async move {
-                let token_x = addr_2_contract(token_a).await.unwrap();
-                let token_y = addr_2_contract(token_b).await.unwrap();
-                let bin_step = basis_points;
+    let lb_pair: LocalResource<Result<LbPair, Error>> = LocalResource::new(move || async move {
+        debug!("run lb_pair resource");
 
-                let storage = window()
-                    .local_storage()
-                    .expect("local storage not available?")
-                    .expect("local storage returned none?");
+        let token_x = addr_2_contract(token_a.get()).await.unwrap();
+        let token_y = addr_2_contract(token_b.get()).await.unwrap();
+        let bin_step = basis_points.get();
 
-                let storage_key = format!("{}_{}_{}", token_x.address, token_y.address, bin_step);
+        let storage = window()
+            .local_storage()
+            .expect("local storage not available?")
+            .expect("local storage returned none?");
 
-                match storage.get_item(&storage_key) {
-                    Ok(None) => {
-                        let lb_pair = LB_FACTORY
-                            .get_lb_pair_information(token_x, token_y, bin_step)
-                            .await
-                            .map(|lb_pair_information| lb_pair_information.lb_pair)
-                            .inspect(|lb_pair| {
-                                _ = storage.set_item(
-                                    &storage_key,
-                                    &serde_json::to_string(&lb_pair).unwrap(),
-                                )
-                            });
+        let storage_key = format!("{}_{}_{}", token_x.address, token_y.address, bin_step);
 
-                        lb_pair
-                    }
-                    Ok(Some(lb_pair)) => Ok(serde_json::from_str(&lb_pair).unwrap()),
-                    _ => todo!(),
-                }
-            })
-        },
-    );
+        match storage.get_item(&storage_key) {
+            Ok(None) => {
+                let lb_pair = LB_FACTORY
+                    .get_lb_pair_information(token_x, token_y, bin_step)
+                    .await
+                    .map(|lb_pair_information| lb_pair_information.lb_pair)
+                    .inspect(|lb_pair| {
+                        _ = storage
+                            .set_item(&storage_key, &serde_json::to_string(&lb_pair).unwrap())
+                    });
 
-    // NOTE: For some reason, this always runs twice. To avoid double querying, do nothing if
-    //       lb_pair is None, instead of await-ing it. I wonder if it has something to do with all
-    //       the SendWrappers involved...
-    let active_id = Resource::new(
-        move || lb_pair.get(),
-        |lb_pair| {
-            debug!("run active_id resource");
-            async move {
-                if let Some(Ok(lb_pair)) = lb_pair {
-                    ILbPair(lb_pair.contract).get_active_id().await
-                } else {
-                    Err(Error::generic("lb_pair resource is not available yet"))
-                }
+                lb_pair
             }
-        },
-    );
+            Ok(Some(lb_pair)) => Ok(serde_json::from_str(&lb_pair).unwrap()),
+            _ => todo!(),
+        }
+    });
 
-    let target_price = AsyncDerived::new(move || async move {
+    let active_id = LocalResource::new(move || {
+        debug!("run active_id resource");
+        async move {
+            if let Ok(lb_pair) = lb_pair.await {
+                ILbPair(lb_pair.contract).get_active_id().await
+            } else {
+                Err(Error::generic("lb_pair resource is not available yet"))
+            }
+        }
+    });
+
+    let target_price = LocalResource::new(move || async move {
         active_id
             .await
             .ok()
@@ -168,18 +156,15 @@ pub fn Pool() -> impl IntoView {
     provide_context(active_id);
 
     // TODO: decide if these queries should go here or in the analytics component
-    let total_reserves = Resource::new(
-        move || lb_pair.get(),
-        move |_| async move { ILbPair(lb_pair.await?.contract).get_reserves().await },
-    );
-    let static_fee_parameters = Resource::new(
-        move || lb_pair.get(),
-        move |_| async move {
-            ILbPair(lb_pair.await?.contract)
-                .get_static_fee_parameters()
-                .await
-        },
-    );
+    let total_reserves =
+        LocalResource::new(
+            move || async move { ILbPair(lb_pair.await?.contract).get_reserves().await },
+        );
+    let static_fee_parameters = LocalResource::new(move || async move {
+        ILbPair(lb_pair.await?.contract)
+            .get_static_fee_parameters()
+            .await
+    });
     provide_context(total_reserves);
     provide_context(static_fee_parameters);
 
@@ -254,12 +239,11 @@ pub fn Pool() -> impl IntoView {
                 >
                     <div class="flex gap-1 items-center [&_svg]:-translate-y-[1px] [&_svg]:text-muted-foreground">
                         <div>
-                            {move || {
+                            {move || Suspend::new(async move {
                                 lb_pair
-                                    .get()
-                                    .and_then(Result::ok)
+                                    .await
                                     .map(|x| shorten_address(x.contract.address))
-                            }}
+                            })}
                         </div>
                         <ExternalLink size=14 />
                     </div>

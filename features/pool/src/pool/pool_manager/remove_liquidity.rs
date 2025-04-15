@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use ammber_core::state::*;
 use ammber_core::support::{chain_query, ILbPair, Querier, COMPUTE_QUERIER};
 use ammber_core::{prelude::*, Error};
@@ -37,6 +39,10 @@ use tracing::{debug, error, info};
 #[component]
 pub fn RemoveLiquidity() -> impl IntoView {
     info!("rendering <RemoveLiquidity/>");
+
+    on_cleanup(move || {
+        info!("cleaning up <RemoveLiquidity/>");
+    });
 
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let chain_id = use_context::<ChainId>().expect("chain_id context missing!");
@@ -102,9 +108,9 @@ pub fn RemoveLiquidity() -> impl IntoView {
         ..Default::default()
     };
 
-    let active_id = use_context::<Resource<Result<u32, Error>>>()
+    let active_id = use_context::<LocalResource<Result<u32, Error>>>()
         .expect("missing the active_id resource context");
-    let lb_pair = use_context::<Resource<Result<LbPair, Error>>>()
+    let lb_pair = use_context::<LocalResource<Result<LbPair, Error>>>()
         .expect("missing the LbPair resource context");
 
     let (amount_x, set_amount_x) = signal("0.0".to_string());
@@ -115,10 +121,10 @@ pub fn RemoveLiquidity() -> impl IntoView {
         let chain_id = CHAIN_ID;
 
         async move {
-            let Some(Ok(lb_pair)) = lb_pair.get_untracked() else {
+            let Ok(lb_pair) = lb_pair.await else {
                 return Err(Error::generic("lb pair information is missing!"));
             };
-            let Some(Ok(id)) = active_id.get_untracked() else {
+            let Ok(id) = active_id.await else {
                 return Err(Error::generic("active id is missing!"));
             };
 
@@ -174,12 +180,14 @@ pub fn RemoveLiquidity() -> impl IntoView {
         let amount_x = amount_x.get();
         let amount_y = amount_y.get();
 
-        let Some(Ok(lb_pair)) = lb_pair.get() else {
+        let binding = lb_pair.get();
+
+        let Some(Ok(lb_pair)) = binding.as_deref() else {
             return Err(Error::generic("lb pair information is missing!"));
         };
 
-        let token_x = lb_pair.token_x;
-        let token_y = lb_pair.token_y;
+        let token_x = &lb_pair.token_x;
+        let token_y = &lb_pair.token_y;
         let bin_step = lb_pair.bin_step;
 
         let decimals_x = get_token_decimals(token_x.address().as_str())?;
@@ -234,7 +242,7 @@ pub fn RemoveLiquidity() -> impl IntoView {
             let amount_x = amount_x.get_untracked();
             let amount_y = amount_y.get_untracked();
 
-            let Some(Ok(lb_pair)) = lb_pair.get_untracked() else {
+            let Ok(lb_pair) = lb_pair.await else {
                 return Err(Error::generic("lb pair information is missing!"));
             };
 

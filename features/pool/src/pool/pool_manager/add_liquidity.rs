@@ -1,6 +1,11 @@
-use ammber_core::state::*;
-use ammber_core::support::{chain_query, Querier, COMPUTE_QUERIER};
-use ammber_core::{prelude::*, Error};
+#![allow(unused)]
+
+use ammber_core::{
+    prelude::*,
+    state::*,
+    support::{chain_query, Querier, COMPUTE_QUERIER},
+    Error,
+};
 use ammber_sdk::{
     constants::liquidity_config::{
         LiquidityConfigurations, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
@@ -13,7 +18,6 @@ use ammber_sdk::{
     utils::*,
 };
 use cosmwasm_std::{Addr, ContractInfo, Uint128, Uint64};
-use ethnum::U256;
 use keplr::Keplr;
 use leptos::{logging::*, prelude::*};
 use leptos_router::{
@@ -33,7 +37,6 @@ use secretrs::{
     tx::Msg,
     AccountId,
 };
-use send_wrapper::SendWrapper;
 use std::str::FromStr;
 use tonic_web_wasm_client::Client;
 use tracing::{debug, info, trace};
@@ -42,6 +45,10 @@ use web_sys::MouseEvent;
 #[component]
 pub fn AddLiquidity() -> impl IntoView {
     info!("rendering <AddLiquidity/>");
+
+    on_cleanup(move || {
+        info!("cleaning up <AddLiquidity/>");
+    });
 
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let chain_id = use_context::<ChainId>().expect("chain_id context missing!");
@@ -59,48 +66,11 @@ pub fn AddLiquidity() -> impl IntoView {
             .unwrap_or_default()
     };
 
-    // TODO: move these to support/utils
-    async fn addr_2_contract(contract_address: impl Into<String>) -> Result<ContractInfo, Error> {
-        let contract_address = contract_address.into();
-
-        if let Some(token) = TOKEN_MAP.get(&contract_address) {
-            Ok(ContractInfo {
-                address: Addr::unchecked(token.contract_address.clone()),
-                code_hash: token.code_hash.clone(),
-            })
-        } else {
-            COMPUTE_QUERIER
-                .code_hash_by_contract_address(&contract_address)
-                .await
-                .map_err(Error::from)
-                .map(|code_hash| ContractInfo {
-                    address: Addr::unchecked(contract_address),
-                    code_hash,
-                })
-        }
-    }
-    async fn token_symbol_convert(address: String) -> String {
-        if let Some(token) = TOKEN_MAP.get(&address) {
-            return token.symbol.clone();
-        }
-        let contract = addr_2_contract(&address).await.unwrap();
-
-        chain_query::<TokenInfoResponse>(
-            contract.address.to_string(),
-            contract.code_hash,
-            secret_toolkit_snip20::QueryMsg::TokenInfo {},
-        )
-        .await
-        .map(|x| x.token_info.symbol)
-        .unwrap_or(address)
-    }
-
     // TODO: pass this info from parent with context
     let token_a_symbol =
-        AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_a()).await });
-
+        AsyncDerived::new_unsync(move || async move { addr_2_symbol(token_a()).await });
     let token_b_symbol =
-        AsyncDerived::new_unsync(move || async move { token_symbol_convert(token_b()).await });
+        AsyncDerived::new_unsync(move || async move { addr_2_symbol(token_b()).await });
 
     // prevents scrolling to the top of the page each time a query param changes
     let nav_options = NavigateOptions {
@@ -109,7 +79,7 @@ pub fn AddLiquidity() -> impl IntoView {
     };
 
     // let (active_id, _) = query_signal::<u32>("active_id");
-    let active_id = use_context::<Resource<Result<u32, Error>>>()
+    let active_id = use_context::<LocalResource<Result<u32, Error>>>()
         .expect("missing the active_id resource context");
     let (price_by, set_price_by) =
         query_signal_with_options::<String>("price_by", nav_options.clone());
@@ -117,7 +87,7 @@ pub fn AddLiquidity() -> impl IntoView {
     // NOTE: By using the information returned by lb-factory query, we can be sure it is correct.
     // In theory, we could have an off-chain database of (token_x, token_y, bin_step) -> LbPairInformation
     // to reduce the number of chain queries.
-    let lb_pair = use_context::<Resource<Result<LbPair, Error>>>()
+    let lb_pair = use_context::<LocalResource<Result<LbPair, Error>>>()
         .expect("missing the LbPair resource context");
 
     let price_by = move || price_by.get().unwrap_or("radius".to_string());
@@ -173,16 +143,17 @@ pub fn AddLiquidity() -> impl IntoView {
     // };
 
     // debug Effects
-    Effect::new(move || debug!("amount_slippage: {}", amount_slippage.get()));
-    Effect::new(move || debug!("price_slippage: {}", price_slippage.get()));
-    Effect::new(move || debug!("target_bin: {}", target_bin()));
-    Effect::new(move || debug!("id_slippage: {}", id_slippage()));
+    // Effect::new(move || debug!("amount_slippage: {}", amount_slippage.get()));
+    // Effect::new(move || debug!("price_slippage: {}", price_slippage.get()));
+    // Effect::new(move || debug!("target_bin: {}", target_bin()));
+    // Effect::new(move || debug!("id_slippage: {}", id_slippage()));
     //
 
     Effect::new(move || {
         active_id
             .get()
-            .and_then(Result::ok)
+            .as_deref()
+            .and_then(|result| result.clone().ok())
             .and_then(|id| PriceHelper::get_price_from_id(id, bin_step()).ok())
             .and_then(|price| PriceHelper::convert128x128_price_to_decimal(price).ok())
             // FIXME: the target price is being truncated, causing the get_id_from_price
@@ -190,22 +161,6 @@ pub fn AddLiquidity() -> impl IntoView {
             .map(|price| u128_to_string_with_precision(price.as_u128()))
             .map(|price| set_target_price.set(price));
     });
-
-    // Might be useful to have this re-run regularly at the top-level and provide a context
-    // let latest_block = Resource::new(
-    //     move || endpoint.get(),
-    //     move |endpoint| {
-    //         SendWrapper::new(async move {
-    //             let tendermint = TendermintQuerier::new(Client::new(endpoint));
-    //             let latest_block = tendermint.get_latest_block().await;
-    //
-    //             latest_block
-    //                 .and_then(|block| Ok(block.header.height))
-    //                 .inspect(|height| debug!("{:#?}", height))
-    //                 .map_err(Into::<crate::Error>::into)
-    //         })
-    //     },
-    // );
 
     // even tho this is a derived signal, it's not run automatically whenever the signals it
     // uses change (I think). It's only running when something calls it (in this case, on click)
@@ -223,14 +178,15 @@ pub fn AddLiquidity() -> impl IntoView {
 
         let target_bin = target_bin();
 
-        let Some(Ok(lb_pair)) = lb_pair.get() else {
+        let binding = lb_pair.get();
+        let Some(Ok(lb_pair)) = binding.as_deref() else {
             return Err(Error::generic("lb pair information is missing!"));
         };
 
         // end of signal getting
 
-        let token_x = lb_pair.token_x;
-        let token_y = lb_pair.token_y;
+        let token_x = lb_pair.token_x.clone();
+        let token_y = lb_pair.token_y.clone();
         let bin_step = lb_pair.bin_step;
 
         let decimals_x = get_token_decimals(token_x.address().as_str())?;
@@ -275,7 +231,7 @@ pub fn AddLiquidity() -> impl IntoView {
             // TODO: Use the dynamic versions instead.
             // let url = endpoint.get();
             // let chain_id = chain_id.get();
-            let url = NODE;
+            let url = endpoint.get();
             let chain_id = CHAIN_ID;
             let mut liquidity_parameters = liquidity_parameters.clone();
 
@@ -547,7 +503,8 @@ pub fn AddLiquidity() -> impl IntoView {
                             prop:value=move || {
                                 let active_id = active_id
                                     .get()
-                                    .and_then(Result::ok)
+                                    .as_deref()
+                                    .and_then(|result| result.clone().ok())
                                     .unwrap_or(8_388_608);
                                 let id = active_id - radius.get();
                                 let price = PriceHelper::get_price_from_id(id, bin_step())
@@ -573,7 +530,8 @@ pub fn AddLiquidity() -> impl IntoView {
                             prop:value=move || {
                                 let active_id = active_id
                                     .get()
-                                    .and_then(Result::ok)
+                                    .as_deref()
+                                    .and_then(|result| result.clone().ok())
                                     .unwrap_or(8_388_608);
                                 let id = active_id + radius.get();
                                 let price = PriceHelper::get_price_from_id(id, bin_step())

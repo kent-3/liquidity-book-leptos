@@ -29,39 +29,44 @@ pub fn PoolAnalytics() -> impl IntoView {
         AsyncDerived<String, LocalStorage>,
     )>()
     .expect("missing token symbols context");
-    let lb_pair = use_context::<Resource<Result<LbPair, Error>>>()
+    let lb_pair = use_context::<LocalResource<Result<LbPair, Error>>>()
         .expect("missing the LbPair resource context");
-    let active_id = use_context::<Resource<Result<u32, Error>>>()
+    let active_id = use_context::<LocalResource<Result<u32, Error>>>()
         .expect("missing the active_id resource context");
     let static_fee_parameters =
-        use_context::<Resource<Result<StaticFeeParametersResponse, Error>>>()
+        use_context::<LocalResource<Result<StaticFeeParametersResponse, Error>>>()
             .expect("missing the static fee parameters resource context");
 
+    // TODO: decide on making these signals sync or async
     let bin_step = move || {
         lb_pair
-            .get_untracked()
-            .and_then(Result::ok)
+            .get()
+            .as_deref()
+            .and_then(|result| result.clone().ok())
             .map(|pair| pair.bin_step)
             .unwrap_or_default()
     };
     let pool_address = move || {
         lb_pair
-            .get_untracked()
-            .and_then(Result::ok)
+            .get()
+            .as_deref()
+            .and_then(|result| result.clone().ok())
             .map(|pair| pair.contract.address.to_string())
             .unwrap_or_default()
     };
     let token_x_address = move || {
         lb_pair
-            .get_untracked()
-            .and_then(Result::ok)
+            .get()
+            .as_deref()
+            .and_then(|result| result.clone().ok())
             .map(|pair| pair.token_x.address().to_string())
             .unwrap_or_default()
     };
     let token_y_address = move || {
         lb_pair
-            .get_untracked()
-            .and_then(Result::ok)
+            .get()
+            .as_deref()
+            .and_then(|result| result.clone().ok())
             .map(|pair| pair.token_y.address().to_string())
             .unwrap_or_default()
     };
@@ -107,7 +112,7 @@ pub fn PoolAnalytics() -> impl IntoView {
         format!("{}.{}%", protocol_fee / 100, protocol_fee % 100)
     });
 
-    let total_reserves = use_context::<Resource<Result<ReservesResponse, Error>>>()
+    let total_reserves = use_context::<LocalResource<Result<ReservesResponse, Error>>>()
         .expect("missing the total reserves resource context");
 
     let reserve_x = AsyncDerived::new(move || async move {

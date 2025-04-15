@@ -33,9 +33,9 @@ pub fn PoolManager() -> impl IntoView {
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
-    let lb_pair = use_context::<Resource<Result<LbPair, Error>>>()
+    let lb_pair = use_context::<LocalResource<Result<LbPair, Error>>>()
         .expect("missing the LbPair resource context");
-    let active_id = use_context::<Resource<Result<u32, Error>>>()
+    let active_id = use_context::<LocalResource<Result<u32, Error>>>()
         .expect("missing the active_id resource context");
 
     let params = use_params_map();
@@ -74,10 +74,10 @@ pub fn PoolManager() -> impl IntoView {
                 return Err(Error::generic("keplr is disabled"));
             }
 
-            let Some(Ok(lb_pair)) = lb_pair.get() else {
+            let Ok(lb_pair) = lb_pair.await else {
                 return Err(Error::generic("lb pair information is missing!"));
             };
-            let Some(Ok(id)) = active_id.get() else {
+            let Ok(id) = active_id.await else {
                 return Err(Error::generic("active id is missing!"));
             };
 
