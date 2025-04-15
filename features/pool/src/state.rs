@@ -1,5 +1,5 @@
 use ammber_core::Error;
-use cosmwasm_std::ContractInfo;
+use cosmwasm_std::{Addr, ContractInfo, Uint128};
 use ethnum::U256;
 use leptos::prelude::*;
 use liquidity_book::interfaces::lb_pair::{LbPair, ReservesResponse, StaticFeeParametersResponse};
@@ -18,20 +18,66 @@ use serde::{Deserialize, Serialize};
 //     4) Query the LbPair contract for the active_id, total_reserves, and static_fee_parameters
 //         (These could be batched)
 
-// #[derive(Debug, Store, Serialize, Deserialize)]
-// pub struct PoolState {
-// token_x: ContractInfo,
-// token_y: ContractInfo,
-// bin_step: u16,
-// lb_pair: ContractInfo,
-// active_id: u32,
-// target_price: U256,
-// total_reserves: ReservesResponse,
-// static_fee_parameters: StaticFeeParametersResponse,
-// }
-
-#[derive(Store, Clone)]
+#[derive(Debug, Store, Serialize, Deserialize)]
 pub struct PoolState {
-    pub lb_pair: Result<ContractInfo, Error>,
-    pub active_id: Result<u32, Error>,
+    token_x: ContractInfo,
+    token_y: ContractInfo,
+    bin_step: u16,
+    lb_pair: LbPair,
+    active_id: u32,
+    target_price: U256,
+    total_reserves: ReservesResponse,
+    static_fee_parameters: StaticFeeParametersResponse,
 }
+
+impl Default for PoolState {
+    fn default() -> Self {
+        PoolState {
+            token_x: ContractInfo {
+                address: Addr::unchecked(""),
+                code_hash: String::new(),
+            },
+            token_y: ContractInfo {
+                address: Addr::unchecked(""),
+                code_hash: String::new(),
+            },
+            bin_step: 0u16,
+            lb_pair: LbPair {
+                token_x: liquidity_book::core::TokenType::CustomToken {
+                    contract_addr: Addr::unchecked(""),
+                    token_code_hash: String::new(),
+                },
+                token_y: liquidity_book::core::TokenType::CustomToken {
+                    contract_addr: Addr::unchecked(""),
+                    token_code_hash: String::new(),
+                },
+                bin_step: 0u16,
+                contract: ContractInfo {
+                    address: Addr::unchecked(""),
+                    code_hash: String::new(),
+                },
+            },
+            active_id: 0u32,
+            target_price: U256::ZERO,
+            total_reserves: ReservesResponse {
+                reserve_x: Uint128::zero(),
+                reserve_y: Uint128::zero(),
+            },
+            static_fee_parameters: StaticFeeParametersResponse {
+                base_factor: 0u16,
+                filter_period: 0u16,
+                decay_period: 0u16,
+                reduction_factor: 0u16,
+                variable_fee_control: 0u32,
+                protocol_share: 0u16,
+                max_volatility_accumulator: 0u32,
+            },
+        }
+    }
+}
+
+// #[derive(Store, Clone)]
+// pub struct PoolState {
+//     pub lb_pair: Result<ContractInfo, Error>,
+//     pub active_id: Result<u32, Error>,
+// }

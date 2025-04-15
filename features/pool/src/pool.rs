@@ -1,6 +1,8 @@
 use ammber_core::{prelude::*, support::ILbPair, utils::addr_2_symbol, Error, BASE_URL};
 use ammber_sdk::{contract_interfaces::lb_pair::LbPair, utils::u128_to_string_with_precision};
 use codee::string::FromToStringCodec;
+use cosmwasm_std::Addr;
+use cosmwasm_std::ContractInfo;
 use leptos::{ev, html, prelude::*, task::spawn_local};
 use leptos_router::{components::A, hooks::use_params_map, nested_router::Outlet};
 use leptos_use::storage::use_local_storage;
@@ -44,22 +46,23 @@ pub fn Pool() -> impl IntoView {
     });
 
     let params = use_params_map();
+
     // TODO: decide on calling these a/b or x/y
     let token_a = Signal::derive(move || {
         params
-            .read()
+            .read_untracked()
             .get("token_a")
             .expect("Missing token_a URL param")
     });
     let token_b = Signal::derive(move || {
         params
-            .read()
+            .read_untracked()
             .get("token_b")
             .expect("Missing token_b URL param")
     });
     let basis_points = Signal::derive(move || {
         params
-            .read()
+            .read_untracked()
             .get("bps")
             .and_then(|value| value.parse::<u16>().ok())
             .expect("Missing bps URL param")
@@ -124,10 +127,9 @@ pub fn Pool() -> impl IntoView {
     let active_id = LocalResource::new(move || {
         debug!("run active_id resource");
         async move {
-            if let Ok(lb_pair) = lb_pair.await {
-                ILbPair(lb_pair.contract).get_active_id().await
-            } else {
-                Err(Error::generic("lb_pair resource is not available yet"))
+            match lb_pair.await {
+                Ok(pair) => ILbPair(pair.contract).get_active_id().await,
+                Err(_) => Err(Error::generic("lb_pair resource is not available")),
             }
         }
     });
@@ -153,10 +155,7 @@ pub fn Pool() -> impl IntoView {
 
     use crate::PoolState;
 
-    let store = reactive_stores::Store::new(PoolState {
-        lb_pair: Err(Error::generic("lb_pair resource is not available yet")),
-        active_id: Err(Error::generic("lb_pair resource is not available yet")),
-    });
+    let store = reactive_stores::Store::new(PoolState::default());
 
     spawn_local(async move {
         let token_x = addr_2_contract(token_a.get()).await.unwrap();
@@ -187,7 +186,7 @@ pub fn Pool() -> impl IntoView {
             _ => todo!(),
         };
 
-        store.lb_pair().set(lb_pair.map(|pair| pair.contract))
+        store.lb_pair().set(lb_pair.unwrap())
     });
 
     spawn_local(async move {
@@ -196,7 +195,7 @@ pub fn Pool() -> impl IntoView {
             Err(_) => Err(Error::generic("lb_pair resource is not available")),
         };
 
-        store.active_id().set(active_id)
+        store.active_id().set(active_id.unwrap_or_default())
     });
 
     // --- end Store demonstration
@@ -243,7 +242,7 @@ pub fn Pool() -> impl IntoView {
         { move || {
             let result = store.lb_pair().get();
 
-            result.map(|x| x.address.to_string())
+            result.contract.address.to_string()
         }}
 
         { move || {
