@@ -14,31 +14,27 @@ pub fn Home() -> impl IntoView {
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
-    let viewing_keys = Resource::new(
-        move || keplr.key.track(),
-        move |_| {
-            let tokens = token_map.clone();
-            SendWrapper::new(async move {
-                if keplr.enabled.get_untracked() {
-                    debug!("gathering viewing_keys");
-                    let mut keys = Vec::new();
-                    for (_, token) in tokens.iter() {
-                        let key_result =
-                            Keplr::get_secret_20_viewing_key(CHAIN_ID, &token.contract_address)
-                                .await;
+    let viewing_keys = LocalResource::new(move || {
+        let tokens = token_map.clone();
+        async move {
+            if keplr.enabled.get_untracked() {
+                debug!("gathering viewing_keys");
+                let mut keys = Vec::new();
+                for (_, token) in tokens.iter() {
+                    let key_result =
+                        Keplr::get_secret_20_viewing_key(CHAIN_ID, &token.contract_address).await;
 
-                        if let Ok(key) = key_result {
-                            keys.push((token.name.clone(), token.contract_address.clone(), key));
-                        }
+                    if let Ok(key) = key_result {
+                        keys.push((token.name.clone(), token.contract_address.clone(), key));
                     }
-                    debug!("Found {} viewing keys.", keys.len());
-                    keys
-                } else {
-                    vec![]
                 }
-            })
-        },
-    );
+                debug!("Found {} viewing keys.", keys.len());
+                keys
+            } else {
+                vec![]
+            }
+        }
+    });
 
     let viewing_keys_list = move || {
         Suspend::new(async move {
@@ -60,46 +56,20 @@ pub fn Home() -> impl IntoView {
         })
     };
 
-    let user_balance = Resource::new(
-        move || keplr.key.track(),
-        move |_| {
-            let client = Client::new(endpoint.get().to_string());
-            SendWrapper::new(async move {
-                let bank = BankQuerier::new(client);
-                let key = keplr.key.await?;
+    let user_balance = LocalResource::new(move || {
+        let client = Client::new(endpoint.get().to_string());
+        async move {
+            let bank = BankQuerier::new(client);
+            let key = keplr.key.await?;
 
-                bank.balance(key.bech32_address, "uscrt")
-                    .await
-                    .map(|balance| Coin::from(balance.balance.unwrap()))
-                    .map_err(Error::from)
-                    .inspect(|coin| debug!("{coin:?}"))
-                    .inspect_err(|err| error!("{err:?}"))
-            })
-        },
-    );
-
-    // TODO: move all static resources like this (query response is always the same) to a separate
-    // module. Implement caching with local storage. They can all use a random account for the
-    // EncryptionUtils, since they don't depend on user address.
-
-    // let enigma_utils = EnigmaUtils::new(None, "secret-4").unwrap();
-    // let contract_address = "secret1s09x2xvfd2lp2skgzm29w2xtena7s8fq98v852";
-    // let code_hash = "9a00ca4ad505e9be7e6e6dddf8d939b7ec7e9ac8e109c8681f10db9cacb36d42";
-    // let token_info = Resource::new(
-    //     || (),
-    //     move |_| {
-    //         debug!("loading token_info resource");
-    //         let compute =
-    //             ComputeQuerier::new(Client::new(endpoint.get()), enigma_utils.clone().into());
-    //         SendWrapper::new(async move {
-    //             let query = QueryMsg::TokenInfo {};
-    //             compute
-    //                 .query_secret_contract(contract_address, code_hash, query)
-    //                 .await
-    //                 .map_err(Error::generic)
-    //         })
-    //     },
-    // );
+            bank.balance(key.bech32_address, "uscrt")
+                .await
+                .map(|balance| Coin::from(balance.balance.unwrap()))
+                .map_err(Error::from)
+                .inspect(|coin| debug!("{coin:?}"))
+                .inspect_err(|err| error!("{err:?}"))
+        }
+    });
 
     view! {
         <div class="p-2 max-w-lg">

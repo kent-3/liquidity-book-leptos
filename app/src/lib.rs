@@ -1,9 +1,9 @@
-#![allow(unused)]
+// #![allow(unused)]
 
-use crate::prelude::*;
 use ammber_components::{LoadingModal, Spinner2, SuggestChains, WalletMenu};
 use ammber_core::{
-    constants::{CHAIN_ID, NODE, TOKEN_MAP},
+    constants::{contracts::LB_FACTORY, CHAIN_ID, NODE, TOKEN_MAP},
+    prelude::SYMBOL_TO_ADDR,
     state::{ChainId, Endpoint, KeplrSignals, TokenMap},
     support::{chain_batch_query, chain_query},
     Error,
@@ -34,12 +34,9 @@ use lucide_leptos::{
 use tracing::{debug, error, info, warn};
 use web_sys::{js_sys, wasm_bindgen::JsValue};
 
-mod constants;
-mod error;
-mod prelude;
 mod routes;
 
-use routes::{nav::Nav, pool::Pools, trade::*};
+use routes::nav::Nav;
 
 pub const BASE_URL: &str = "/liquidity-book-leptos";
 
