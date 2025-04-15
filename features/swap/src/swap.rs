@@ -1,11 +1,15 @@
+use crate::{SwapDetails, SwapSettings};
 use ammber_components::{LoadingModal, Secret20Balance, Spinner2};
-use ammber_core::state::{Endpoint, KeplrSignals, TokenMap};
-use ammber_core::utils::{display_token_amount, parse_token_amount};
 use ammber_core::{
     constants::{contracts::*, CHAIN_ID, NODE, SYMBOL_TO_ADDR, TOKEN_MAP},
+    state::{Endpoint, KeplrSignals, TokenMap},
+    utils::{display_token_amount, parse_token_amount},
     Error,
 };
-use ammber_sdk::contract_interfaces::{lb_quoter::Quote, lb_router::Path, *};
+use ammber_sdk::contract_interfaces::{
+    lb_quoter::Quote,
+    lb_router::{self, Path},
+};
 use codee::string::FromToStringCodec;
 use cosmwasm_std::{to_binary, Addr, Uint128, Uint64};
 use keplr::Keplr;
@@ -13,7 +17,7 @@ use leptos::{ev, html, logging::*, prelude::*, tachys::dom::window};
 use leptos_router::{hooks::query_signal_with_options, NavigateOptions};
 use leptos_use::storage::use_local_storage;
 use liquidity_book::core::TokenType;
-use lucide_leptos::{ArrowDownUp, ChevronDown, Info, Settings2, TriangleAlert, X};
+use lucide_leptos::{ArrowDownUp, Settings2};
 use rsecret::{
     secret_client::CreateTxSenderOptions,
     tx::{compute::MsgExecuteContractRaw, ComputeServiceClient},
@@ -22,42 +26,7 @@ use rsecret::{
 use secretrs::AccountId;
 use std::str::FromStr;
 use tracing::{debug, info};
-use web_sys::{js_sys::Date, wasm_bindgen::JsCast};
-
-// just an idea
-#[component]
-fn KeyboardShortcuts() -> impl IntoView {
-    let handle_shortcut = move |ev: web_sys::KeyboardEvent| {
-        let target = ev.target();
-
-        // Check if the event is coming from an input field
-        if let Some(target) = target.and_then(|t| t.dyn_into::<web_sys::HtmlElement>().ok()) {
-            let tag = target.tag_name().to_lowercase();
-            if tag == "input" || tag == "textarea" || target.is_content_editable() {
-                return; // Don't trigger shortcut inside input fields
-            }
-        }
-        if ev.ctrl_key() {
-            // Check if Ctrl is held
-            match ev.code().as_str() {
-                "Digit1" => log!("Ctrl + 1 pressed → Action 1"),
-                "Digit2" => log!("Ctrl + 2 pressed → Action 2"),
-                "Digit3" => log!("Ctrl + 3 pressed → Action 3"),
-                _ => {}
-            }
-        }
-    };
-
-    // Attach a global keydown listener
-    window_event_listener(ev::keydown, handle_shortcut);
-
-    view! {
-        <p>
-            "Keyboard shortcuts: Press "<kbd>"1"</kbd>", "<kbd>"2"</kbd>", or "<kbd>"3"</kbd>
-            " to trigger actions."
-        </p>
-    }
-}
+use web_sys::js_sys::Date;
 
 #[component]
 pub fn Swap() -> impl IntoView {
@@ -69,7 +38,7 @@ pub fn Swap() -> impl IntoView {
 
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
-    let token_map = use_context::<TokenMap>().expect("tokens context missing!");
+    let _token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
     // prevents scrolling to the top of the page each time a query param changes
     let nav_options = NavigateOptions {
@@ -223,7 +192,7 @@ pub fn Swap() -> impl IntoView {
         }
     });
 
-    let current_quote = move || {
+    let _current_quote = move || {
         get_quote
             .value()
             .get()
@@ -231,7 +200,7 @@ pub fn Swap() -> impl IntoView {
             .and_then(|quote| serde_json::to_string_pretty(&quote).ok())
     };
 
-    let path = move || {
+    let _path = move || {
         get_quote
             .value()
             .get()
@@ -245,10 +214,7 @@ pub fn Swap() -> impl IntoView {
 
     // TODO: how will we recheck the balances after a swap?
     let swap = Action::new_local(move |quote: &Quote| {
-        // TODO: Use the dynamic versions instead.
-        // let url = endpoint.get();
-        // let chain_id = chain_id.get();
-        let url = NODE;
+        let url = endpoint.get();
         let chain_id = CHAIN_ID;
 
         let quote = quote.clone();
@@ -632,250 +598,6 @@ pub fn Swap() -> impl IntoView {
                     </div>
                 </div>
             </div>
-        </div>
-    }
-}
-
-#[component]
-fn SwapDetails(
-    #[prop(into)] price_ratio: Signal<Option<f64>>,
-    #[prop(into)] expected_output: Signal<Option<Uint128>>,
-    #[prop(into)] minimum_received: Signal<Option<Uint128>>,
-    #[prop(into)] price_impact: Signal<f64>,
-) -> impl IntoView {
-    let (expanded, set_expanded) = signal(false);
-
-    let content_ref = NodeRef::<html::Div>::new();
-
-    let toggle_expand = move |_: ev::MouseEvent| {
-        if let Some(content) = content_ref.get() {
-            // let full_height = content.get_bounding_client_rect().height();
-            let full_height = content.scroll_height();
-
-            if expanded.get() {
-                // Ensure the content has an explicit height before collapsing
-                content.style(("height", format!("{}px", full_height)));
-                request_animation_frame(move || {
-                    content.style(("height", "0px"));
-                });
-            } else {
-                // First, set the height explicitly (this fixes the first animation issue)
-                content.style(("height", "0px"));
-                request_animation_frame(move || {
-                    content.style(("height", format!("{}px", full_height)));
-                });
-
-                // Reset height to `auto` after transition ends to allow dynamic resizing
-                let expanded_signal = expanded.clone();
-                window_event_listener_untyped("transitionend", move |_| {
-                    if expanded_signal.get() {
-                        if let Some(content) = content_ref.get() {
-                            content.style(("height", "auto"));
-                        }
-                    }
-                });
-            }
-        }
-        set_expanded.update(|e| *e = !*e);
-    };
-
-    view! {
-        <div class="flex flex-col w-full rounded-md box-border border border-solid border-border">
-            // Header (Click to Toggle)
-            <div
-                class="min-h-[40px] px-4 flex items-center justify-between cursor-pointer"
-                on:click=toggle_expand
-            >
-                // TODO: toggle between price ratio on click. somehow make this take precedence
-                // over the toggle_expand for the whole header.
-                // NOTE: This price ratio is based on the expected output (amount_out).
-                // TODO: add token symbols to this string.
-                <p on:click=move |_| () class="m-0 text-sm text-white font-semibold">
-                    {move || price_ratio.get().map(|uint128| uint128.to_string())}
-                // "1 AVAX = 35.37513945 USDC"
-                </p>
-                <div
-                    class="flex items-center justify-center transition-transform"
-                    class=("rotate-180", move || expanded.get())
-                >
-                    <ChevronDown size=20 />
-                </div>
-            </div>
-
-            // Expandable Content
-            <div
-                node_ref=content_ref
-                class="transition-all ease-standard box-border overflow-hidden"
-                class=(["opacity-0", "invisible", "h-0"], move || !expanded.get())
-                class=(["opacity-100", "visible"], move || expanded.get())
-            >
-                <div class="w-full box-border p-4 pt-2 flex flex-col gap-2 items-center">
-                    <div class="w-full flex flex-row justify-between text-sm">
-                        <p class="m-0 text-muted-foreground">"Expected Output:"</p>
-                        <p class="m-0 text-foreground font-semibold">
-                            {move || expected_output.get().map(|uint128| uint128.to_string())}
-                        </p>
-                    </div>
-                    <div class="w-full flex flex-row justify-between text-sm">
-                        <p class="m-0 text-muted-foreground">"Minimum Received:"</p>
-                        <p class="m-0 text-foreground font-semibold">
-                            {move || minimum_received.get().map(|uint128| uint128.to_string())}
-                        </p>
-                    </div>
-                    <div class="w-full flex flex-row justify-between text-sm">
-                        <p class="m-0 text-muted-foreground">"Price Impact:"</p>
-                        <p class="m-0 text-foreground font-semibold">
-                            {move || price_impact.get()}
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            // Warning (Price Impact, etc)
-            <Show when=move || price_impact.get().gt(&2.0)>
-                <div class="flex flex-col items-center gap-2 m-2 mt-0">
-                    <div class="flex items-center justify-between box-border w-full px-4 py-2 text-sm text-white font-semibold bg-red-500/90 rounded-md">
-                        // price impact icon and text
-                        <div class="flex flex-row items-center gap-3">
-                            <TriangleAlert size=20 />
-                            <p class="m-0">"Price Impact Warning"</p>
-                        </div>
-                        // price impact percentage
-                        <p class="m-0">{move || price_impact.get()}"%"</p>
-                    </div>
-                </div>
-            </Show>
-        </div>
-    }
-}
-
-#[component]
-fn SwapSettings(
-    dialog_ref: NodeRef<html::Dialog>,
-    toggle_menu: impl Fn(ev::MouseEvent) + 'static,
-    slippage: (Signal<u16>, WriteSignal<u16>),
-    deadline: (Signal<u64>, WriteSignal<u64>),
-) -> impl IntoView {
-    info!("rendering <SettingsMenu/>");
-
-    view! {
-        <div class="floating-menu">
-            <dialog
-                node_ref=dialog_ref
-                class="z-40 mt-1.5 -mr-0 md:-mr-[124px] w-80 h-52 p-0 shadow-md bg-background text-foreground rounded-md border border-solid border-border"
-            >
-                <div class="relative flex flex-col z-auto">
-                    // <div class="absolute right-1.5 top-1.5 flex shrink-0 items-center justify-center w-6 h-6 p-1 box-border rounded-md hover:bg-neutral-700">
-                    // <X size=16 />
-                    // </div>
-                    <div class="flex justify-between items-center p-2 pl-3 text-popover-foreground border-0 border-b border-solid border-border">
-                        <p class="m-0">"Settings"</p>
-                        <button
-                            autofocus
-                            on:click=toggle_menu
-                            class="appearance-none border-0
-                            flex shrink-0 items-center justify-center w-6 h-6 p-1 box-border rounded-md
-                            bg-transparent hover:bg-muted transition-colors duration-200 ease-standard
-                            "
-                        >
-                            <X size=16 />
-                        </button>
-                    </div>
-                    <div class="px-3 py-4 box-border">
-                        <div class="flex flex-col items-start gap-4 w-full">
-                            <div class="flex flex-col items-start gap-2 w-full">
-                                <div class="flex flex-row items-center justify-between gap-2 w-full">
-                                    <p class="text-muted-foreground text-sm m-0">
-                                        "Slippage tolerance"
-                                    </p>
-                                    <div class="relative group focus-within:group">
-                                        <div
-                                            tabindex="0"
-                                            class="text-foreground focus:outline-none"
-                                        >
-                                            <Info size=16 />
-                                        </div>
-                                        <div class="absolute w-[200px] z-50 bottom-full right-0 lg:right-1/2 translate-x-0 lg:translate-x-1/2
-                                        bg-popover text-popover-foreground text-xs font-normal rounded-md border border-solid
-                                        mb-1 p-2 invisible opacity-0 transition-opacity duration-100 ease-in
-                                        group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-                                            "Your transaction will revert if the price changes unfavorably by more than this percentage."
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="flex flex-row items-center gap-2">
-                                    <div class="flex flex-row items-center gap-1">
-                                        <button
-                                            on:click=move |_| slippage.1.set(10)
-                                            class="h-8 min-w-8 w-16 text-sm font-semibold bg-secondary text-secondary-foreground rounded-md"
-                                        >
-                                            "0.1%"
-                                        </button>
-                                        <button
-                                            on:click=move |_| slippage.1.set(50)
-                                            class="h-8 min-w-8 w-16 text-sm font-semibold bg-secondary text-secondary-foreground rounded-md"
-                                        >
-                                            "0.5%"
-                                        </button>
-                                        <button
-                                            on:click=move |_| slippage.1.set(100)
-                                            class="h-8 min-w-8 w-16 text-sm font-semibold bg-secondary text-secondary-foreground rounded-md"
-                                        >
-                                            "1%"
-                                        </button>
-                                    </div>
-                                    <div class="w-full relative flex items-center isolate box-border">
-                                        <input
-                                            class="w-full box-border px-3 h-8 text-sm font-semibold bg-transparent text-popover-foreground rounded-md"
-                                            inputmode="decimal"
-                                            minlength="1"
-                                            maxlength="79"
-                                            type="text"
-                                            pattern="^[0-9]*[.,]?[0-9]*$"
-                                            prop:value=move || { slippage.0.get() as f64 / 100.0 }
-                                            on:change=move |ev| {
-                                                let value = event_target_value(&ev)
-                                                    .parse::<f64>()
-                                                    .unwrap_or(0.5);
-                                                let value = (value * 100.0).round() as u16;
-                                                slippage.1.set(value)
-                                            }
-                                        />
-                                        <div class="absolute right-0 top-0 w-8 h-8 z-[2] flex items-center justify-center text-popover-foreground">
-                                            "%"
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex flex-col items-start gap-2">
-                                <p class="text-muted-foreground text-sm m-0">
-                                    "Transaction deadline"
-                                </p>
-                                <div class="w-full relative flex items-center isolate box-border">
-                                    <input
-                                        class="w-full box-border px-3 h-8 text-sm font-semibold bg-transparent text-popover-foreground rounded-md"
-                                        inputmode="decimal"
-                                        minlength="1"
-                                        maxlength="79"
-                                        type="text"
-                                        pattern="^[0-9]*[.,]?[0-9]*$"
-                                        prop:value=move || { deadline.0.get() }
-                                        on:change=move |ev| {
-                                            let value = event_target_value(&ev)
-                                                .parse::<u64>()
-                                                .unwrap_or(5u64);
-                                            deadline.1.set(value)
-                                        }
-                                    />
-                                    <div class="absolute right-0 top-0 min-w-fit h-8 mr-4 z-[2] flex items-center justify-center text-sm text-popover-foreground">
-                                        "minutes"
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </dialog>
         </div>
     }
 }

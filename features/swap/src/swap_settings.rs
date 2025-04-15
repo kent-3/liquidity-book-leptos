@@ -1,15 +1,19 @@
-use leptos::{ev, html, logging::*, prelude::*, tachys::dom::window};
+use leptos::{ev, html, prelude::*};
 use lucide_leptos::{Info, X};
-use tracing::{debug, info};
+use tracing::info;
 
 #[component]
-fn SwapSettings(
+pub fn SwapSettings(
     dialog_ref: NodeRef<html::Dialog>,
     toggle_menu: impl Fn(ev::MouseEvent) + 'static,
     slippage: (Signal<u16>, WriteSignal<u16>),
     deadline: (Signal<u64>, WriteSignal<u64>),
 ) -> impl IntoView {
-    info!("rendering <SettingsMenu/>");
+    info!("rendering <SwapSettings/>");
+
+    on_cleanup(move || {
+        info!("cleaning up <SwapSettings/>");
+    });
 
     view! {
         <div class="floating-menu">
