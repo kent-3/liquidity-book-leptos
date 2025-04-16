@@ -161,72 +161,75 @@ pub fn PoolAnalytics() -> impl IntoView {
         format!("{} {}", amount, denom)
     });
 
-    let nearby_bins = RwSignal::<Result<Vec<BinResponse>, Error>>::new(Ok(vec![]));
-
-    // TODO: Handle Errors
-    spawn_local(async move {
-        let lb_pair_contract = lb_pair.await.unwrap().contract;
-        let id = active_id.await.unwrap();
-        let mut ids = Vec::new();
-
-        let radius = 49;
-
-        for i in 0..(radius * 2 + 1) {
-            let offset_id = if i < radius {
-                id - (radius - i) as u32 // Subtract for the first half
-            } else {
-                id + (i - radius) as u32 // Add for the second half
-            };
-
-            ids.push(offset_id);
-        }
-
-        debug!("getting nearby bins");
-
-        let bins = chain_query::<BinsResponse>(
-            lb_pair_contract.code_hash.clone(),
-            lb_pair_contract.address.to_string(),
-            lb_pair::QueryMsg::GetBins { ids },
-        )
-        .await
-        .map(|response| response.0);
-
-        nearby_bins.set(bins)
-    });
+    // let nearby_bins = RwSignal::<Result<Vec<BinResponse>, Error>>::new(Ok(vec![]));
+    //
+    // // TODO: Handle Errors
+    // spawn_local(async move {
+    //     let lb_pair_contract = lb_pair.await.unwrap().contract;
+    //     let id = active_id.await.unwrap();
+    //     let mut ids = Vec::new();
+    //
+    //     let radius = 49;
+    //
+    //     for i in 0..(radius * 2 + 1) {
+    //         let offset_id = if i < radius {
+    //             id - (radius - i) as u32 // Subtract for the first half
+    //         } else {
+    //             id + (i - radius) as u32 // Add for the second half
+    //         };
+    //
+    //         ids.push(offset_id);
+    //     }
+    //
+    //     debug!("getting nearby bins");
+    //
+    //     let bins = chain_query::<BinsResponse>(
+    //         lb_pair_contract.code_hash.clone(),
+    //         lb_pair_contract.address.to_string(),
+    //         lb_pair::QueryMsg::GetBins { ids },
+    //     )
+    //     .await
+    //     .map(|response| response.0);
+    //
+    //     nearby_bins.set(bins)
+    // });
 
     // 8.7 kb
-    // TODO: figure out why this runs twice when starting on this page
-    // let nearby_bins = LocalResource::new(move || {
-    //     async move {
-    //         let lb_pair_contract = lb_pair.await?.contract;
-    //         let id = active_id.await?;
-    //         let mut ids = Vec::new();
-    //
-    //         let radius = 49;
-    //
-    //         for i in 0..(radius * 2 + 1) {
-    //             let offset_id = if i < radius {
-    //                 id - (radius - i) as u32 // Subtract for the first half
-    //             } else {
-    //                 id + (i - radius) as u32 // Add for the second half
-    //             };
-    //
-    //             ids.push(offset_id);
-    //         }
-    //
-    //         debug!("getting nearby bins");
-    //
-    //         let bins = chain_query::<BinsResponse>(
-    //             lb_pair_contract.code_hash.clone(),
-    //             lb_pair_contract.address.to_string(),
-    //             lb_pair::QueryMsg::GetBins { ids },
-    //         )
-    //         .await
-    //         .map(|response| response.0);
-    //
-    //         bins
-    //     }
-    // });
+    let nearby_bins = LocalResource::new(move || {
+        let active_id = active_id.get();
+        async move {
+            let Some(Ok(id)) = active_id.as_deref() else {
+                return Err(Error::generic("ffffff"));
+            };
+
+            let lb_pair_contract = lb_pair.await?.contract;
+            let mut ids = Vec::new();
+
+            let radius = 49;
+
+            for i in 0..(radius * 2 + 1) {
+                let offset_id = if i < radius {
+                    id - (radius - i) as u32 // Subtract for the first half
+                } else {
+                    id + (i - radius) as u32 // Add for the second half
+                };
+
+                ids.push(offset_id);
+            }
+
+            debug!("getting nearby bins");
+
+            let bins = chain_query::<BinsResponse>(
+                lb_pair_contract.code_hash.clone(),
+                lb_pair_contract.address.to_string(),
+                lb_pair::QueryMsg::GetBins { ids },
+            )
+            .await
+            .map(|response| response.0);
+
+            bins
+        }
+    });
 
     // 38.4 kb
     // let nearby_bins = LocalResource::new(move || {
@@ -285,6 +288,9 @@ pub fn PoolAnalytics() -> impl IntoView {
 
         nearby_bins
             .get()
+            .as_deref()
+            .unwrap()
+            .clone()
             .map(|bins| {
                 bins.iter()
                     .map(|bin_response| {
@@ -297,6 +303,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                     .collect::<Vec<ReserveData>>()
             })
             .inspect(|ok| debug!("{ok:?}"))
+            .inspect_err(|err| debug!("{err:?}"))
     });
 
     let token_labels = AsyncDerived::new(move || async move {
