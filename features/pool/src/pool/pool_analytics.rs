@@ -10,6 +10,7 @@ use batch_query::{
     BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
 };
 use leptos::prelude::*;
+use leptos::task::spawn_local;
 use leptos_use::use_clipboard;
 use liquidity_book::interfaces::lb_pair::BinsResponse;
 use serde::{Deserialize, Serialize};
@@ -90,12 +91,12 @@ pub fn PoolAnalytics() -> impl IntoView {
 
         let base_fee = base_factor * bin_step() as u128 * 10_000_000_000;
 
-        debug!("{base_fee}");
+        // debug!("{base_fee}");
 
         let prod = (max_volatility_accumulator as u128) * (100 as u128);
         let max_variable_fee = (prod * prod * variable_fee_control + 99) / 100;
 
-        debug!("{max_variable_fee}");
+        // debug!("{max_variable_fee}");
 
         let max_fee = base_fee + max_variable_fee;
         let max_fee_bps = max_fee / 100_000_000_000_000;
@@ -160,37 +161,72 @@ pub fn PoolAnalytics() -> impl IntoView {
         format!("{} {}", amount, denom)
     });
 
-    // 8.7 kb
-    let nearby_bins = LocalResource::new(move || {
-        debug!("getting nearby bins");
-        async move {
-            let lb_pair_contract = lb_pair.await?.contract;
-            let id = active_id.await?;
-            let mut ids = Vec::new();
+    let nearby_bins = RwSignal::<Result<Vec<BinResponse>, Error>>::new(Ok(vec![]));
 
-            let radius = 49;
+    // TODO: Handle Errors
+    spawn_local(async move {
+        let lb_pair_contract = lb_pair.await.unwrap().contract;
+        let id = active_id.await.unwrap();
+        let mut ids = Vec::new();
 
-            for i in 0..(radius * 2 + 1) {
-                let offset_id = if i < radius {
-                    id - (radius - i) as u32 // Subtract for the first half
-                } else {
-                    id + (i - radius) as u32 // Add for the second half
-                };
+        let radius = 49;
 
-                ids.push(offset_id);
-            }
+        for i in 0..(radius * 2 + 1) {
+            let offset_id = if i < radius {
+                id - (radius - i) as u32 // Subtract for the first half
+            } else {
+                id + (i - radius) as u32 // Add for the second half
+            };
 
-            let bins = chain_query::<BinsResponse>(
-                lb_pair_contract.code_hash.clone(),
-                lb_pair_contract.address.to_string(),
-                lb_pair::QueryMsg::GetBins { ids },
-            )
-            .await
-            .map(|response| response.0);
-
-            bins
+            ids.push(offset_id);
         }
+
+        debug!("getting nearby bins");
+
+        let bins = chain_query::<BinsResponse>(
+            lb_pair_contract.code_hash.clone(),
+            lb_pair_contract.address.to_string(),
+            lb_pair::QueryMsg::GetBins { ids },
+        )
+        .await
+        .map(|response| response.0);
+
+        nearby_bins.set(bins)
     });
+
+    // 8.7 kb
+    // TODO: figure out why this runs twice when starting on this page
+    // let nearby_bins = LocalResource::new(move || {
+    //     async move {
+    //         let lb_pair_contract = lb_pair.await?.contract;
+    //         let id = active_id.await?;
+    //         let mut ids = Vec::new();
+    //
+    //         let radius = 49;
+    //
+    //         for i in 0..(radius * 2 + 1) {
+    //             let offset_id = if i < radius {
+    //                 id - (radius - i) as u32 // Subtract for the first half
+    //             } else {
+    //                 id + (i - radius) as u32 // Add for the second half
+    //             };
+    //
+    //             ids.push(offset_id);
+    //         }
+    //
+    //         debug!("getting nearby bins");
+    //
+    //         let bins = chain_query::<BinsResponse>(
+    //             lb_pair_contract.code_hash.clone(),
+    //             lb_pair_contract.address.to_string(),
+    //             lb_pair::QueryMsg::GetBins { ids },
+    //         )
+    //         .await
+    //         .map(|response| response.0);
+    //
+    //         bins
+    //     }
+    // });
 
     // 38.4 kb
     // let nearby_bins = LocalResource::new(move || {
@@ -243,25 +279,24 @@ pub fn PoolAnalytics() -> impl IntoView {
     }
 
     let debug = RwSignal::new(false);
-    // FIXME: prevent this from running twice
-    let chart_data = AsyncDerived::new(move || async move {
-        debug!("gathering chart data");
-        let bins = nearby_bins.await.unwrap_or_default();
 
-        let data: Vec<ReserveData> = bins
-            .iter()
-            .map(|bin_response| {
-                ReserveData::from_bin(
-                    bin_response.bin_id,
-                    bin_response.bin_reserve_y.u128(),
-                    bin_response.bin_reserve_x.u128(),
-                )
+    let chart_data = LocalResource::new(move || async move {
+        debug!("processing chart data");
+
+        nearby_bins
+            .get()
+            .map(|bins| {
+                bins.iter()
+                    .map(|bin_response| {
+                        ReserveData::from_bin(
+                            bin_response.bin_id,
+                            bin_response.bin_reserve_y.u128(),
+                            bin_response.bin_reserve_x.u128(),
+                        )
+                    })
+                    .collect::<Vec<ReserveData>>()
             })
-            .collect();
-
-        debug!("{data:?}");
-
-        data
+            .inspect(|ok| debug!("{ok:?}"))
     });
 
     let token_labels = AsyncDerived::new(move || async move {
@@ -395,10 +430,10 @@ pub fn PoolAnalytics() -> impl IntoView {
                             <p class="text-sm text-muted-foreground font-semibold m-0">"Pool"</p>
                             <div class="flex flex-row items-center gap-2">
                                 <p class="hidden lg:block text-base font-semibold m-0">
-                                    {pool_address()}
+                                    {move || pool_address()}
                                 </p>
                                 <p class="block lg:hidden text-base font-semibold m-0">
-                                    {shorten_address(pool_address())}
+                                    {move || shorten_address(pool_address())}
                                 </p>
                                 <div
                                     on:click={
@@ -410,10 +445,12 @@ pub fn PoolAnalytics() -> impl IntoView {
                                     <Copy size=20 stroke_width=3 />
                                 </div>
                                 <a
-                                    href=format!(
-                                        "https://testnet.ping.pub/secret/account/{}",
-                                        pool_address(),
-                                    )
+                                    href=move || {
+                                        format!(
+                                            "https://testnet.ping.pub/secret/account/{}",
+                                            pool_address(),
+                                        )
+                                    }
                                     target="_blank"
                                     rel="noopener"
                                     class="text-muted-foreground hover:brightness-75"
@@ -428,10 +465,10 @@ pub fn PoolAnalytics() -> impl IntoView {
                             </p>
                             <div class="flex flex-row items-center gap-2">
                                 <p class="hidden lg:block text-base font-semibold m-0">
-                                    {token_x_address()}
+                                    {move || token_x_address()}
                                 </p>
                                 <p class="block lg:hidden text-base font-semibold m-0">
-                                    {shorten_address(token_x_address())}
+                                    {move || shorten_address(token_x_address())}
                                 </p>
                                 <div
                                     on:click={
@@ -443,10 +480,12 @@ pub fn PoolAnalytics() -> impl IntoView {
                                     <Copy size=20 stroke_width=3 />
                                 </div>
                                 <a
-                                    href=format!(
-                                        "https://testnet.ping.pub/secret/account/{}",
-                                        token_x_address(),
-                                    )
+                                    href=move || {
+                                        format!(
+                                            "https://testnet.ping.pub/secret/account/{}",
+                                            token_x_address(),
+                                        )
+                                    }
                                     target="_blank"
                                     rel="noopener"
                                     class="text-muted-foreground hover:brightness-75"
@@ -461,10 +500,10 @@ pub fn PoolAnalytics() -> impl IntoView {
                             </p>
                             <div class="flex flex-row items-center gap-2">
                                 <p class="hidden lg:block text-base font-semibold m-0">
-                                    {token_y_address()}
+                                    {move || token_y_address()}
                                 </p>
                                 <p class="block lg:hidden text-base font-semibold m-0">
-                                    {shorten_address(token_y_address())}
+                                    {move || shorten_address(token_y_address())}
                                 </p>
                                 <div
                                     on:click={
@@ -476,10 +515,12 @@ pub fn PoolAnalytics() -> impl IntoView {
                                     <Copy size=20 stroke_width=3 />
                                 </div>
                                 <a
-                                    href=format!(
-                                        "https://testnet.ping.pub/secret/account/{}",
-                                        token_y_address(),
-                                    )
+                                    href=move || {
+                                        format!(
+                                            "https://testnet.ping.pub/secret/account/{}",
+                                            token_y_address(),
+                                        )
+                                    }
                                     target="_blank"
                                     rel="noopener"
                                     class="text-muted-foreground hover:brightness-75"
@@ -494,7 +535,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                             <p class="text-sm text-muted-foreground font-semibold m-0">
                                 "Bin steps"
                             </p>
-                            <p class="text-base font-semibold m-0">{bin_step()}"bps"</p>
+                            <p class="text-base font-semibold m-0">{move || bin_step()}"bps"</p>
                         </div>
                         // TODO: is the Version stored anywhere?
                         <div class="flex flex-col items-start">
@@ -557,9 +598,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                         </div>
                     </div>
                 </div>
-                <div class="flex justify-center w-full">
-                    {chart_element}
-                </div>
+                <div class="flex justify-center w-full">{chart_element}</div>
             </div>
         </div>
     }
