@@ -14,7 +14,7 @@ use leptos::task::spawn_local;
 use leptos_use::use_clipboard;
 use liquidity_book::interfaces::lb_pair::BinsResponse;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, info};
+use tracing::{debug, error, info};
 
 #[component]
 pub fn PoolAnalytics() -> impl IntoView {
@@ -161,75 +161,100 @@ pub fn PoolAnalytics() -> impl IntoView {
         format!("{} {}", amount, denom)
     });
 
-    // let nearby_bins = RwSignal::<Result<Vec<BinResponse>, Error>>::new(Ok(vec![]));
-    //
-    // // TODO: Handle Errors
-    // spawn_local(async move {
-    //     let lb_pair_contract = lb_pair.await.unwrap().contract;
-    //     let id = active_id.await.unwrap();
-    //     let mut ids = Vec::new();
-    //
-    //     let radius = 49;
-    //
-    //     for i in 0..(radius * 2 + 1) {
-    //         let offset_id = if i < radius {
-    //             id - (radius - i) as u32 // Subtract for the first half
-    //         } else {
-    //             id + (i - radius) as u32 // Add for the second half
-    //         };
-    //
-    //         ids.push(offset_id);
-    //     }
-    //
-    //     debug!("getting nearby bins");
-    //
-    //     let bins = chain_query::<BinsResponse>(
-    //         lb_pair_contract.code_hash.clone(),
-    //         lb_pair_contract.address.to_string(),
-    //         lb_pair::QueryMsg::GetBins { ids },
-    //     )
-    //     .await
-    //     .map(|response| response.0);
-    //
-    //     nearby_bins.set(bins)
-    // });
+    let nearby_bins = RwSignal::<Result<Vec<BinResponse>, Error>>::new(Ok(vec![]));
+
+    // TODO: Handle Errors
+    spawn_local(async move {
+        let lb_pair_result = lb_pair.await;
+        let id_result = active_id.await;
+
+        // Early return pattern with error logging
+        let lb_pair_contract = match lb_pair_result {
+            Ok(pair) => pair.contract,
+            Err(err) => {
+                error!("Failed to get LB pair: {:?}", err);
+                nearby_bins.set(Err(err.into())); // Convert error and set in state
+                return;
+            }
+        };
+
+        let id = match id_result {
+            Ok(id) => id,
+            Err(err) => {
+                error!("Failed to get active ID: {:?}", err);
+                nearby_bins.set(Err(err.into()));
+                return;
+            }
+        };
+
+        let mut ids = Vec::new();
+        let radius = 49;
+        for i in 0..(radius * 2 + 1) {
+            let offset_id = if i < radius {
+                id - (radius - i) as u32
+            } else {
+                id + (i - radius) as u32
+            };
+            ids.push(offset_id);
+        }
+
+        debug!("getting nearby bins");
+
+        // Use match for the final operation to handle errors
+        match chain_query::<BinsResponse>(
+            lb_pair_contract.code_hash.clone(),
+            lb_pair_contract.address.to_string(),
+            lb_pair::QueryMsg::GetBins { ids },
+        )
+        .await
+        {
+            Ok(response) => nearby_bins.set(Ok(response.0)),
+            Err(err) => {
+                error!("Failed to get bins: {:?}", err);
+                nearby_bins.set(Err(err.into()));
+            }
+        }
+
+        // Function returns (), which is what spawn_local expects
+    });
 
     // 8.7 kb
-    let nearby_bins = LocalResource::new(move || {
-        let active_id = active_id.get();
-        async move {
-            let Some(Ok(id)) = active_id.as_deref() else {
-                return Err(Error::generic("ffffff"));
-            };
-
-            let lb_pair_contract = lb_pair.await?.contract;
-            let mut ids = Vec::new();
-
-            let radius = 49;
-
-            for i in 0..(radius * 2 + 1) {
-                let offset_id = if i < radius {
-                    id - (radius - i) as u32 // Subtract for the first half
-                } else {
-                    id + (i - radius) as u32 // Add for the second half
-                };
-
-                ids.push(offset_id);
-            }
-
-            debug!("getting nearby bins");
-
-            let bins = chain_query::<BinsResponse>(
-                lb_pair_contract.code_hash.clone(),
-                lb_pair_contract.address.to_string(),
-                lb_pair::QueryMsg::GetBins { ids },
-            )
-            .await
-            .map(|response| response.0);
-
-            bins
-        }
-    });
+    // TODO: decide if this should be a Resource or not
+    // let nearby_bins = LocalResource::new(move || {
+    //     let active_id = active_id.get();
+    //     async move {
+    //         let Some(Ok(id)) = active_id.as_deref() else {
+    //             return Err(Error::generic("active_id is not ready yet"));
+    //         };
+    //
+    //         let lb_pair_contract = lb_pair.await?.contract;
+    //         let mut ids = Vec::new();
+    //
+    //         let radius = 49;
+    //
+    //         for i in 0..(radius * 2 + 1) {
+    //             let offset_id = if i < radius {
+    //                 id - (radius - i) as u32 // Subtract for the first half
+    //             } else {
+    //                 id + (i - radius) as u32 // Add for the second half
+    //             };
+    //
+    //             ids.push(offset_id);
+    //         }
+    //
+    //         debug!("getting nearby bins");
+    //
+    //         let bins = chain_query::<BinsResponse>(
+    //             lb_pair_contract.code_hash.clone(),
+    //             lb_pair_contract.address.to_string(),
+    //             lb_pair::QueryMsg::GetBins { ids },
+    //         )
+    //         .await
+    //         .map(|response| response.0);
+    //
+    //         bins
+    //     }
+    // });
 
     // 38.4 kb
     // let nearby_bins = LocalResource::new(move || {
@@ -288,9 +313,9 @@ pub fn PoolAnalytics() -> impl IntoView {
 
         nearby_bins
             .get()
-            .as_deref()
-            .unwrap()
-            .clone()
+            // .as_deref()
+            // .unwrap()
+            // .clone()
             .map(|bins| {
                 bins.iter()
                     .map(|bin_response| {

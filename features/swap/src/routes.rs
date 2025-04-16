@@ -5,8 +5,6 @@ use leptos_router_macro::path;
 
 #[component]
 pub fn SwapRoutes() -> impl MatchNestedRoutes + Clone {
-    view! {
-        <Route path=path!("/liquidity-book-leptos/trade") view=Swap/>
-    }
+    view! { <Route path=path!("/liquidity-book-leptos/trade") view=Swap /> }
     .into_inner()
 }

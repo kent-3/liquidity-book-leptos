@@ -239,17 +239,9 @@ pub fn Pool() -> impl IntoView {
             "Back to pools list"
         </a>
 
-        { move || {
-            let result = store.lb_pair().get();
+        {move || store.lb_pair().get().contract.address.to_string()}
 
-            result.contract.address.to_string()
-        }}
-
-        { move || {
-            let result = store.active_id().get();
-
-            result
-        }}
+        {move || store.active_id().get()}
 
         // page title with the token symbols
         <div class="md:h-10 flex flex-col md:flex-row items-start md:items-center gap-x-4 gap-y-3">
@@ -298,9 +290,7 @@ pub fn Pool() -> impl IntoView {
                     <div class="flex gap-1 items-center [&_svg]:-translate-y-[1px] [&_svg]:text-muted-foreground">
                         <div>
                             {move || Suspend::new(async move {
-                                lb_pair
-                                    .await
-                                    .map(|x| shorten_address(x.contract.address))
+                                lb_pair.await.map(|x| shorten_address(x.contract.address))
                             })}
                         </div>
                         <ExternalLink size=14 />

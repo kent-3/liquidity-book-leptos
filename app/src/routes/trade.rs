@@ -11,7 +11,5 @@ pub fn Trade() -> impl IntoView {
         info!("cleaning up <Trade/>");
     });
 
-    view! {
-        <Swap/>
-    }
+    view! { <Swap /> }
 }
