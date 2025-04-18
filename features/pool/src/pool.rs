@@ -277,6 +277,37 @@ pub fn Pool() -> impl IntoView {
                 <span class="text-sm text-foreground inline-flex font-semibold px-2.5 py-0.5 rounded-md border border-solid border-border">
                     {basis_points}" bps"
                 </span>
+
+                // Option #1 - entire element in a Suspend
+                // {move || Suspend::new(async move {
+                //     let address = lb_pair.await.map(|x| x.contract.address.to_string()).unwrap_or_default();
+                //
+                //     view! {
+                //         <a
+                //             href=move || {
+                //                 format!(
+                //                     "https://testnet.ping.pub/secret/account/{}",
+                //                     address.clone()
+                //                 )
+                //             }
+                //             target="_blank"
+                //             rel="noopener"
+                //             class="
+                //             inline-flex px-2.5 py-0.5 rounded-md border border-solid border-border
+                //             text-sm text-foreground font-semibold no-underline
+                //             "
+                //         >
+                //             <div class="flex gap-1 items-center [&_svg]:-translate-y-[1px] [&_svg]:text-muted-foreground">
+                //                 <div>
+                //                     {shorten_address(address.clone())}
+                //                 </div>
+                //                 <ExternalLink size=14 />
+                //             </div>
+                //         </a>
+                //     }
+                // })}
+
+                // Option #2 - Suspend display of the contract address, but access signal synchronously for href
                 <a
                     href=move || {
                         format!(
@@ -288,7 +319,6 @@ pub fn Pool() -> impl IntoView {
                                 )
                         )
                     }
-                    // href={move || lb_pair.get().as_deref().and_then(|x| x.clone().ok()).map(|x| x.contract.address.to_string()).unwrap_or("about:blank".to_string())}
                     target="_blank"
                     rel="noopener"
                     class="
