@@ -27,6 +27,7 @@
     }
   }
 
+  /* TODO: light amber theme */
   :root {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
@@ -55,7 +56,7 @@
     --chart-5: 27 87% 67%;
   }
 
-  /* amber theme */
+  /* dark amber theme */
   .dark {
     --background: 22.23% 0.006 271.14;
     /* my slightly darker version (900) */
@@ -116,8 +117,13 @@
     @apply border-border;
   }
 
-  a {
-    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-xs;
+  ::selection {
+    @apply bg-pine text-white;
+  }
+
+  html {
+    text-rendering: optimizelegibility;
+    color-scheme: dark;
   }
 
   body {
@@ -125,6 +131,24 @@
     @apply max-w-screen-xl mx-auto;
     @apply flex flex-col;
     @apply dark bg-background text-foreground;
+  }
+
+  a {
+    @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-xs;
+  }
+
+  a[aria-current] {
+    @apply text-foreground;
+  }
+
+  a[aria-current]>button {
+    @apply text-foreground bg-background;
+  }
+
+  @media (hover: hover) {
+    a:hover {
+      @apply md:underline;
+    }
   }
 
   button {
@@ -136,8 +160,6 @@
     @apply border border-solid border-transparent rounded-xs;
     @apply hover:brightness-95 disabled:hover:brightness-100;
     @apply focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring;
-    /* @apply hover:bg-[oklch(0.612_0_0)] disabled:hover:bg-neutral-500; */
-    /* @apply active:bg-[oklch(0.500_0_0)] disabled:active:bg-neutral-500; */
   }
 
   input,
@@ -156,14 +178,6 @@
     @apply bg-white text-black border-black;
     @apply dark:bg-black dark:text-white dark:border-white;
   }
-
-  /* select { */
-  /*   @apply text-[13.3333px] bg-background text-foreground dark; */
-  /* } */
-  /**/
-  /* select>option { */
-  /*   @apply bg-accent text-accent-foreground dark; */
-  /* } */
 
   h1 {
     display: block;
@@ -199,49 +213,25 @@
   }
 }
 
-html {
-  text-rendering: optimizelegibility;
-  color-scheme: dark;
-}
+/* Light mode styles */
+@media (prefers-color-scheme: light) {
+  html {
+    color-scheme: light;
+  }
 
-::selection {
-  @apply bg-pine text-white;
-}
+  body {
+    @apply bg-neutral-900 text-neutral-50;
+  }
 
-/* First N children */
-/* ._chartistry svg g g rect:nth-child(-n+5) { */
-/*     fill: blue; */
-/* } */
+  nav a {
+    @apply px-2 py-1 no-underline;
+    color: #0065b3;
+  }
 
-/* Last N children */
-/* ._chartistry svg g g rect:nth-last-child(-n+5) { */
-/*     fill: red; */
-/* } */
-
-/* ._chartistry aside table tbody tr td:first-child { */
-/*     display: none; */
-/* } */
-
-._chartistry svg g g rect {
-  rx: 2px;
-}
-
-/* ._chartistry svg g g rect:hover { */
-/*   @apply brightness-150; */
-/* } */
-
-._chartistry aside table tbody tr td ._chartistry_snippet ._chartistry_taster {
-  display: none;
-}
-
-._chartistry_tick_label {
-  @apply fill-muted-foreground;
-}
-
-._chartistry_tooltip {
-  @apply !p-3 !bg-neutral-700/40 !rounded !border-none;
-  backdrop-filter: blur(8px);
-  transform: translateY(-50%) translateX(117%) !important;
+  nav a:hover {
+    color: #0065b3;
+    @apply underline;
+  }
 }
 
 @layer components {
@@ -310,31 +300,46 @@ html {
   }
 }
 
-#mainTitle:hover {
-  transform: rotate(2deg);
+/* chart styles */
+
+/* First N children */
+/* ._chartistry svg g g rect:nth-child(-n+5) { */
+/*     fill: blue; */
+/* } */
+
+/* Last N children */
+/* ._chartistry svg g g rect:nth-last-child(-n+5) { */
+/*     fill: red; */
+/* } */
+
+/* ._chartistry aside table tbody tr td:first-child { */
+/*     display: none; */
+/* } */
+
+/* add some roundness to the bars */
+._chartistry svg g g rect {
+  rx: 2px;
 }
 
-a[aria-current] {
-  @apply text-foreground;
+/* brighten the bars on hover */
+/* ._chartistry svg g g rect:hover { */
+/*   @apply brightness-150; */
+/* } */
+
+/* hide the ugly legend in the tooltip */
+._chartistry aside table tbody tr td ._chartistry_snippet ._chartistry_taster {
+  display: none;
 }
 
-a[aria-current]>button {
-  @apply text-foreground bg-background;
+/* the color of the axis text labels. the text is svg so use fill */
+._chartistry_tick_label {
+  @apply fill-muted-foreground;
 }
 
-nav a {
-  @apply text-muted-foreground;
-  @apply px-3 py-1.5 no-underline leading-none;
-}
-
-@media (hover: hover) {
-  a:hover {
-    @apply md:underline;
-  }
-
-  nav a:hover {
-    @apply underline;
-  }
+._chartistry_tooltip {
+  @apply !p-3 !bg-neutral-700/40 !rounded !border-none;
+  backdrop-filter: blur(8px);
+  transform: translateY(-50%) translateX(117%) !important;
 }
 
 /* Full page background */
@@ -352,27 +357,6 @@ nav a {
   background-repeat: no-repeat;
   background-size: cover;
   transition: all 500ms ease-in-out;
-}
-
-/* Light mode styles */
-@media (prefers-color-scheme: light) {
-  html {
-    color-scheme: light;
-  }
-
-  body {
-    @apply bg-neutral-900 text-neutral-50;
-  }
-
-  nav a {
-    @apply px-2 py-1 no-underline;
-    color: #0065b3;
-  }
-
-  nav a:hover {
-    color: #0065b3;
-    @apply underline;
-  }
 }
 
 .floating-menu dialog {
