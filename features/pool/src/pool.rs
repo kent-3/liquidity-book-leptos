@@ -239,9 +239,8 @@ pub fn Pool() -> impl IntoView {
             "Back to pools list"
         </a>
 
-        {move || store.lb_pair().get().contract.address.to_string()}
-
-        {move || store.active_id().get()}
+        // {move || store.lb_pair().get().contract.address.to_string()}
+        // {move || store.active_id().get()}
 
         // page title with the token symbols
         <div class="md:h-10 flex flex-col md:flex-row items-start md:items-center gap-x-4 gap-y-3">

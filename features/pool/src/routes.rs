@@ -18,7 +18,7 @@ pub fn PoolRoutes() -> impl MatchNestedRoutes + Clone {
             <ParentRoute path=path!("/:token_a/:token_b/:bps") view=Pool>
                 <Route path=path!("") view=|| view! { <Redirect path="manage" /> } />
                 <ParentRoute path=path!("/manage") view=PoolManager>
-                    <Route path=path!("") view=|| view! { <Redirect path="add" /> } />
+                    <Route path=path!("") view=AddLiquidity />
                     <Route path=path!("add") view=AddLiquidity />
                     <Route path=path!("remove") view=RemoveLiquidity />
                 </ParentRoute>

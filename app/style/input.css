@@ -1,5 +1,3 @@
-/* @import "style/leptonic/leptonic-themes"; */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -126,9 +124,7 @@
     @apply antialiased box-content min-h-[100dvh];
     @apply max-w-screen-xl mx-auto;
     @apply flex flex-col;
-    /* @apply dark bg-neutral-900 text-neutral-200; */
     @apply dark bg-background text-foreground;
-    /* font-feature-settings: "kern"; */
   }
 
   button {
@@ -203,32 +199,10 @@
   }
 }
 
-/* Base styles */
 html {
-  /* scroll-behavior: smooth; */
   text-rendering: optimizelegibility;
-  /* font-family: */
-  /*   Inter, */
-  /*   Segoe UI, */
-  /*   SegoeUI, */
-  /*   Helvetica Neue, */
-  /*   Helvetica, */
-  /*   Arial, */
-  /*   sans-serif; */
   color-scheme: dark;
 }
-
-/* .card { */
-/*   background-color: rgba(255, 255, 255, 0.8); */
-/*   border: 1px solid #e0e0e0; */
-/*   border-radius: 8px; */
-/*   padding: 20px; */
-/*   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
-/* } */
-
-/* select>option { */
-/*   @apply bg-neutral-600 text-white; */
-/* } */
 
 ::selection {
   @apply bg-pine text-white;
@@ -290,7 +264,6 @@ html {
   }
 }
 
-/* Container to position the toasts */
 .toast-container {
   position: fixed;
   top: 1rem;
@@ -301,7 +274,6 @@ html {
   z-index: 1000;
 }
 
-/* Toast styles */
 .toast {
   background-color: #333;
   color: #fff;
@@ -315,7 +287,6 @@ html {
     fade-out 0.5s 3.5s ease-out forwards;
 }
 
-/* Keyframes for sliding in */
 @keyframes slide-in {
   0% {
     transform: translateX(100%);
@@ -328,7 +299,6 @@ html {
   }
 }
 
-/* Keyframes for fading out */
 @keyframes fade-out {
   0% {
     opacity: 1;
@@ -345,7 +315,6 @@ html {
 }
 
 a[aria-current] {
-  /* font-weight: bold; */
   @apply text-foreground;
 }
 
@@ -353,9 +322,7 @@ a[aria-current]>button {
   @apply text-foreground bg-background;
 }
 
-/* microsoft docs blue */
 nav a {
-  /* color: #75b6e7; */
   @apply text-muted-foreground;
   @apply px-3 py-1.5 no-underline leading-none;
 }
@@ -366,12 +333,11 @@ nav a {
   }
 
   nav a:hover {
-    /* color: #278cda; */
     @apply underline;
   }
 }
 
-/* NOTE: full page background */
+/* Full page background */
 
 #background {
   position: fixed;
@@ -387,39 +353,6 @@ nav a {
   background-size: cover;
   transition: all 500ms ease-in-out;
 }
-
-/* NOTE: glow effect behind something */
-
-.img-bg {
-  @apply absolute z-[-1] overflow-hidden rounded-full blur-[50px] scale-125 opacity-50 transition-all;
-  /* animation: */
-  /*   pulse 5s cubic-bezier(0, 0, 0, 0.5) infinite, */
-  /*   glow 5s linear infinite; */
-}
-
-/* @keyframes glow { */
-/*   0% { */
-/*     @apply bg-gold opacity-50; */
-/*   } */
-/**/
-/*   33% { */
-/*     @apply bg-[#798498] opacity-50; */
-/*   } */
-/**/
-/*   66% { */
-/*     @apply bg-iris opacity-50; */
-/*   } */
-/**/
-/*   100% { */
-/*     @apply bg-gold opacity-50; */
-/*   } */
-/* } */
-/**/
-/* @keyframes pulse { */
-/*   50% { */
-/*     transform: scale(1.05); */
-/*   } */
-/* } */
 
 /* Light mode styles */
 @media (prefers-color-scheme: light) {
@@ -441,79 +374,6 @@ nav a {
     @apply underline;
   }
 }
-
-/* code { */
-/*   font-family: */
-/*     JetBrains Mono, */
-/*     monospace; */
-/*   font-size: 1rem; */
-/*   color: #75b6e7; */
-/*   background-color: rgb(117 182 231 / 0.3); */
-/*   padding-top: 0.125rem; */
-/*   padding-bottom: 0.125rem; */
-/*   padding-left: 0.25rem; */
-/*   padding-right: 0.25rem; */
-/*   border-radius: 0.25rem; */
-/* } */
-
-/* ::backdrop { */
-/*   --tw-border-spacing-x: 0; */
-/*   --tw-border-spacing-y: 0; */
-/*   --tw-translate-x: 0; */
-/*   --tw-translate-y: 0; */
-/*   --tw-rotate: 0; */
-/*   --tw-skew-x: 0; */
-/*   --tw-skew-y: 0; */
-/*   --tw-scale-x: 1; */
-/*   --tw-scale-y: 1; */
-/*   --tw-pan-x: ; */
-/*   --tw-pan-y: ; */
-/*   --tw-pinch-zoom: ; */
-/*   --tw-scroll-snap-strictness: proximity; */
-/*   --tw-gradient-from-position: ; */
-/*   --tw-gradient-via-position: ; */
-/*   --tw-gradient-to-position: ; */
-/*   --tw-ordinal: ; */
-/*   --tw-slashed-zero: ; */
-/*   --tw-numeric-figure: ; */
-/*   --tw-numeric-spacing: ; */
-/*   --tw-numeric-fraction: ; */
-/*   --tw-ring-inset: ; */
-/*   --tw-ring-offset-width: 0px; */
-/*   --tw-ring-offset-color: #fff; */
-/*   --tw-ring-color: rgb(59 130 246 / 0.5); */
-/*   --tw-ring-offset-shadow: 0 0 #0000; */
-/*   --tw-ring-shadow: 0 0 #0000; */
-/*   --tw-shadow: 0 0 #0000; */
-/*   --tw-shadow-colored: 0 0 #0000; */
-/*   --tw-blur: ; */
-/*   --tw-brightness: ; */
-/*   --tw-contrast: ; */
-/*   --tw-grayscale: ; */
-/*   --tw-hue-rotate: ; */
-/*   --tw-invert: ; */
-/*   --tw-saturate: ; */
-/*   --tw-sepia: ; */
-/*   --tw-drop-shadow: ; */
-/*   --tw-backdrop-blur: ; */
-/*   --tw-backdrop-brightness: ; */
-/*   --tw-backdrop-contrast: ; */
-/*   --tw-backdrop-grayscale: ; */
-/*   --tw-backdrop-hue-rotate: ; */
-/*   --tw-backdrop-invert: ; */
-/*   --tw-backdrop-opacity: ; */
-/*   --tw-backdrop-saturate: ; */
-/*   --tw-backdrop-sepia: ; */
-/*   --tw-contain-size: ; */
-/*   --tw-contain-layout: ; */
-/*   --tw-contain-paint: ; */
-/*   --tw-contain-style: ; */
-/* } */
-
-/* .floating-menu dialog[open] { */
-/*   opacity: 1; */
-/*   transform: scale(1); */
-/* } */
 
 .floating-menu dialog {
   opacity: 0;
@@ -587,128 +447,7 @@ dialog::backdrop {
   @apply font-bold py-2 px-4;
 }
 
-.success {
-  background-color: green;
-}
-
-.error {
-  color: #efd9fd;
-  background-color: #3b2e58;
-  border: 1px solid #3b2e58;
-  padding: 1rem 1rem;
-}
-
-.error p,
-ul {
-  margin-block: 0;
-}
-
-.fadeIn {
-  animation: 300ms fadeIn cubic-bezier(0.2, 0, 0, 1);
-  /* Hold final state of animation */
-  animation-fill-mode: forwards;
-}
-
-.fadeOut {
-  animation: 150ms fadeOut cubic-bezier(0.3, 0.1, 1, 1);
-  /* Hold final state of animation */
-  animation-fill-mode: forwards;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-
-  to {
-    opacity: 0;
-  }
-}
-
-/* transitionTimingFunction: { */
-/* 	'standard': 'cubic-bezier(0.2, 0, 0, 1)', */
-/* 	'standard-decelerate': 'cubic-bezier(0, 0, 0, 1)', */
-/* 	'standard-accelerate': 'cubic-bezier(0.3, 0.1, 1, 1)', */
-/* 	'emphasized-decelerate': 'cubic-bezier(0.05, 0.7, 0.1, 1.0)', */
-/* 	'emphasized-accelerate': 'cubic-bezier(0.3, 0.0, 0.8, 0.15)' */
-/*  'easy-ease': 'cubic-bezier(0.33, 0, 0.67, 1)' */
-/* } */
-
-.slideIn {
-  animation: 450ms slideIn cubic-bezier(0.2, 0, 0, 1);
-}
-
-.slideOut {
-  animation: 200ms slideOut cubic-bezier(0.2, 0, 0, 1);
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translate(100px, 0px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate(0px, 0px);
-  }
-}
-
-@keyframes slideOut {
-  from {
-    opacity: 1;
-    transform: translate(0px, 0px);
-  }
-
-  to {
-    opacity: 0;
-    transform: translate(-100px, 0);
-  }
-}
-
-.slideInBack {
-  animation: 450ms slideInBack cubic-bezier(0.2, 0, 0, 1);
-}
-
-.slideOutBack {
-  animation: 200ms slideOutBack cubic-bezier(0.2, 0, 0, 1);
-}
-
-@keyframes slideInBack {
-  from {
-    opacity: 0;
-    transform: translate(-100px, 1);
-  }
-
-  to {
-    opacity: 1;
-    transform: translate(0px, 0px);
-  }
-}
-
-@keyframes slideOutBack {
-  from {
-    opacity: 1;
-    transform: translate(0px, 0px);
-  }
-
-  to {
-    opacity: 0;
-    transform: translate(100px, 0);
-  }
-}
-
-/* View Transitions CSS */
+/* View Transitions */
 
 .router-outlet-0 main {
   view-transition-name: main;
@@ -728,6 +467,30 @@ ul {
 
 .router-outlet-3 .liquidity-group {
   view-transition-name: outlet-3;
+}
+
+::view-transition-old(main) {
+  animation:
+    90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+}
+
+::view-transition-new(main) {
+  animation:
+    210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+}
+
+::view-transition-old(main-back) {
+  animation:
+    90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-right;
+}
+
+::view-transition-new(main-back) {
+  animation:
+    210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-left;
 }
 
 ::view-transition-old(outlet-1) {
@@ -754,27 +517,30 @@ ul {
     300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
 }
 
-/* ::view-transition-old(main) { */
-/*   animation: 200ms slideOut cubic-bezier(0.2, 0, 0, 1); */
-/*   animation-fill-mode: forwards; */
-/* } */
-/**/
-/* ::view-transition-new(main) { */
-/*   animation: 450ms slideIn cubic-bezier(0.2, 0, 0, 1); */
-/*   animation-fill-mode: forwards; */
-/* } */
-/**/
-/* ::view-transition-old(main-back) { */
-/*   color: red; */
-/*   animation: 200ms slideOutBack cubic-bezier(0.2, 0, 0, 1); */
-/*   animation-fill-mode: forwards; */
-/* } */
-/**/
-/* ::view-transition-new(main-back) { */
-/*   color: blue; */
-/*   animation: 450ms slideInBack cubic-bezier(0.2, 0, 0, 1); */
-/*   animation-fill-mode: forwards; */
-/* } */
+::view-transition-old(outlet-3) {
+  animation:
+    90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
+}
+
+::view-transition-new(outlet-3) {
+  animation:
+    210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
+    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
+}
+
+@media (prefers-reduced-motion: reduce),
+.no-animation {
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0s !important;
+  }
+}
 
 @keyframes fade-in {
   from {
@@ -824,67 +590,11 @@ ul {
   }
 }
 
-::view-transition-old(main) {
-  animation:
-    90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
-    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
-}
-
-::view-transition-new(main) {
-  animation:
-    210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
-    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
-}
-
-::view-transition-old(main-back) {
-  animation:
-    90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
-    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-right;
-}
-
-::view-transition-new(main-back) {
-  animation:
-    210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
-    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-left;
-}
-
-::view-transition-old(outlet-3) {
-  animation:
-    90ms cubic-bezier(0.4, 0, 1, 1) both fade-out,
-    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-to-left;
-}
-
-::view-transition-new(outlet-3) {
-  animation:
-    210ms cubic-bezier(0, 0, 0.2, 1) 90ms both fade-in,
-    300ms cubic-bezier(0.4, 0, 0.2, 1) both slide-from-right;
-}
-
-/* ::view-transition-old(main), */
-/* ::view-transition-new(main) { */
-/*   animation-duration: 1s; */
+/* transitionTimingFunction: { */
+/* 	'standard': 'cubic-bezier(0.2, 0, 0, 1)', */
+/* 	'standard-decelerate': 'cubic-bezier(0, 0, 0, 1)', */
+/* 	'standard-accelerate': 'cubic-bezier(0.3, 0.1, 1, 1)', */
+/* 	'emphasized-decelerate': 'cubic-bezier(0.05, 0.7, 0.1, 1.0)', */
+/* 	'emphasized-accelerate': 'cubic-bezier(0.3, 0.0, 0.8, 0.15)' */
+/*  'easy-ease': 'cubic-bezier(0.33, 0, 0.67, 1)' */
 /* } */
-/**/
-/* ::view-transition-old(outlet-1), */
-/* ::view-transition-new(outlet-1) { */
-/*   animation-duration: 0.5s; */
-/* } */
-/**/
-/* ::view-transition-old(outlet-2), */
-/* ::view-transition-new(outlet-2) { */
-/*   animation-duration: 0.25s; */
-/* } */
-/**/
-/* ::view-transition-old(outlet-3), */
-/* ::view-transition-new(outlet-3) { */
-/*   animation-duration: 0.15s; */
-/* } */
-
-@media (prefers-reduced-motion) {
-
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
-  }
-}
