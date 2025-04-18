@@ -278,7 +278,17 @@ pub fn Pool() -> impl IntoView {
                     {basis_points}" bps"
                 </span>
                 <a
-                    href="about:blank"
+                    href=move || {
+                        format!(
+                            "https://testnet.ping.pub/secret/account/{}",
+                            lb_pair.get()
+                                .map_or(String::new(), |wrapper|
+                                    wrapper.as_ref().ok()
+                                        .map_or(String::new(), |pair| pair.contract.address.to_string())
+                                )
+                        )
+                    }
+                    // href={move || lb_pair.get().as_deref().and_then(|x| x.clone().ok()).map(|x| x.contract.address.to_string()).unwrap_or("about:blank".to_string())}
                     target="_blank"
                     rel="noopener"
                     class="
