@@ -3,6 +3,7 @@ use ammber_sdk::contract_interfaces::lb_pair::LbPair;
 use cosmwasm_std::Uint256;
 use keplr::Keplr;
 use leptos::prelude::*;
+use leptos::task::spawn_local;
 use leptos_router::components::A;
 use leptos_router::{
     hooks::{use_location, use_navigate, use_params_map},
@@ -10,7 +11,7 @@ use leptos_router::{
     NavigateOptions,
 };
 use lucide_leptos::Plus;
-use tracing::{debug, info};
+use tracing::{debug, error, info};
 
 mod add_liquidity;
 mod remove_liquidity;
@@ -21,14 +22,6 @@ pub use remove_liquidity::RemoveLiquidity;
 #[component]
 pub fn PoolManager() -> impl IntoView {
     info!("rendering <PoolManager/>");
-
-    let navigate = use_navigate();
-    let location = use_location();
-    let nav_options = NavigateOptions {
-        // prevents scrolling to the top of the page each time a query param changes
-        scroll: false,
-        ..Default::default()
-    };
 
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
@@ -66,20 +59,99 @@ pub fn PoolManager() -> impl IntoView {
     let token_a_symbol = Signal::derive(move || token_a().symbol.clone());
     let token_b_symbol = Signal::derive(move || token_b().symbol.clone());
 
+    // let my_liquidity =
+    //     RwSignal::<Result<(Vec<u32>, Vec<Uint256>), Error>>::new(Ok((vec![], vec![])));
+    //
+    // just realized this whole thing won't work because we need this to react to changes in
+    // keplr.enabled
+    // spawn_local(async move {
+    //     if !keplr.enabled.get() {
+    //         return;
+    //     }
+    //
+    //     let lb_pair_result = lb_pair.await;
+    //     let id_result = active_id.await;
+    //
+    //     let lb_pair = match lb_pair_result {
+    //         Ok(lb_pair) => lb_pair.contract,
+    //         Err(err) => {
+    //             error!("Failed to get LB pair: {:?}", err);
+    //             my_liquidity.set(Err(err.into()));
+    //             return;
+    //         }
+    //     };
+    //
+    //     let id = match id_result {
+    //         Ok(id) => id,
+    //         Err(err) => {
+    //             error!("Failed to get active ID: {:?}", err);
+    //             my_liquidity.set(Err(err.into()));
+    //             return;
+    //         }
+    //     };
+    //
+    //     let mut ids = vec![];
+    //     let radius = 49;
+    //
+    //     for i in 0..(radius * 2 + 1) {
+    //         let offset_id = if i < radius {
+    //             id - (radius - i) as u32 // Subtract for the first half
+    //         } else {
+    //             id + (i - radius) as u32 // Add for the second half
+    //         };
+    //
+    //         ids.push(offset_id);
+    //     }
+    //
+    //     debug!("{:?}", ids);
+    //
+    //     // let account = Keplr::get_key(&chain_id)
+    //     //     .await
+    //     //     .map(|key| key.bech32_address)?;
+    //     //
+    //     // let accounts = vec![account; ids.len()];
+    //     //
+    //     // let balances: Vec<Uint256> = ILbPair(lb_pair)
+    //     //     .balance_of_batch(accounts, ids.clone())
+    //     //     .await?;
+    //     //
+    //     // debug!("{:?}", balances);
+    //     //
+    //     // Ok((ids, balances))
+    // });
+
     let my_liquidity = LocalResource::new(move || {
         let url = endpoint;
         let chain_id = CHAIN_ID;
 
+        // we have to access this signal sychronously to prevent the query from happening twice
+        let active_id = active_id.get();
+
         async move {
+            debug!("getting my_liquidity");
+
             if !keplr.enabled.get() {
-                return Err(Error::generic("keplr is disabled"));
+                return Err(Error::KeplrDisabled);
             }
 
-            let Ok(lb_pair) = lb_pair.await else {
-                return Err(Error::generic("lb pair information is missing!"));
-            };
-            let Ok(id) = active_id.await else {
-                return Err(Error::generic("active id is missing!"));
+            if active_id.is_none() {
+                return Err(Error::generic("active_id is missing"));
+            }
+
+            let lb_pair = lb_pair.await.map(|lb_pair| lb_pair.contract)?;
+
+            // If the signal is None, the resource is still loading and we return early.
+            // If we were to await it instead, this resource would spawn a second future when
+            // active_id changes. Both futures would complete independently,
+            // resulting in duplicate queries.
+            let id = match active_id.as_deref() {
+                Some(Ok(active_id)) => active_id,
+                Some(Err(err)) => {
+                    return Err(err.clone());
+                }
+                None => {
+                    return Err(Error::generic("active_id is missing"));
+                }
             };
 
             let mut ids = vec![];
@@ -95,18 +167,23 @@ pub fn PoolManager() -> impl IntoView {
                 ids.push(offset_id);
             }
 
-            debug!("{:?}", ids);
+            let account = Keplr::get_key(&chain_id)
+                .await
+                .map(|key| key.bech32_address)?;
 
-            let key = Keplr::get_key(&chain_id).await?;
-            let account = key.bech32_address;
+            let accounts = vec![account; ids.len()];
 
-            let accounts = vec![account.clone(); ids.len()];
-
-            let balances: Vec<Uint256> = ILbPair(lb_pair.contract.clone())
+            let balances: Vec<Uint256> = ILbPair(lb_pair)
                 .balance_of_batch(accounts, ids.clone())
                 .await?;
 
-            debug!("{:?}", balances);
+            let combined: Vec<(u32, String)> = ids
+                .iter()
+                .zip(balances.iter())
+                .map(|(&a, &b)| (a, b.to_string()))
+                .collect();
+
+            debug!("{:?}", combined);
 
             Ok((ids, balances))
         }
@@ -263,8 +340,7 @@ pub fn PoolManager() -> impl IntoView {
                         </button>
                     </A>
                 </div>
-                // TODO: I think add/remove liquidity should not be separate routes, and instead toggle
-                // visibility with a tab-group-like thing?
+                // container for the View Transition when navigating within the 'PoolManager' ParentRoute
                 <div class="liquidity-group">
                     <Outlet />
                 </div>

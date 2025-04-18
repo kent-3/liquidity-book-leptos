@@ -163,12 +163,10 @@ pub fn PoolAnalytics() -> impl IntoView {
 
     let nearby_bins = RwSignal::<Result<Vec<BinResponse>, Error>>::new(Ok(vec![]));
 
-    // TODO: Handle Errors
     spawn_local(async move {
         let lb_pair_result = lb_pair.await;
         let id_result = active_id.await;
 
-        // Early return pattern with error logging
         let lb_pair_contract = match lb_pair_result {
             Ok(pair) => pair.contract,
             Err(err) => {
@@ -200,7 +198,6 @@ pub fn PoolAnalytics() -> impl IntoView {
 
         debug!("getting nearby bins");
 
-        // Use match for the final operation to handle errors
         match chain_query::<BinsResponse>(
             lb_pair_contract.code_hash.clone(),
             lb_pair_contract.address.to_string(),
@@ -214,8 +211,6 @@ pub fn PoolAnalytics() -> impl IntoView {
                 nearby_bins.set(Err(err.into()));
             }
         }
-
-        // Function returns (), which is what spawn_local expects
     });
 
     // 8.7 kb

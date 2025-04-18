@@ -1,8 +1,6 @@
 use ammber_core::{prelude::*, support::ILbPair, utils::addr_2_symbol, Error, BASE_URL};
 use ammber_sdk::{contract_interfaces::lb_pair::LbPair, utils::u128_to_string_with_precision};
 use codee::string::FromToStringCodec;
-use cosmwasm_std::Addr;
-use cosmwasm_std::ContractInfo;
 use leptos::{ev, html, prelude::*, task::spawn_local};
 use leptos_router::{components::A, hooks::use_params_map, nested_router::Outlet};
 use leptos_use::storage::use_local_storage;
@@ -31,6 +29,7 @@ pub fn Pools() -> impl IntoView {
     });
 
     view! {
+        // container for the View Transition when navigating within the 'Pools' ParentRoute
         <div class="pools-group">
             <Outlet />
         </div>
@@ -230,6 +229,15 @@ pub fn Pool() -> impl IntoView {
         }
     };
 
+    let pool_address = move || {
+        lb_pair
+            .get()
+            .map_or(String::new(), |wrapper| match wrapper.as_ref() {
+                Ok(pair) => pair.contract.address.to_string(),
+                Err(_) => String::new(),
+            })
+    };
+
     view! {
         <a
             href="/liquidity-book-leptos/pool"
@@ -278,45 +286,12 @@ pub fn Pool() -> impl IntoView {
                     {basis_points}" bps"
                 </span>
 
-                // Option #1 - entire element in a Suspend
-                // {move || Suspend::new(async move {
-                //     let address = lb_pair.await.map(|x| x.contract.address.to_string()).unwrap_or_default();
-                //
-                //     view! {
-                //         <a
-                //             href=move || {
-                //                 format!(
-                //                     "https://testnet.ping.pub/secret/account/{}",
-                //                     address.clone()
-                //                 )
-                //             }
-                //             target="_blank"
-                //             rel="noopener"
-                //             class="
-                //             inline-flex px-2.5 py-0.5 rounded-md border border-solid border-border
-                //             text-sm text-foreground font-semibold no-underline
-                //             "
-                //         >
-                //             <div class="flex gap-1 items-center [&_svg]:-translate-y-[1px] [&_svg]:text-muted-foreground">
-                //                 <div>
-                //                     {shorten_address(address.clone())}
-                //                 </div>
-                //                 <ExternalLink size=14 />
-                //             </div>
-                //         </a>
-                //     }
-                // })}
-
-                // Option #2 - Suspend display of the contract address, but access signal synchronously for href
+                // Not bothering with Suspend. Accessing signal synchronously.
                 <a
                     href=move || {
                         format!(
                             "https://testnet.ping.pub/secret/account/{}",
-                            lb_pair.get()
-                                .map_or(String::new(), |wrapper|
-                                    wrapper.as_ref().ok()
-                                        .map_or(String::new(), |pair| pair.contract.address.to_string())
-                                )
+                            pool_address()
                         )
                     }
                     target="_blank"
@@ -328,9 +303,7 @@ pub fn Pool() -> impl IntoView {
                 >
                     <div class="flex gap-1 items-center [&_svg]:-translate-y-[1px] [&_svg]:text-muted-foreground">
                         <div>
-                            {move || Suspend::new(async move {
-                                lb_pair.await.map(|x| shorten_address(x.contract.address))
-                            })}
+                            {move || shorten_address(pool_address())}
                         </div>
                         <ExternalLink size=14 />
                     </div>
@@ -410,6 +383,7 @@ pub fn Pool() -> impl IntoView {
             </div>
         </div>
 
+        // container for the View Transition when navigating within the 'Pool' ParentRoute
         <div class="pool-tab-group">
             <Outlet />
         </div>
