@@ -3,6 +3,7 @@ use ammber_sdk::contract_interfaces::lb_pair::LbPair;
 use cosmwasm_std::Uint256;
 use keplr::Keplr;
 use leptos::prelude::*;
+use leptos_router::components::A;
 use leptos_router::{
     hooks::{use_location, use_navigate, use_params_map},
     nested_router::Outlet,
@@ -245,61 +246,25 @@ pub fn PoolManager() -> impl IntoView {
             <div class="block px-5 py-4 w-full box-border space-y-5 mx-auto bg-card border-solid border rounded-lg max-h-max">
                 // "Tab Group"
                 <div class="flex gap-0.5 w-full p-[5px] bg-muted rounded-md">
-                    // This preserves the query params when navigating to nested routes.
-                    // TODO: this is terribly complicated. it works, but there must be a simpler way
-                    <button
-                        class="w-full h-8 py-1.5 bg-background rounded-sm"
-                        on:click={
-                            let navigate_ = navigate.clone();
-                            let nav_options_ = nav_options.clone();
-                            move |_| {
-                                let mut pathname = location.pathname.get();
-                                let query_params = location.search.get();
-                                if pathname.ends_with('/') {
-                                    pathname.pop();
-                                }
-                                if pathname.ends_with("/add") || pathname.ends_with("/remove") {
-                                    pathname = pathname
-                                        .rsplit_once('/')
-                                        .map(|(base, _)| base)
-                                        .unwrap_or(&pathname)
-                                        .to_string();
-                                }
-                                let new_route = format!("{pathname}/add/?{query_params}");
-                                navigate_(&new_route, nav_options_.clone());
-                            }
-                        }
-                    >
-                        "Add Liquidity"
-                    </button>
-                    <button
-                        class="w-full h-8 py-1.5 bg-muted text-muted-foreground rounded-sm"
-                        on:click={
-                            let navigate_ = navigate.clone();
-                            let nav_options_ = nav_options.clone();
-                            move |_| {
-                                let mut pathname = location.pathname.get();
-                                let query_params = location.search.get();
-                                if pathname.ends_with('/') {
-                                    pathname.pop();
-                                }
-                                if pathname.ends_with("/add") || pathname.ends_with("/remove") {
-                                    pathname = pathname
-                                        .rsplit_once('/')
-                                        .map(|(base, _)| base)
-                                        .unwrap_or(&pathname)
-                                        .to_string();
-                                }
-                                let new_route = format!("{pathname}/remove/?{query_params}");
-                                navigate_(&new_route, nav_options_.clone());
-                            }
-                        }
-                    >
-                        "Remove Liquidity"
-                    </button>
+                    <A href="add" attr:class="w-full">
+                        <button
+                            tabindex="-1"
+                            class="py-1.5 px-3 rounded-sm bg-muted text-muted-foreground border-none h-8 w-full"
+                        >
+                            "Add Liquidity"
+                        </button>
+                    </A>
+                    <A href="remove" attr:class="w-full">
+                        <button
+                            tabindex="-1"
+                            class="py-1.5 px-3 rounded-sm bg-muted text-muted-foreground border-none h-8 w-full"
+                        >
+                            "Remove Liquidity"
+                        </button>
+                    </A>
                 </div>
                 // TODO: I think add/remove liquidity should not be separate routes, and instead toggle
-                // visibility with a tab-group-like thing
+                // visibility with a tab-group-like thing?
                 <div class="liquidity-group">
                     <Outlet />
                 </div>
