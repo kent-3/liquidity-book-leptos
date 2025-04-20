@@ -341,7 +341,7 @@ pub fn PoolAnalytics() -> impl IntoView {
             }>
                 {move || {
                     Suspend::new(async move {
-                        let data = chart_data.await;
+                        let data = chart_data.await.unwrap_or_default();
                         let token_labels = token_labels.await;
                         view! {
                             <PoolDistributionChart
