@@ -209,6 +209,7 @@ pub fn load_data() -> Vec<ReserveData> {
     // ]
 }
 
+// TODO: this is not right... liquidity has only 1 series
 #[component]
 pub fn LiquidityChart(
     debug: Signal<bool>,

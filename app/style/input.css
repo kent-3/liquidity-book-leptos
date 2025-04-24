@@ -339,7 +339,8 @@
 ._chartistry_tooltip {
   @apply !p-3 !bg-neutral-700/40 !rounded !border-none;
   backdrop-filter: blur(8px);
-  transform: translateY(-50%) translateX(117%) !important;
+  /* show tooltip to the right of the cursor instead of the left */
+  /* transform: translateY(-50%) translateX(117%) !important; */
 }
 
 /* Full page background */

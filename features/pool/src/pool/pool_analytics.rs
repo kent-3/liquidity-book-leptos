@@ -3,7 +3,7 @@ use ammber_core::support::chain_query;
 use ammber_core::utils::{display_token_amount, get_token_decimals, shorten_address};
 use ammber_core::Error;
 use ammber_sdk::contract_interfaces::lb_pair::{
-    self, BinResponse, LbPair, ReservesResponse, StaticFeeParametersResponse,
+    self, BinResponse, BinsResponse, LbPair, ReservesResponse, StaticFeeParametersResponse,
 };
 use batch_query::{
     msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
@@ -12,7 +12,6 @@ use batch_query::{
 use leptos::prelude::*;
 use leptos::task::spawn_local;
 use leptos_use::use_clipboard;
-use liquidity_book::interfaces::lb_pair::BinsResponse;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info};
 
@@ -91,19 +90,14 @@ pub fn PoolAnalytics() -> impl IntoView {
 
         let base_fee = base_factor * bin_step() as u128 * 10_000_000_000;
 
-        // debug!("{base_fee}");
-
-        let prod = (max_volatility_accumulator as u128) * (100 as u128);
+        let prod = (max_volatility_accumulator as u128) * 100;
         let max_variable_fee = (prod * prod * variable_fee_control + 99) / 100;
-
-        // debug!("{max_variable_fee}");
 
         let max_fee = base_fee + max_variable_fee;
         let max_fee_bps = max_fee / 100_000_000_000_000;
         format!("{}.{}%", max_fee_bps / 100, max_fee_bps % 100)
     });
 
-    // TODO: test this when the protocol_share isn't set to 0 lol
     let protocol_fee = AsyncDerived::new(move || async move {
         let protocol_fee = static_fee_parameters
             .await
@@ -161,57 +155,10 @@ pub fn PoolAnalytics() -> impl IntoView {
         format!("{} {}", amount, denom)
     });
 
-    let nearby_bins = RwSignal::<Result<Vec<BinResponse>, Error>>::new(Ok(vec![]));
+    // TODO: move this part to the 'Pool' component and provide as context here (so it only runs once)
 
-    spawn_local(async move {
-        let lb_pair_result = lb_pair.await;
-        let id_result = active_id.await;
-
-        let lb_pair_contract = match lb_pair_result {
-            Ok(pair) => pair.contract,
-            Err(err) => {
-                error!("Failed to get LB pair: {:?}", err);
-                nearby_bins.set(Err(err.into())); // Convert error and set in state
-                return;
-            }
-        };
-
-        let id = match id_result {
-            Ok(id) => id,
-            Err(err) => {
-                error!("Failed to get active ID: {:?}", err);
-                nearby_bins.set(Err(err.into()));
-                return;
-            }
-        };
-
-        let mut ids = Vec::new();
-        let radius = 49;
-        for i in 0..(radius * 2 + 1) {
-            let offset_id = if i < radius {
-                id - (radius - i) as u32
-            } else {
-                id + (i - radius) as u32
-            };
-            ids.push(offset_id);
-        }
-
-        debug!("getting nearby bins");
-
-        match chain_query::<BinsResponse>(
-            lb_pair_contract.code_hash.clone(),
-            lb_pair_contract.address.to_string(),
-            lb_pair::QueryMsg::GetBins { ids },
-        )
-        .await
-        {
-            Ok(response) => nearby_bins.set(Ok(response.0)),
-            Err(err) => {
-                error!("Failed to get bins: {:?}", err);
-                nearby_bins.set(Err(err.into()));
-            }
-        }
-    });
+    let nearby_bins = use_context::<RwSignal<Result<Vec<BinResponse>, Error>>>()
+        .expect("missing nearby_bins context");
 
     // 8.7 kb
     // TODO: decide if this should be a Resource or not
@@ -303,6 +250,7 @@ pub fn PoolAnalytics() -> impl IntoView {
 
     let debug = RwSignal::new(false);
 
+    // TODO: doesn't need to be async
     let chart_data = LocalResource::new(move || async move {
         debug!("processing chart data");
 
@@ -322,7 +270,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                     })
                     .collect::<Vec<ReserveData>>()
             })
-            .inspect(|ok| debug!("{ok:?}"))
+            // .inspect(|ok| debug!("{ok:?}"))
             .inspect_err(|err| debug!("{err:?}"))
     });
 

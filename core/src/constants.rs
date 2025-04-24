@@ -64,7 +64,7 @@ pub mod contracts {
 
     // TODO: create a wrapper ILbRouter for this
     pub static LB_ROUTER: LazyLock<ContractInfo> =
-        LazyLock::new(|| get_deployed_contracts(CHAIN_ID).lb_quoter.clone());
+        LazyLock::new(|| get_deployed_contracts(CHAIN_ID).lb_router.clone());
 
     pub static LB_QUOTER: LazyLock<ILbQuoter> =
         LazyLock::new(|| ILbQuoter(get_deployed_contracts(CHAIN_ID).lb_quoter.clone()));

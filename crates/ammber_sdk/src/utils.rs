@@ -40,7 +40,14 @@ pub fn u128_to_string_with_precision(value: u128) -> String {
     let whole_part = value / PRECISION;
     let decimal_part = value % PRECISION;
 
-    let decimal_str = format!("{:018}", decimal_part); // Pad to 18 decimals
+    // Scale the decimal_part to 6 decimal places (instead of 18)
+    // PRECISION is 10^18, so divide by 10^12 to get 6 decimal places
+    let scaled_decimal = decimal_part / 1_000_000_000_000;
+
+    // Format to exactly 6 decimal places
+    let decimal_str = format!("{:06}", scaled_decimal);
+
+    // Trim trailing zeros
     let trimmed_decimal = decimal_str.trim_end_matches('0');
 
     if trimmed_decimal.is_empty() {

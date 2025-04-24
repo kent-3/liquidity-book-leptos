@@ -116,8 +116,8 @@ pub fn AddLiquidity() -> impl IntoView {
     let (range, set_range) = signal((8_388_608, 8_388_608));
 
     // TODO: wherever the inputs are for these, need to convert it to/from basis points
-    let (amount_slippage, set_amount_slippage) = signal(1); // idk why this is necessary
-    let (price_slippage, set_price_slippage) = signal(200); // for if the active bin id moves
+    let (amount_slippage, set_amount_slippage) = signal(20); // idk why this is necessary
+    let (price_slippage, set_price_slippage) = signal(1000); // for if the active bin id moves
 
     let id_slippage = move || price_slippage.get() / bin_step() as u32;
 
@@ -276,6 +276,8 @@ pub fn AddLiquidity() -> impl IntoView {
 
                 let lb_router_contract = &LB_ROUTER;
 
+                debug!("{lb_router_contract:?}");
+
                 // NOTE: here we are encrypting the messages manually so we can broadcast them all
                 // together. (The client doesn't have a way to handle this internally yet)
 
@@ -360,13 +362,10 @@ pub fn AddLiquidity() -> impl IntoView {
                     error!("{}", tx.raw_log);
                 }
 
-                debug!("hello");
                 let data = MsgExecuteContractResponse::from_any(&tx.data[0])
                     .inspect_err(|e| error! {"{e}"})?
                     .data;
-                debug!("hello");
                 let add_liquidity_response = serde_json::from_slice::<AddLiquidityResponse>(&data)?;
-                debug!("hello");
 
                 debug!("X: {}", add_liquidity_response.amount_x_added);
                 debug!("Y: {}", add_liquidity_response.amount_y_added);

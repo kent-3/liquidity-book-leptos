@@ -173,6 +173,7 @@ pub fn App() -> impl IntoView {
     //     }
     // });
 
+    // TODO: this isn't great. we are querying every lb_pair on every page visit
     async fn batch_query_all_lb_pairs(number: u32) -> Vec<LbPair> {
         let i = number;
         let mut queries = Vec::new();

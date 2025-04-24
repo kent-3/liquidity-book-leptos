@@ -1,12 +1,20 @@
-use ammber_core::{prelude::*, support::ILbPair, utils::addr_2_symbol, Error, BASE_URL};
-use ammber_sdk::{contract_interfaces::lb_pair::LbPair, utils::u128_to_string_with_precision};
+use ammber_core::support::chain_query;
+use ammber_core::{prelude::*, state::*, support::ILbPair, utils::addr_2_symbol, Error, BASE_URL};
+use ammber_sdk::{
+    contract_interfaces::lb_pair::{
+        self, BinResponse, BinsResponse, LbPair, ReservesResponse, StaticFeeParametersResponse,
+    },
+    utils::u128_to_string_with_precision,
+};
 use codee::string::FromToStringCodec;
+use cosmwasm_std::Uint256;
+use keplr::Keplr;
 use leptos::{ev, html, prelude::*, task::spawn_local};
 use leptos_router::{components::A, hooks::use_params_map, nested_router::Outlet};
 use leptos_use::storage::use_local_storage;
 use liquidity_book::libraries::PriceHelper;
 use lucide_leptos::{ArrowLeft, ExternalLink, Info, Settings2, X};
-use tracing::{debug, info};
+use tracing::{debug, error, info};
 
 mod pool_analytics;
 mod pool_browser;
@@ -29,13 +37,13 @@ pub fn Pools() -> impl IntoView {
     });
 
     view! {
-        // container for the View Transition when navigating within the 'Pools' ParentRoute
         <div class="pools-group">
             <Outlet />
         </div>
     }
 }
 
+// TODO: structure the pool data and provide_context for child components
 #[component]
 pub fn Pool() -> impl IntoView {
     info!("rendering <Pool/>");
@@ -43,6 +51,9 @@ pub fn Pool() -> impl IntoView {
     on_cleanup(move || {
         info!("cleaning up <Pool/>");
     });
+
+    let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
+    let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
 
     let params = use_params_map();
 
@@ -74,10 +85,10 @@ pub fn Pool() -> impl IntoView {
         use_local_storage::<u16, FromToStringCodec>("price_slippage");
 
     // initialize local storage to default values
-    if amount_slippage.get() == 0 {
+    if amount_slippage.get_untracked() == 0 {
         set_amount_slippage.set(50u16);
     }
-    if price_slippage.get() == 0 {
+    if price_slippage.get_untracked() == 0 {
         set_price_slippage.set(5u16);
     }
 
@@ -90,7 +101,6 @@ pub fn Pool() -> impl IntoView {
 
     provide_context((token_a_symbol, token_b_symbol));
 
-    // SendWrapper required due to addr_2_contract function
     let lb_pair: LocalResource<Result<LbPair, Error>> = LocalResource::new(move || async move {
         debug!("run lb_pair resource");
 
@@ -199,7 +209,7 @@ pub fn Pool() -> impl IntoView {
 
     // --- end Store demonstration
 
-    // TODO: decide if these queries should go here or in the analytics component
+    // TODO: (maybe) batch query
     let total_reserves =
         LocalResource::new(
             move || async move { ILbPair(lb_pair.await?.contract).get_reserves().await },
@@ -212,6 +222,131 @@ pub fn Pool() -> impl IntoView {
 
     provide_context(total_reserves);
     provide_context(static_fee_parameters);
+
+    // TODO: decide on LocalResource vs regular Signal
+    let nearby_bins = RwSignal::<Result<Vec<BinResponse>, Error>>::new(Ok(vec![]));
+    provide_context(nearby_bins);
+
+    spawn_local(async move {
+        let lb_pair_result = lb_pair.await;
+        let id_result = active_id.await;
+
+        let lb_pair_contract = match lb_pair_result {
+            Ok(pair) => pair.contract,
+            Err(err) => {
+                error!("Failed to get LB pair: {:?}", err);
+                nearby_bins.set(Err(err.into())); // Convert error and set in state
+                return;
+            }
+        };
+
+        let id = match id_result {
+            Ok(id) => id,
+            Err(err) => {
+                error!("Failed to get active ID: {:?}", err);
+                nearby_bins.set(Err(err.into()));
+                return;
+            }
+        };
+
+        let mut ids = Vec::new();
+        let radius = 49;
+        for i in 0..(radius * 2 + 1) {
+            let offset_id = if i < radius {
+                id - (radius - i) as u32
+            } else {
+                id + (i - radius) as u32
+            };
+            ids.push(offset_id);
+        }
+
+        debug!("getting nearby bins reserves");
+
+        match chain_query::<BinsResponse>(
+            lb_pair_contract.code_hash.clone(),
+            lb_pair_contract.address.to_string(),
+            lb_pair::QueryMsg::GetBins { ids },
+        )
+        .await
+        {
+            Ok(response) => nearby_bins.set(Ok(response.0)),
+            Err(err) => {
+                error!("Failed to get bins: {:?}", err);
+                nearby_bins.set(Err(err.into()));
+            }
+        }
+    });
+
+    let my_liquidity = LocalResource::new(move || {
+        let url = endpoint;
+        let chain_id = CHAIN_ID;
+
+        // we have to access this signal sychronously to prevent the query from happening twice
+        let active_id = active_id.get();
+
+        async move {
+            debug!("getting my_liquidity");
+
+            if !keplr.enabled.get() {
+                return Err(Error::KeplrDisabled);
+            }
+
+            if active_id.is_none() {
+                return Err(Error::generic("active_id is missing"));
+            }
+
+            let lb_pair = lb_pair.await.map(|lb_pair| lb_pair.contract)?;
+
+            // If the signal is None, the resource is still loading and we return early.
+            // If we were to await it instead, this resource would spawn a second future when
+            // active_id changes. Both futures would complete independently,
+            // resulting in duplicate queries.
+            let id = match active_id.as_deref() {
+                Some(Ok(active_id)) => active_id,
+                Some(Err(err)) => {
+                    return Err(err.clone());
+                }
+                None => {
+                    return Err(Error::generic("active_id is missing"));
+                }
+            };
+
+            let mut ids = vec![];
+            let radius = 49;
+
+            for i in 0..(radius * 2 + 1) {
+                let offset_id = if i < radius {
+                    id - (radius - i) as u32 // Subtract for the first half
+                } else {
+                    id + (i - radius) as u32 // Add for the second half
+                };
+
+                ids.push(offset_id);
+            }
+
+            let account = Keplr::get_key(&chain_id)
+                .await
+                .map(|key| key.bech32_address)?;
+
+            let accounts = vec![account; ids.len()];
+
+            let balances: Vec<Uint256> = ILbPair(lb_pair)
+                .balance_of_batch(accounts, ids.clone())
+                .await?;
+
+            let combined: Vec<(u32, String)> = ids
+                .iter()
+                .zip(balances.iter())
+                .map(|(&a, &b)| (a, b.to_string()))
+                .collect();
+
+            debug!("{:?}", combined);
+
+            Ok((ids, balances))
+        }
+    });
+
+    provide_context(my_liquidity);
 
     let settings_dialog_ref = NodeRef::<html::Dialog>::new();
 
@@ -289,10 +424,7 @@ pub fn Pool() -> impl IntoView {
                 // Not bothering with Suspend. Accessing signal synchronously.
                 <a
                     href=move || {
-                        format!(
-                            "https://testnet.ping.pub/secret/account/{}",
-                            pool_address()
-                        )
+                        format!("https://testnet.ping.pub/secret/account/{}", pool_address())
                     }
                     target="_blank"
                     rel="noopener"
@@ -302,9 +434,7 @@ pub fn Pool() -> impl IntoView {
                     "
                 >
                     <div class="flex gap-1 items-center [&_svg]:-translate-y-[1px] [&_svg]:text-muted-foreground">
-                        <div>
-                            {move || shorten_address(pool_address())}
-                        </div>
+                        <div>{move || shorten_address(pool_address())}</div>
                         <ExternalLink size=14 />
                     </div>
                 </a>
