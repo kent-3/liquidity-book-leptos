@@ -62,10 +62,10 @@ pub fn Swap() -> impl IntoView {
     let (slippage, set_slippage, _) = use_local_storage::<u16, FromToStringCodec>("swap_slippage");
     let (deadline, set_deadline, _) = use_local_storage::<u64, FromToStringCodec>("swap_deadline");
 
-    if slippage.get() == 0 {
+    if slippage.get_untracked() == 0 {
         set_slippage.set(50u16);
     }
-    if deadline.get() == 0 {
+    if deadline.get_untracked() == 0 {
         set_deadline.set(5u64);
     }
 
