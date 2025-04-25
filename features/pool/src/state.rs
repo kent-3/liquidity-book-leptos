@@ -1,4 +1,4 @@
-use ammber_core::Error;
+use ammber_core::{prelude::Token, Error};
 use cosmwasm_std::{Addr, ContractInfo, Uint128};
 use ethnum::U256;
 use leptos::prelude::*;
@@ -18,10 +18,11 @@ use serde::{Deserialize, Serialize};
 //     4) Query the LbPair contract for the active_id, total_reserves, and static_fee_parameters
 //         (These could be batched)
 
+// TODO: decide if any of these should be Result types
 #[derive(Debug, Store, Serialize, Deserialize)]
 pub struct PoolState {
-    token_x: ContractInfo,
-    token_y: ContractInfo,
+    token_x: Token,
+    token_y: Token,
     bin_step: u16,
     lb_pair: LbPair,
     active_id: u32,
@@ -33,14 +34,8 @@ pub struct PoolState {
 impl Default for PoolState {
     fn default() -> Self {
         PoolState {
-            token_x: ContractInfo {
-                address: Addr::unchecked(""),
-                code_hash: String::new(),
-            },
-            token_y: ContractInfo {
-                address: Addr::unchecked(""),
-                code_hash: String::new(),
-            },
+            token_x: Token::default(),
+            token_y: Token::default(),
             bin_step: 0u16,
             lb_pair: LbPair {
                 token_x: liquidity_book::core::TokenType::CustomToken {
@@ -57,7 +52,7 @@ impl Default for PoolState {
                     code_hash: String::new(),
                 },
             },
-            active_id: 0u32,
+            active_id: 8388608u32,
             target_price: U256::ZERO,
             total_reserves: ReservesResponse {
                 reserve_x: Uint128::zero(),

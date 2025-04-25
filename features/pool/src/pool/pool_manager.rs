@@ -41,21 +41,21 @@ pub fn PoolManager() -> impl IntoView {
     // TODO: decide on calling these a/b or x/y
     let token_a = move || {
         params
-            .read_untracked()
+            .read()
             .get("token_a")
             .and_then(|token_address| TOKEN_MAP.get(&token_address))
             .expect("Missing token_a URL param")
     };
     let token_b = move || {
         params
-            .read_untracked()
+            .read()
             .get("token_b")
             .and_then(|token_address| TOKEN_MAP.get(&token_address))
             .expect("Missing token_b URL param")
     };
     let basis_points = move || {
         params
-            .read_untracked()
+            .read()
             .get("bps")
             .and_then(|value| value.parse::<u16>().ok())
             .expect("Missing bps URL param")
@@ -64,68 +64,7 @@ pub fn PoolManager() -> impl IntoView {
     let token_a_symbol = Signal::derive(move || token_a().symbol.clone());
     let token_b_symbol = Signal::derive(move || token_b().symbol.clone());
 
-    let selected_tab = create_rw_signal("add");
-
-    // let my_liquidity =
-    //     RwSignal::<Result<(Vec<u32>, Vec<Uint256>), Error>>::new(Ok((vec![], vec![])));
-    //
-    // just realized this whole thing won't work because we need this to react to changes in
-    // keplr.enabled
-    // spawn_local(async move {
-    //     if !keplr.enabled.get() {
-    //         return;
-    //     }
-    //
-    //     let lb_pair_result = lb_pair.await;
-    //     let id_result = active_id.await;
-    //
-    //     let lb_pair = match lb_pair_result {
-    //         Ok(lb_pair) => lb_pair.contract,
-    //         Err(err) => {
-    //             error!("Failed to get LB pair: {:?}", err);
-    //             my_liquidity.set(Err(err.into()));
-    //             return;
-    //         }
-    //     };
-    //
-    //     let id = match id_result {
-    //         Ok(id) => id,
-    //         Err(err) => {
-    //             error!("Failed to get active ID: {:?}", err);
-    //             my_liquidity.set(Err(err.into()));
-    //             return;
-    //         }
-    //     };
-    //
-    //     let mut ids = vec![];
-    //     let radius = 49;
-    //
-    //     for i in 0..(radius * 2 + 1) {
-    //         let offset_id = if i < radius {
-    //             id - (radius - i) as u32 // Subtract for the first half
-    //         } else {
-    //             id + (i - radius) as u32 // Add for the second half
-    //         };
-    //
-    //         ids.push(offset_id);
-    //     }
-    //
-    //     debug!("{:?}", ids);
-    //
-    //     // let account = Keplr::get_key(&chain_id)
-    //     //     .await
-    //     //     .map(|key| key.bech32_address)?;
-    //     //
-    //     // let accounts = vec![account; ids.len()];
-    //     //
-    //     // let balances: Vec<Uint256> = ILbPair(lb_pair)
-    //     //     .balance_of_batch(accounts, ids.clone())
-    //     //     .await?;
-    //     //
-    //     // debug!("{:?}", balances);
-    //     //
-    //     // Ok((ids, balances))
-    // });
+    let selected_tab = RwSignal::new("add");
 
     let my_liquidity = use_context::<LocalResource<Result<(Vec<u32>, Vec<Uint256>), Error>>>()
         .expect("missing the my_liquidity context");
@@ -157,54 +96,50 @@ pub fn PoolManager() -> impl IntoView {
             vec![]
         }
     });
+    let debug = RwSignal::new(false);
+    let token_labels = Signal::derive(move || {
+        let token_x = token_a_symbol.get();
+        let token_y = token_b_symbol.get();
+
+        (token_x, token_y)
+    });
 
     #[cfg(feature = "charts")]
-    {
-        let debug = RwSignal::new(false);
-        let token_labels = Signal::derive(move || {
-            let token_x = token_a_symbol.get();
-            let token_y = token_b_symbol.get();
-
-            (token_x, token_y)
-        });
-        // let chart_data = load_data();
-
-        let chart_element = view! {
-            <div class="flex justify-center w-full">
-                // TODO: Suspense is not necessary here. Use the Show component instead?
-                // fallback view is the second one
-                <Suspense fallback=|| {
-                    view! { "Loading..." }
-                }>
-                    {move || {
-                        Suspend::new(async move {
-                            let data = chart_data;
-                            let token_labels = token_labels;
-                            if !data.get().is_empty() {
-                                Either::Left(
-                                    view! {
-                                        <LiquidityChart
-                                            debug=debug.into()
-                                            data=chart_data.into()
-                                            token_labels=token_labels.into()
-                                        />
-                                    },
-                                )
-                            } else {
-                                Either::Right(
-                                    view! {
-                                        <p class="text-muted-foreground text-sm">
-                                            "You have no liquidity in this pool"
-                                        </p>
-                                    },
-                                )
-                            }
-                        })
-                    }}
-                </Suspense>
-            </div>
-        };
-    }
+    let chart_element = view! {
+        <div class="flex justify-center w-full">
+            // TODO: Suspense is not necessary here, but I think I'll keep it just in case I
+            // decide to change any of the signals to async
+            <Suspense fallback=|| {
+                view! { "Loading..." }
+            }>
+                {move || {
+                    Suspend::new(async move {
+                        let data = chart_data;
+                        let token_labels = token_labels;
+                        if !data.get().is_empty() {
+                            Either::Left(
+                                view! {
+                                    <LiquidityChart
+                                        debug=debug.into()
+                                        data=chart_data.into()
+                                        token_labels=token_labels.into()
+                                    />
+                                },
+                            )
+                        } else {
+                            Either::Right(
+                                view! {
+                                    <p class="text-muted-foreground text-sm">
+                                        "You have no liquidity in this pool"
+                                    </p>
+                                },
+                            )
+                        }
+                    })
+                }}
+            </Suspense>
+        </div>
+    };
 
     #[cfg(not(feature = "charts"))]
     let chart_element = view! {

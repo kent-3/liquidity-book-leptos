@@ -1,252 +1,107 @@
+use crate::state::{PoolState, PoolStateStoreFields};
 use ammber_charts::{PoolDistributionChart, ReserveData};
-use ammber_core::support::chain_query;
-use ammber_core::utils::{display_token_amount, get_token_decimals, shorten_address};
-use ammber_core::Error;
-use ammber_sdk::contract_interfaces::lb_pair::{
-    self, BinResponse, BinsResponse, LbPair, ReservesResponse, StaticFeeParametersResponse,
+use ammber_core::{
+    utils::{display_token_amount, shorten_address},
+    Error,
 };
-use batch_query::{
-    msg_batch_query, parse_batch_query, BatchItemResponseStatus, BatchQuery, BatchQueryParams,
-    BatchQueryParsedResponse, BatchQueryResponse, BATCH_QUERY_ROUTER,
-};
+use ammber_sdk::contract_interfaces::lb_pair::BinResponse;
 use leptos::prelude::*;
-use leptos::task::spawn_local;
-use leptos_use::use_clipboard;
-use serde::{Deserialize, Serialize};
+use leptos_use::{use_clipboard, UseClipboardReturn};
+use lucide_leptos::{Copy, Link};
+use reactive_stores::Store;
 use tracing::{debug, error, info};
 
 #[component]
 pub fn PoolAnalytics() -> impl IntoView {
     info!("rendering <PoolAnalytics/>");
 
-    use leptos_use::UseClipboardReturn;
-    use lucide_leptos::{Copy, Link};
+    on_cleanup(move || {
+        info!("cleaning up <PoolAnalytics/>");
+    });
 
     let UseClipboardReturn { copy, .. } = use_clipboard();
 
-    let (token_x_symbol, token_y_symbol) = use_context::<(
-        AsyncDerived<String, LocalStorage>,
-        AsyncDerived<String, LocalStorage>,
-    )>()
-    .expect("missing token symbols context");
-    let lb_pair = use_context::<LocalResource<Result<LbPair, Error>>>()
-        .expect("missing the LbPair resource context");
-    let active_id = use_context::<LocalResource<Result<u32, Error>>>()
-        .expect("missing the active_id resource context");
-    let static_fee_parameters =
-        use_context::<LocalResource<Result<StaticFeeParametersResponse, Error>>>()
-            .expect("missing the static fee parameters resource context");
+    // benefit of using Store. no Option or Result types to deal with
+    let pool = use_context::<Store<PoolState>>().expect("missing the Store<PoolState> context");
 
-    // TODO: decide on making these signals sync or async
-    let bin_step = move || {
-        lb_pair
-            .get()
-            .as_deref()
-            .and_then(|result| result.clone().ok())
-            .map(|pair| pair.bin_step)
-            .unwrap_or_default()
+    // TODO:
+    // - Liquidity
+    // - Volume
+    // - Fees
+    // - APR
+    // - +/- 2% depth
+
+    let reserve_x = move || {
+        let token_x = pool.token_x().get();
+        let reserve_x = pool.total_reserves().get().reserve_x.u128();
+
+        let amount_x = if token_x.decimals > 0 {
+            reserve_x / 10u128.pow(token_x.decimals as u32)
+        } else {
+            reserve_x
+        };
+
+        format!("{} {}", amount_x, token_x.symbol)
     };
-    let pool_address = move || {
-        lb_pair
-            .get()
-            .as_deref()
-            .and_then(|result| result.clone().ok())
-            .map(|pair| pair.contract.address.to_string())
-            .unwrap_or_default()
-    };
-    let token_x_address = move || {
-        lb_pair
-            .get()
-            .as_deref()
-            .and_then(|result| result.clone().ok())
-            .map(|pair| pair.token_x.address().to_string())
-            .unwrap_or_default()
-    };
-    let token_y_address = move || {
-        lb_pair
-            .get()
-            .as_deref()
-            .and_then(|result| result.clone().ok())
-            .map(|pair| pair.token_y.address().to_string())
-            .unwrap_or_default()
+    let reserve_y = move || {
+        let token_y = pool.token_y().get();
+        let reserve_y = pool.total_reserves().get().reserve_y.u128();
+
+        let amount_y = if token_y.decimals > 0 {
+            reserve_y / 10u128.pow(token_y.decimals as u32)
+        } else {
+            reserve_y
+        };
+
+        format!("{} {}", amount_y, token_y.symbol)
     };
 
-    let base_fee = AsyncDerived::new(move || async move {
-        let base_factor = static_fee_parameters
-            .await
-            .map(|r| r.base_factor as u128)
-            .unwrap_or_default();
+    let token_x_symbol = move || {
+        let token = pool.token_x().get();
+        token.display_name.unwrap_or(token.symbol)
+    };
+    let token_y_symbol = move || {
+        let token = pool.token_y().get();
+        token.display_name.unwrap_or(token.symbol)
+    };
 
-        let fee_bps = base_factor * bin_step() as u128 / 10_000;
+    let pool_address = move || pool.lb_pair().get().contract.address.to_string();
+    let token_x_address = move || pool.lb_pair().get().token_x.address().to_string();
+    let token_y_address = move || pool.lb_pair().get().token_y.address().to_string();
+
+    let bin_step = move || pool.lb_pair().get().bin_step;
+    let base_fee = move || {
+        let base_factor = pool.static_fee_parameters().get().base_factor as u64;
+        let fee_bps = base_factor * bin_step() as u64 / 10_000;
+
         format!("{}.{}%", fee_bps / 100, fee_bps % 100)
-    });
+    };
+    let max_fee = move || {
+        // TODO: this seems right, but double check the maths
+        let static_fee_parameters = pool.static_fee_parameters().get();
+        let base_factor = static_fee_parameters.base_factor as u64;
+        let variable_fee_control = static_fee_parameters.variable_fee_control as u64;
+        let max_volatility_accumulator = static_fee_parameters.max_volatility_accumulator as u64;
 
-    // TODO: this seems right, but double check the maths
-    let max_fee = AsyncDerived::new(move || async move {
-        let static_fee_parameters = static_fee_parameters.await.unwrap();
-        let base_factor = static_fee_parameters.base_factor as u128;
-        let variable_fee_control = static_fee_parameters.variable_fee_control as u128;
-        let max_volatility_accumulator = static_fee_parameters.max_volatility_accumulator as u128;
+        let base_fee = base_factor * bin_step() as u64 * 10_000_000_000;
 
-        let base_fee = base_factor * bin_step() as u128 * 10_000_000_000;
-
-        let prod = (max_volatility_accumulator as u128) * 100;
+        let prod = (max_volatility_accumulator as u64) * 100;
         let max_variable_fee = (prod * prod * variable_fee_control + 99) / 100;
 
         let max_fee = base_fee + max_variable_fee;
         let max_fee_bps = max_fee / 100_000_000_000_000;
-        format!("{}.{}%", max_fee_bps / 100, max_fee_bps % 100)
-    });
 
-    let protocol_fee = AsyncDerived::new(move || async move {
-        let protocol_fee = static_fee_parameters
-            .await
-            .map(|r| r.protocol_share)
-            .unwrap_or_default();
+        format!("{}.{}%", max_fee_bps / 100, max_fee_bps % 100)
+    };
+    let protocol_fee = move || {
+        let protocol_fee = pool.static_fee_parameters().get().protocol_share;
 
         format!("{}.{}%", protocol_fee / 100, protocol_fee % 100)
-    });
+    };
 
-    let total_reserves = use_context::<LocalResource<Result<ReservesResponse, Error>>>()
-        .expect("missing the total reserves resource context");
-
-    let reserve_x = AsyncDerived::new(move || async move {
-        let decimals_x = get_token_decimals(token_x_address().as_str());
-
-        let amount = total_reserves
-            .await
-            .map(|r| {
-                if let Ok(decimals) = decimals_x {
-                    let full_amount = display_token_amount(r.reserve_x.u128(), decimals);
-                    full_amount
-                        .splitn(2, '.')
-                        .next()
-                        .unwrap_or(&full_amount)
-                        .to_string()
-                } else {
-                    r.reserve_x.to_string()
-                }
-            })
-            .unwrap_or(0.to_string());
-        let denom = token_x_symbol.await;
-
-        format!("{} {}", amount, denom)
-    });
-    let reserve_y = AsyncDerived::new(move || async move {
-        let decimals_y = get_token_decimals(token_y_address().as_str());
-
-        let amount = total_reserves
-            .await
-            .map(|r| {
-                if let Ok(decimals) = decimals_y {
-                    let full_amount = display_token_amount(r.reserve_y.u128(), decimals);
-                    full_amount
-                        .splitn(2, '.')
-                        .next()
-                        .unwrap_or(&full_amount)
-                        .to_string()
-                } else {
-                    r.reserve_y.to_string()
-                }
-            })
-            .unwrap_or(0.to_string());
-        let denom = token_y_symbol.await;
-
-        format!("{} {}", amount, denom)
-    });
-
-    // TODO: move this part to the 'Pool' component and provide as context here (so it only runs once)
-
+    // TODO: should this be a resource instead? so we can show something while loading
     let nearby_bins = use_context::<RwSignal<Result<Vec<BinResponse>, Error>>>()
         .expect("missing nearby_bins context");
-
-    // 8.7 kb
-    // TODO: decide if this should be a Resource or not
-    // let nearby_bins = LocalResource::new(move || {
-    //     let active_id = active_id.get();
-    //     async move {
-    //         let Some(Ok(id)) = active_id.as_deref() else {
-    //             return Err(Error::generic("active_id is not ready yet"));
-    //         };
-    //
-    //         let lb_pair_contract = lb_pair.await?.contract;
-    //         let mut ids = Vec::new();
-    //
-    //         let radius = 49;
-    //
-    //         for i in 0..(radius * 2 + 1) {
-    //             let offset_id = if i < radius {
-    //                 id - (radius - i) as u32 // Subtract for the first half
-    //             } else {
-    //                 id + (i - radius) as u32 // Add for the second half
-    //             };
-    //
-    //             ids.push(offset_id);
-    //         }
-    //
-    //         debug!("getting nearby bins");
-    //
-    //         let bins = chain_query::<BinsResponse>(
-    //             lb_pair_contract.code_hash.clone(),
-    //             lb_pair_contract.address.to_string(),
-    //             lb_pair::QueryMsg::GetBins { ids },
-    //         )
-    //         .await
-    //         .map(|response| response.0);
-    //
-    //         bins
-    //     }
-    // });
-
-    // 38.4 kb
-    // let nearby_bins = LocalResource::new(move || {
-    //     async move {
-    //         let lb_pair_contract = lb_pair.await?.contract;
-    //         let id = active_id.await?;
-    //         let mut queries = Vec::new();
-    //
-    //         let radius = 50;
-    //
-    //         for i in 0..(radius * 2 + 1) {
-    //             let offset_id = if i < radius {
-    //                 id - (radius - i) as u32 // Subtract for the first half
-    //             } else {
-    //                 id + (i - radius) as u32 // Add for the second half
-    //             };
-    //
-    //             queries.push(BatchQueryParams {
-    //                 id: offset_id.to_string(),
-    //                 contract: lb_pair_contract.clone(),
-    //                 query_msg: lb_pair::QueryMsg::GetBin { id: offset_id },
-    //             });
-    //         }
-    //
-    //         let batch_query_message = msg_batch_query(queries);
-    //
-    //         let bins = chain_query::<BatchQueryResponse>(
-    //             BATCH_QUERY_ROUTER.pulsar.code_hash.clone(),
-    //             BATCH_QUERY_ROUTER.pulsar.address.to_string(),
-    //             batch_query_message,
-    //         )
-    //         .await
-    //         .map(parse_batch_query)
-    //         .map(extract_bins_from_batch);
-    //
-    //         bins
-    //     }
-    // });
-
-    fn extract_bins_from_batch(batch_response: BatchQueryParsedResponse) -> Vec<BinResponse> {
-        batch_response
-            .items
-            .into_iter()
-            .filter(|item| item.status == BatchItemResponseStatus::SUCCESS)
-            .map(|item| {
-                serde_json::from_str::<BinResponse>(&item.response)
-                    .expect("Invalid BinResponse JSON")
-            })
-            .collect()
-    }
 
     let debug = RwSignal::new(false);
 
@@ -274,9 +129,9 @@ pub fn PoolAnalytics() -> impl IntoView {
             .inspect_err(|err| debug!("{err:?}"))
     });
 
-    let token_labels = AsyncDerived::new(move || async move {
-        let token_x = token_x_symbol.await;
-        let token_y = token_y_symbol.await;
+    let token_labels = Signal::derive(move || {
+        let token_x = token_x_symbol();
+        let token_y = token_y_symbol();
 
         (token_x, token_y)
     });
@@ -290,7 +145,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                 {move || {
                     Suspend::new(async move {
                         let data = chart_data.await.unwrap_or_default();
-                        let token_labels = token_labels.await;
+                        let token_labels = token_labels;
                         view! {
                             <PoolDistributionChart
                                 debug=debug.into()
@@ -360,24 +215,20 @@ pub fn PoolAnalytics() -> impl IntoView {
                 <div class="bg-card px-4 sm:px-8 py-4 rounded-lg">
                     <dl class="m-0">
                         <dt class="text-sm text-muted-foreground font-medium">
-                            {move || token_x_symbol.get()} " Reserves"
+                            {token_x_symbol} " Reserves"
                         </dt>
                         <dd class="pt-0.5 text-2xl font-semibold align-baseline proportional-nums">
-                            <Suspense fallback=|| {
-                                view! { "Loading..." }
-                            }>{move || Suspend::new(async move { reserve_x.await })}</Suspense>
+                            {reserve_x}
                         </dd>
                     </dl>
                 </div>
                 <div class="bg-card px-4 sm:px-8 py-4 rounded-lg">
                     <dl class="m-0">
                         <dt class="text-sm text-muted-foreground font-medium">
-                            {move || token_y_symbol.get()} " Reserves"
+                            {token_y_symbol} " Reserves"
                         </dt>
                         <dd class="pt-0.5 text-2xl font-semibold align-baseline proportional-nums">
-                            <Suspense fallback=|| {
-                                view! { "Loading..." }
-                            }>{move || Suspend::new(async move { reserve_y.await })}</Suspense>
+                            {reserve_y}
                         </dd>
                     </dl>
                 </div>
@@ -385,7 +236,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                     <dl class="m-0">
                         <dt class="text-sm text-muted-foreground font-medium">"+2% Depth"</dt>
                         <dd class="pt-0.5 text-2xl font-semibold align-baseline proportional-nums">
-                            "TBD " {move || token_x_symbol.get()}
+                            "TBD " {token_x_symbol}
                         </dd>
                     </dl>
                 </div>
@@ -393,7 +244,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                     <dl class="m-0">
                         <dt class="text-sm text-muted-foreground font-medium">"-2% Depth"</dt>
                         <dd class="pt-0.5 text-2xl font-semibold align-baseline proportional-nums">
-                            "TBD " {move || token_y_symbol.get()}
+                            "TBD " {token_y_symbol}
                         </dd>
                     </dl>
                 </div>
@@ -405,7 +256,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                             <p class="text-sm text-muted-foreground font-semibold m-0">"Pool"</p>
                             <div class="flex flex-row items-center gap-2">
                                 <p class="hidden lg:block text-base font-semibold m-0">
-                                    {move || pool_address()}
+                                    {pool_address}
                                 </p>
                                 <p class="block lg:hidden text-base font-semibold m-0">
                                     {move || shorten_address(pool_address())}
@@ -436,11 +287,11 @@ pub fn PoolAnalytics() -> impl IntoView {
                         </div>
                         <div class="flex flex-col items-start">
                             <p class="text-sm text-muted-foreground font-semibold m-0">
-                                {move || token_x_symbol.get()}
+                                {token_x_symbol}
                             </p>
                             <div class="flex flex-row items-center gap-2">
                                 <p class="hidden lg:block text-base font-semibold m-0">
-                                    {move || token_x_address()}
+                                    {token_x_address}
                                 </p>
                                 <p class="block lg:hidden text-base font-semibold m-0">
                                     {move || shorten_address(token_x_address())}
@@ -471,11 +322,11 @@ pub fn PoolAnalytics() -> impl IntoView {
                         </div>
                         <div class="flex flex-col items-start">
                             <p class="text-sm text-muted-foreground font-semibold m-0">
-                                {move || token_y_symbol.get()}
+                                {token_y_symbol}
                             </p>
                             <div class="flex flex-row items-center gap-2">
                                 <p class="hidden lg:block text-base font-semibold m-0">
-                                    {move || token_y_address()}
+                                    {token_y_address}
                                 </p>
                                 <p class="block lg:hidden text-base font-semibold m-0">
                                     {move || shorten_address(token_y_address())}
@@ -510,7 +361,7 @@ pub fn PoolAnalytics() -> impl IntoView {
                             <p class="text-sm text-muted-foreground font-semibold m-0">
                                 "Bin steps"
                             </p>
-                            <p class="text-base font-semibold m-0">{move || bin_step()}"bps"</p>
+                            <p class="text-base font-semibold m-0">{bin_step}"bps"</p>
                         </div>
                         // TODO: is the Version stored anywhere?
                         <div class="flex flex-col items-start">
@@ -528,31 +379,17 @@ pub fn PoolAnalytics() -> impl IntoView {
                             <p class="text-sm text-muted-foreground font-semibold m-0">
                                 "Base fee"
                             </p>
-                            <p class="text-base font-semibold m-0">
-                                <Suspense fallback=|| {
-                                    view! { "Loading..." }
-                                }>{move || Suspend::new(async move { base_fee.await })}</Suspense>
-                            </p>
+                            <p class="text-base font-semibold m-0">{base_fee}</p>
                         </div>
                         <div class="flex flex-col items-start">
                             <p class="text-sm text-muted-foreground font-semibold m-0">"Max fee"</p>
-                            <p class="text-base font-semibold m-0">
-                                <Suspense fallback=|| {
-                                    view! { "Loading..." }
-                                }>{move || Suspend::new(async move { max_fee.await })}</Suspense>
-                            </p>
+                            <p class="text-base font-semibold m-0">{max_fee}</p>
                         </div>
                         <div class="flex flex-col items-start">
                             <p class="text-sm text-muted-foreground font-semibold m-0">
                                 "Protocol fee"
                             </p>
-                            <p class="text-base font-semibold m-0">
-                                <Suspense fallback=|| {
-                                    view! { "Loading..." }
-                                }>
-                                    {move || Suspend::new(async move { protocol_fee.await })}
-                                </Suspense>
-                            </p>
+                            <p class="text-base font-semibold m-0">{protocol_fee}</p>
                         </div>
                     </div>
                 </div>
@@ -565,11 +402,11 @@ pub fn PoolAnalytics() -> impl IntoView {
                     <div class="flex flex-row gap-2 items-center">
                         <div class="flex flex-row gap-1 items-center">
                             <div class="w-2 h-2 rounded-full bg-gold"></div>
-                            <p class="m-0">{move || token_y_symbol.get()}</p>
+                            <p class="m-0">{token_y_symbol}</p>
                         </div>
                         <div class="flex flex-row gap-1 items-center">
                             <div class="w-2 h-2 rounded-full bg-pine"></div>
-                            <p class="m-0">{move || token_x_symbol.get()}</p>
+                            <p class="m-0">{token_x_symbol}</p>
                         </div>
                     </div>
                 </div>

@@ -1,11 +1,7 @@
-#![allow(unused)]
+// #![allow(unused)]
 
-use ammber_core::{
-    prelude::*,
-    state::*,
-    support::{chain_query, Querier, COMPUTE_QUERIER},
-    Error,
-};
+use crate::state::{PoolState, PoolStateStoreFields};
+use ammber_core::{prelude::*, state::*, Error};
 use ammber_sdk::{
     constants::liquidity_config::{
         LiquidityConfigurations, LiquidityShape, BID_ASK, CURVE, SPOT_UNIFORM, WIDE,
@@ -21,17 +17,17 @@ use cosmwasm_std::{Addr, ContractInfo, Uint128, Uint64};
 use keplr::Keplr;
 use leptos::{logging::*, prelude::*};
 use leptos_router::{
-    hooks::{query_signal, query_signal_with_options, use_params, use_params_map, use_query_map},
+    hooks::{query_signal_with_options, use_params_map},
     NavigateOptions,
 };
 use liquidity_book::libraries::{PriceHelper, U128x128Math};
+use reactive_stores::Store;
 use rsecret::{
     query::tendermint::TendermintQuerier,
     secret_client::{CreateTxSenderOptions, TxDecrypter},
     tx::ComputeServiceClient,
     TxOptions,
 };
-use secret_toolkit_snip20::TokenInfoResponse;
 use secretrs::{
     compute::{MsgExecuteContract, MsgExecuteContractResponse},
     tx::Msg,
@@ -39,7 +35,7 @@ use secretrs::{
 };
 use std::str::FromStr;
 use tonic_web_wasm_client::Client;
-use tracing::{debug, info, trace};
+use tracing::{debug, info};
 use web_sys::MouseEvent;
 
 #[component]
@@ -50,27 +46,25 @@ pub fn AddLiquidity() -> impl IntoView {
         info!("cleaning up <AddLiquidity/>");
     });
 
+    let pool = use_context::<Store<PoolState>>().expect("missing the Store<PoolState> context");
+
     let endpoint = use_context::<Endpoint>().expect("endpoint context missing!");
     let chain_id = use_context::<ChainId>().expect("chain_id context missing!");
     let keplr = use_context::<KeplrSignals>().expect("keplr signals context missing!");
     let token_map = use_context::<TokenMap>().expect("tokens context missing!");
 
-    let params = use_params_map();
-    let token_a = move || params.read().get("token_a").unwrap_or_default();
-    let token_b = move || params.read().get("token_b").unwrap_or_default();
-    let bin_step = move || {
-        params
-            .read()
-            .get("bps") // bps = basis points
-            .and_then(|string| string.parse::<u16>().ok())
-            .unwrap_or_default()
-    };
+    let token_a = move || pool.token_x().get().contract_address;
+    let token_b = move || pool.token_y().get().contract_address;
+    let bin_step = move || pool.lb_pair().get().bin_step;
 
-    // TODO: pass this info from parent with context
-    let token_a_symbol =
-        AsyncDerived::new_unsync(move || async move { addr_2_symbol(token_a()).await });
-    let token_b_symbol =
-        AsyncDerived::new_unsync(move || async move { addr_2_symbol(token_b()).await });
+    let token_a_symbol = move || {
+        let token = pool.token_x().get();
+        token.display_name.unwrap_or(token.symbol)
+    };
+    let token_b_symbol = move || {
+        let token = pool.token_y().get();
+        token.display_name.unwrap_or(token.symbol)
+    };
 
     // prevents scrolling to the top of the page each time a query param changes
     let nav_options = NavigateOptions {
@@ -78,9 +72,7 @@ pub fn AddLiquidity() -> impl IntoView {
         ..Default::default()
     };
 
-    // let (active_id, _) = query_signal::<u32>("active_id");
-    let active_id = use_context::<LocalResource<Result<u32, Error>>>()
-        .expect("missing the active_id resource context");
+    let active_id = Signal::derive(move || pool.active_id().get());
     let (price_by, set_price_by) =
         query_signal_with_options::<String>("price_by", nav_options.clone());
 
@@ -150,16 +142,17 @@ pub fn AddLiquidity() -> impl IntoView {
     //
 
     Effect::new(move || {
-        active_id
-            .get()
-            .as_deref()
-            .and_then(|result| result.clone().ok())
-            .and_then(|id| PriceHelper::get_price_from_id(id, bin_step()).ok())
+        let id = active_id.get();
+        let price_result = PriceHelper::get_price_from_id(id, bin_step())
+            .ok()
             .and_then(|price| PriceHelper::convert128x128_price_to_decimal(price).ok())
-            // FIXME: the target price is being truncated, causing the get_id_from_price
-            // function to return the wrong bin id
-            .map(|price| u128_to_string_with_precision(price.as_u128()))
-            .map(|price| set_target_price.set(price));
+            .map(|price| u128_to_string_with_precision(price.as_u128()));
+
+        debug!("{price_result:?}");
+
+        if let Some(price_str) = price_result {
+            set_target_price.set(price_str);
+        }
     });
 
     // even tho this is a derived signal, it's not run automatically whenever the signals it
@@ -228,9 +221,6 @@ pub fn AddLiquidity() -> impl IntoView {
 
     let add_liquidity_action =
         Action::new_local(move |liquidity_parameters: &LiquidityParameters| {
-            // TODO: Use the dynamic versions instead.
-            // let url = endpoint.get();
-            // let chain_id = chain_id.get();
             let url = endpoint.get();
             let chain_id = CHAIN_ID;
             let mut liquidity_parameters = liquidity_parameters.clone();
@@ -337,13 +327,6 @@ pub fn AddLiquidity() -> impl IntoView {
                     ..Default::default()
                 };
 
-                // let tx = compute_service_client
-                //     .execute_contract(msg, lb_router_contract.code_hash.clone(), tx_options)
-                //     .await
-                //     .map_err(Error::from)
-                //     .inspect(|tx_response| info!("{tx_response:?}"))
-                //     .inspect_err(|error| error!("{error}"))?;
-
                 let tx = compute_service_client
                     .broadcast(
                         vec![
@@ -390,7 +373,7 @@ pub fn AddLiquidity() -> impl IntoView {
                     on:change=move |ev| set_amount_x.set(event_target_value(&ev))
                 />
                 <div class="absolute right-0 top-0 px-3 py-2 h-9 z-[2] flex items-center justify-center text-sm text-popover-foreground">
-                    {move || token_a_symbol.get()}
+                    {token_a_symbol}
                 </div>
             </div>
             <div class="w-full relative flex items-center gap-2">
@@ -401,7 +384,7 @@ pub fn AddLiquidity() -> impl IntoView {
                     on:change=move |ev| set_amount_y.set(event_target_value(&ev))
                 />
                 <div class="absolute right-0 top-0 px-3 py-2 h-9 z-[2] flex items-center justify-center text-sm text-popover-foreground">
-                    {move || token_b_symbol.get()}
+                    {token_b_symbol}
                 </div>
             </div>
 
@@ -500,11 +483,7 @@ pub fn AddLiquidity() -> impl IntoView {
                             placeholder="Range Min"
                             disabled
                             prop:value=move || {
-                                let active_id = active_id
-                                    .get()
-                                    .as_deref()
-                                    .and_then(|result| result.clone().ok())
-                                    .unwrap_or(8_388_608);
+                                let active_id = active_id.get();
                                 let id = active_id - radius.get();
                                 let price = PriceHelper::get_price_from_id(id, bin_step())
                                     .ok()
@@ -527,11 +506,7 @@ pub fn AddLiquidity() -> impl IntoView {
                             placeholder="Range Max"
                             disabled
                             prop:value=move || {
-                                let active_id = active_id
-                                    .get()
-                                    .as_deref()
-                                    .and_then(|result| result.clone().ok())
-                                    .unwrap_or(8_388_608);
+                                let active_id = active_id.get();
                                 let id = active_id + radius.get();
                                 let price = PriceHelper::get_price_from_id(id, bin_step())
                                     .ok()

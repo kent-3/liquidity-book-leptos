@@ -7,7 +7,7 @@ use ammber_sdk::{
     utils::u128_to_string_with_precision,
 };
 use codee::string::FromToStringCodec;
-use cosmwasm_std::Uint256;
+use cosmwasm_std::{Uint128, Uint256};
 use keplr::Keplr;
 use leptos::{ev, html, prelude::*, task::spawn_local};
 use leptos_router::{components::A, hooks::use_params_map, nested_router::Outlet};
@@ -101,7 +101,7 @@ pub fn Pool() -> impl IntoView {
 
     provide_context((token_a_symbol, token_b_symbol));
 
-    let lb_pair: LocalResource<Result<LbPair, Error>> = LocalResource::new(move || async move {
+    let lb_pair = LocalResource::new(move || async move {
         debug!("run lb_pair resource");
 
         let token_x = addr_2_contract(token_a.get()).await.unwrap();
@@ -164,24 +164,31 @@ pub fn Pool() -> impl IntoView {
 
     use crate::PoolState;
 
-    let store = reactive_stores::Store::new(PoolState::default());
+    let pool_store = reactive_stores::Store::new(PoolState::default());
 
     spawn_local(async move {
-        let token_x = addr_2_contract(token_a.get()).await.unwrap();
-        let token_y = addr_2_contract(token_b.get()).await.unwrap();
+        let token_x = addr_2_token(token_a.get()).await;
+        let token_y = addr_2_token(token_b.get()).await;
         let bin_step = basis_points.get();
+
+        pool_store.token_x().set(token_x.clone());
+        pool_store.token_y().set(token_y.clone());
+        pool_store.bin_step().set(bin_step.clone());
 
         let storage = window()
             .local_storage()
             .expect("local storage not available?")
             .expect("local storage returned none?");
 
-        let storage_key = format!("{}_{}_{}", token_x.address, token_y.address, bin_step);
+        let storage_key = format!(
+            "{}_{}_{}",
+            token_x.contract_address, token_y.contract_address, bin_step
+        );
 
         let lb_pair = match storage.get_item(&storage_key) {
             Ok(None) => {
                 let lb_pair = LB_FACTORY
-                    .get_lb_pair_information(token_x, token_y, bin_step)
+                    .get_lb_pair_information(token_x.into(), token_y.into(), bin_step)
                     .await
                     .map(|lb_pair_information| lb_pair_information.lb_pair)
                     .inspect(|lb_pair| {
@@ -192,20 +199,41 @@ pub fn Pool() -> impl IntoView {
                 lb_pair
             }
             Ok(Some(lb_pair)) => Ok(serde_json::from_str(&lb_pair).unwrap()),
-            _ => todo!(),
+            Err(_) => Err(Error::generic("Error accessing local storage")),
         };
 
-        store.lb_pair().set(lb_pair.unwrap())
-    });
-
-    spawn_local(async move {
-        let active_id = match lb_pair.await {
-            Ok(pair) => ILbPair(pair.contract).get_active_id().await,
-            Err(_) => Err(Error::generic("lb_pair resource is not available")),
+        let pair_contract = match lb_pair {
+            Ok(pair) => {
+                pool_store.lb_pair().set(pair.clone());
+                Some(ILbPair(pair.contract.clone()))
+            }
+            Err(err) => {
+                error!("Failed to get LB pair: {err}");
+                None
+            }
         };
 
-        store.active_id().set(active_id.unwrap_or_default())
+        if let Some(contract) = pair_contract {
+            match contract.get_reserves().await {
+                Ok(total_reserves) => pool_store.total_reserves().set(total_reserves),
+                Err(err) => error!("Failed to get reserves: {err}"),
+            }
+
+            match contract.get_static_fee_parameters().await {
+                Ok(static_fee_parameters) => pool_store
+                    .static_fee_parameters()
+                    .set(static_fee_parameters),
+                Err(err) => error!("Failed to get static fee parameters: {err}"),
+            }
+
+            match contract.get_active_id().await {
+                Ok(active_id) => pool_store.active_id().set(active_id),
+                Err(err) => error!("Failed to get active ID: {err}"),
+            }
+        }
     });
+
+    provide_context(pool_store);
 
     // --- end Store demonstration
 
