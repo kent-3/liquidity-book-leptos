@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-mainnet = []
+mainnet = ["ammber-core/mainnet"]
 testnet = ["ammber-core/testnet"]
-devnet = []
+devnet = ["ammber-core/devnet"]
 charts = ["ammber-pool/charts"]
 default = ["testnet"]
 

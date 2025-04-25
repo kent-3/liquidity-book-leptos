@@ -49,7 +49,7 @@ pub static BATCH_QUERY_ROUTER: LazyLock<BatchQueryRouter> = LazyLock::new(|| {
     BatchQueryRouter {
         localsecret: ContractInfo {
             // FIXME: this address needs to be updated manually
-            address: Addr::unchecked("secret15zvwtzf38yqhdzt2svdk7mnc5ha24493tqydn2"),
+            address: Addr::unchecked("secret1rgqxfst0frq5mgmw3e5pzajpre4qwepc2uh22m"),
             code_hash: "1c7e86ba4fdb6760e70bf08a7df7f44b53eb0b23290e3e69ca96140810d4f432"
                 .to_string(),
         },

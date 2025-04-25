@@ -8,7 +8,7 @@ use std::{
 };
 
 // TODO: add token icon url metadata
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Default, Deserialize, Debug, Clone)]
 pub struct Token {
     pub contract_address: String,
     pub code_hash: String,
@@ -29,10 +29,16 @@ impl From<&Token> for ContractInfo {
     }
 }
 
+impl From<Token> for ContractInfo {
+    fn from(token: Token) -> ContractInfo {
+        ContractInfo::from(&token)
+    }
+}
+
 // WARN: This key is randomly generated when localsecret is started for the first time.
 // Reuse containers to avoid needing to change this every time.
 pub static DEVNET_IO_PUBKEY: [u8; 32] =
-    hex!("80171b6f3b84eb5975b72ca51ee86b6ae113c22938e4866e5c2300077a06cd3e");
+    hex!("d9ea31a74933dc7be98445e68be177a3daa3f8d77796b9bfd6032c9a8b7f0c6a");
 
 // Compile-time configuration for chain and node details
 pub const CHAIN_ID: &'static str = if cfg!(feature = "mainnet") {
