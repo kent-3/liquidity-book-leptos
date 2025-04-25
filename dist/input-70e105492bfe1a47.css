@@ -2405,7 +2405,8 @@ h3 {
   padding: 0.75rem !important;
   -webkit-backdrop-filter: blur(8px);
           backdrop-filter: blur(8px);
-  transform: translateY(-50%) translateX(117%) !important;
+  /* show tooltip to the right of the cursor instead of the left */
+  /* transform: translateY(-50%) translateX(117%) !important; */
 }
 
 /* Full page background */
