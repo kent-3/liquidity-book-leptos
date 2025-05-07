@@ -82,8 +82,8 @@ liquidity-book = { git = "https://github.com/kent-3/liquidity-book.git" }
 # secret-sdk-proto = { path = "../secret-rust/secret-sdk-proto/" }
 # secretrs = { path = "../secret-rust/secretrs" }
 
-# [patch."https://github.com/kent-3/secret-clients.git"]
-# rsecret = { path = "../secret-clients/rsecret" }
+[patch."https://github.com/kent-3/secret-clients.git"]
+rsecret = { path = "../secret-clients/rsecret" }
 
 # [patch."https://github.com/kent-3/liquidity-book.git"]
 # liquidity-book = { path = "../liquidity-book/packages/liquidity-book" }
